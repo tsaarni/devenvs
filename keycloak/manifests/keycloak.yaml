@@ -1,0 +1,224 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: keycloak
+spec:
+  virtualhost:
+    fqdn: keycloak.127-0-0-121.nip.io
+    tls:
+      passthrough: true
+  tcpproxy:
+    services:
+      - name: keycloak
+        port: 8443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - name: https
+      port: 8443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: keycloak
+  ports:
+    - name: https
+      port: 8443
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keycloak
+spec:
+  selector:
+    matchLabels:
+      app: keycloak
+  replicas: 2
+  serviceName: keycloak-headless
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      initContainers:
+        - name: wait-for-postgresql
+          image: alpine:3
+          command:
+            - sh
+            - -c
+            - |
+              until printf "." && nc -z -w 2 postgres 5432; do
+                  sleep 2;
+              done;
+
+              echo 'PostgreSQL OK ✓'
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:16.0.0
+          #imagePullPolicy: Never
+
+          env:
+            - name: KEYCLOAK_USER
+              value: "admin"
+            - name: KEYCLOAK_PASSWORD
+              value: "admin"
+            - name: KEYCLOAK_MIGRATION_DIR
+              value: /input/config/
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=50.0"
+            - name: PROXY_ADDRESS_FORWARDING
+              value: "true"
+            - name: JGROUPS_DISCOVERY_PROTOCOL
+              value: dns.DNS_PING
+            - name: JGROUPS_DISCOVERY_PROPERTIES
+              value: "dns_query=keycloak-headless.default.svc.cluster.local"
+            - name: DB_VENDOR
+              value: "postgres"
+            - name: DB_ADDR
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "keycloak"
+            - name: DB_PASSWORD
+              value: "keycloak"
+            # - name: KEYCLOAK_LOGLEVEL
+            #   value: DEBUG
+            # - name: WILDFLY_LOGLEVEL
+            #   value: DEBUG
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /auth/
+              port: http
+            initialDelaySeconds: 300
+            timeoutSeconds: 5
+
+          readinessProbe:
+            httpGet:
+              path: /auth/realms/master
+              port: http
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+
+          volumeMounts:
+            - name: cli-scripts
+              mountPath: /opt/jboss/startup-scripts
+              readOnly: true
+            - name: https-certs
+              mountPath: /certs
+              readOnly: true
+            - name: keycloak-config
+              mountPath: /input/config
+
+      volumes:
+        - name: cli-scripts
+          configMap:
+            name: cli-scripts
+        - name: https-certs
+          secret:
+            secretName: keycloakcert
+        - name: keycloak-config
+          configMap:
+              name: keycloak-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cli-scripts
+data:
+  keycloak.cli: |
+    embed-server --server-config=standalone-ha.xml --std-out=echo
+    batch
+    ## Sets the node identifier to the node name (= pod name). Node identifiers have to be unique. They can have a
+    ## maximum length of 23 characters. Thus, the chart's fullname template truncates its length accordingly.
+    /subsystem=transactions:write-attribute(name=node-identifier, value=${jboss.node.name})
+
+
+    # debug
+    #/subsystem=logging/console-handler=CONSOLE:write-attribute(name=level, value=INFO)
+    #/subsystem=logging/root-logger=ROOT:write-attribute(name=level, value=INFO)
+    /subsystem=logging/console-handler=CONSOLE:write-attribute(name=level, value=DEBUG)
+    /subsystem=logging/root-logger=ROOT:write-attribute(name=level, value=INFO)
+
+    # Add dedicated eventsListener config element to allow configuring elements.
+    /subsystem=keycloak-server/spi=eventsListener:add()
+    /subsystem=keycloak-server/spi=eventsListener/provider=jboss-logging:add(enabled=true)
+
+    # Propagate success events to INFO instead of DEBUG, to expose successful logins for log analysis
+    /subsystem=keycloak-server/spi=eventsListener/provider=jboss-logging:write-attribute(name=properties.success-level,value=info)
+    /subsystem=keycloak-server/spi=eventsListener/provider=jboss-logging:write-attribute(name=properties.error-level,value=warn)
+
+
+    # Configure datasource to use explicit query timeout in seconds
+    /subsystem=datasources/data-source=KeycloakDS/:write-attribute(name=query-timeout,value=${env.DB_QUERY_TIMEOUT:300})
+
+    # Configure datasource to connection before use
+    /subsystem=datasources/data-source=KeycloakDS/:write-attribute(name=validate-on-match,value=${env.DB_VALIDATE_ON_MATCH:true})
+
+    # Configure datasource to try all other connections before failing
+    /subsystem=datasources/data-source=KeycloakDS/:write-attribute(name=use-fast-fail,value=${env.DB_USE_CAST_FAIL:false})
+
+    # Make cache items highly available
+    /subsystem=infinispan/cache-container=keycloak/distributed-cache=sessions:write-attribute(name=owners, value=${env.CACHE_OWNERS:2})
+    /subsystem=infinispan/cache-container=keycloak/distributed-cache=authenticationSessions:write-attribute(name=owners, value=${env.CACHE_OWNERS:2})
+    /subsystem=infinispan/cache-container=keycloak/distributed-cache=offlineSessions:write-attribute(name=owners, value=${env.CACHE_OWNERS:2})
+    /subsystem=infinispan/cache-container=keycloak/distributed-cache=clientSessions:write-attribute(name=owners, value=${env.CACHE_OWNERS:2})
+    /subsystem=infinispan/cache-container=keycloak/distributed-cache=offlineClientSessions:write-attribute(name=owners, value=${env.CACHE_OWNERS:2})
+    /subsystem=infinispan/cache-container=keycloak/distributed-cache=loginFailures:write-attribute(name=owners, value=${env.CACHE_OWNERS:2})
+    /subsystem=infinispan/cache-container=keycloak/distributed-cache=actionTokens:write-attribute(name=owners, value=${env.CACHE_OWNERS:2})
+
+    echo ** Adding truststore for default SSL context e.g. for LDAP client **
+    /subsystem=elytron/key-store=default-trust-store:add(path="/certs/truststore.jks",credential-reference={clear-text="secret"})
+    /subsystem=elytron/trust-manager=default-trust-manager:add(key-store=default-trust-store,algorithm="SunX509")
+    /subsystem=elytron/client-ssl-context=default-ssl-context:add(trust-manager=default-trust-manager)
+    /subsystem=elytron:write-attribute(name=default-ssl-context, value=default-ssl-context)
+
+    echo Changing transport
+    /subsystem=jgroups/stack=tcp:remove
+    /subsystem=jgroups/stack=tcp:add(transport={"type"=>"TCP", "socket-binding" => "jgroups-tcp"})
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=dns.DNS_PING)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=MERGE3)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=FD_SOCK,socket-binding=jgroups-tcp-fd)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=FD_ALL)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=VERIFY_SUSPECT)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=SSL_KEY_EXCHANGE)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=ASYM_ENCRYPT)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=pbcast.NAKACK2)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=UNICAST3)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=pbcast.STABLE)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=FRAG2)
+    /subsystem=jgroups/stack=tcp/:add-protocol(type=pbcast.GMS)
+
+    /subsystem=jgroups/stack=tcp/protocol=SSL_KEY_EXCHANGE/property=keystore_name/:add(value="aaa")
+    /subsystem=jgroups/stack=tcp/protocol=ASYM_ENCRYPT/property=use_external_key_exchange/:add(value="true")
+    /subsystem=jgroups/stack=tcp/protocol=ASYM_ENCRYPT/property=sym_keylength/:add(value="128")
+    /subsystem=jgroups/stack=tcp/protocol=ASYM_ENCRYPT/property=sym_algorithm/:add(value="AES/CBC/PKCS5Padding")
+    /subsystem=jgroups/stack=tcp/protocol=ASYM_ENCRYPT/property=sym_iv_length/:add(value="16")
+    /subsystem=jgroups/stack=tcp/protocol=ASYM_ENCRYPT/property=asym_keylength/:add(value="512")
+    /subsystem=jgroups/stack=tcp/protocol=ASYM_ENCRYPT/property=asym_algorithm/:add(value="RSA")
+
+    /subsystem=jgroups/channel=ee:write-attribute(name=stack,value=tcp)
+
+
+
+    run-batch
+    stop-embedded-server

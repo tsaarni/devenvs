@@ -1,0 +1,4 @@
+resources:
+- deploy-control-plane-stub.yaml
+- deploy-httpbin-no-tls-no-ingress.yaml
+- deploy-envoy-debug.yaml

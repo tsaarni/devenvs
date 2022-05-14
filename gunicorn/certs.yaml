@@ -1,0 +1,20 @@
+subject: cn=ca
+---
+issuer: cn=ca
+subject: cn=server
+sans:
+- DNS:localhost
+---
+issuer: cn=ca
+subject: cn=foo
+sans:
+- DNS:foo.127.0.0.1.nip.io
+---
+issuer: cn=ca
+subject: cn=bar
+sans:
+- DNS:bar.127.0.0.1.nip.io
+---
+issuer: cn=ca
+subject: cn=client
+

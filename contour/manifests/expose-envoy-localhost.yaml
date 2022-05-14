@@ -1,0 +1,32 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: admin
+spec:
+  virtualhost:
+    fqdn: admin.127-0-0-101.nip.io
+  routes:
+    - services:
+        - name: envoy-admin-service
+          port: 9001
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: envoy-admin-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9001
+    targetPort: 9001
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: envoy-admin-service
+subsets:
+ - addresses:
+     - ip: 127.0.0.1
+   ports:
+     - port: 9001
+

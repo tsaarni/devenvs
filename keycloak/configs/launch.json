@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug (Attach 8000)",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 8000
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch) - Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Debug KeycloakServer",
+            "request": "launch",
+            "mainClass": "org.keycloak.testsuite.KeycloakServer",
+            "projectName": "keycloak-testsuite-utils",
+            "vmArgs": "-Dkeycloak.migration.action=import -Dkeycloak.migration.provider=dir -Dkeycloak.migration.dir=/home/tsaarni/work/keycloak-devenv/migrations/ldap-federation/ -Djavax.net.ssl.trustStore=/home/tsaarni/work/keycloak-devenv/truststore.p12 -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.javax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.keyStore=/home/tsaarni/work/keycloak-devenv/admin-keystore.p12 -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.javax.net.ssl.keyStoreType=PKCS12 -Dresources -Dkeycloak.logging.level=debug"
+        },
+    ]
+}
+

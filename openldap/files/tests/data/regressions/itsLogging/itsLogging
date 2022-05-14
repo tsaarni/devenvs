@@ -1,0 +1,267 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2020 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+#set -x
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+ITS=OLC
+ITSDIR=$DATADIR/regressions/its$ITS
+
+
+mkdir -p $TESTDIR $TESTDIR/slapd.d
+
+
+echo "Creating configuration for slapd"
+$SLAPADD -F $TESTDIR/slapd.d -n 0 <<EOF
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcLogFile: /dev/stdout
+olcLogFileOnly: TRUE
+olcLogFileFormat: syslog-utc
+olcLogLevel: stats
+
+dn: olcDatabase=config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: config
+olcRootPW: secret
+
+dn: olcDatabase=monitor,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: monitor
+olcRootDN: cn=config
+olcMonitoring: TRUE
+olcAccess: to * by dn.exact="gidNumber=1000+uidNumber=1000,cn=peercred,cn=external,cn=auth" manage by * break
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file://$ABS_SCHEMADIR/core.ldif
+include: file://$ABS_SCHEMADIR/cosine.ldif
+include: file://$ABS_SCHEMADIR/inetorgperson.ldif
+include: file://$ABS_SCHEMADIR/openldap.ldif
+include: file://$ABS_SCHEMADIR/nis.ldif
+
+# user database
+dn: olcDatabase={1}$BACKEND,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc${BACKEND}Config
+olcDatabase: $BACKEND
+olcSuffix: dc=example,dc=com
+olcDbDirectory: $TESTDIR/slapd.d
+
+dn: olcOverlay=accesslog,olcDatabase={1}$BACKEND,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcAccessLogConfig
+olcOverlay: accesslog
+olcAccessLogDB: cn=accesslog
+# ops https://linux.die.net/man/5/slapo-accesslog
+olcAccessLogOps: all
+# scan the accesslog DB every day, and purge entries older than 7 days
+olcAccessLogPurge: 07+00:00 01+00:00
+olcAccessLogSuccess: TRUE
+
+
+# access log database
+dn: olcDatabase={2}$BACKEND,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc${BACKEND}Config
+olcDatabase: $BACKEND
+olcDbDirectory: $TESTDIR/slapd.d
+olcSuffix: cn=accesslog
+olcDbIndex: default eq
+olcDbIndex: entryCSN,objectClass,reqEnd,reqResult,reqStart,reqDN
+
+dn: olcOverlay=syncprov,olcDatabase={2}$BACKEND,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: syncprov
+
+
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+        echo "slapadd failed ($RC)!"
+        exit $RC
+fi
+
+echo "Creating users"
+$SLAPADD -F $TESTDIR/slapd.d -n 2 <<EOF
+dn: dc=example,dc=com
+objectclass: top
+objectclass: organization
+objectclass: dcobject
+dc: example
+o: Example
+
+dn: cn=joe,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: joe
+uid: joe
+uidNumber: 1001
+gidNumber: 1001
+userPassword: joe
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: Average
+givenName: Joe
+pwdReset: true
+
+dn: cn=admin-account,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: admin-account
+uid: admin-account
+uidNumber: 1001
+gidNumber: 1001
+userPassword: admin-account
+loginShell: /bin/bash
+homeDirectory: /home/
+sn:
+
+dn: ou=policies,dc=example,dc=com
+objectClass: organizationalUnit
+ou: policies
+
+dn: cn=default,ou=policies,dc=example,dc=com
+objectClass: pwdPolicy
+objectClass: organizationalRole
+cn: default
+pwdAttribute: userPassword
+pwdMinLength: 3
+pwdCheckQuality: 2
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+        echo "slapadd failed ($RC)!"
+        exit $RC
+fi
+
+echo "Starting remote slapd server on $URI1"
+#$SLAPD -F $TESTDIR/slapd.d -h "$URI1" -d $LVL >$LOG1 2>&1 &
+$SLAPD -F $TESTDIR/slapd.d -h "$URI1 ldapi://%2Ftmp%2Fslapdsock" >$LOG1 2>&1 &
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+		$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+				'objectclass=*' > /dev/null 2>&1
+		RC=$?
+		if test $RC = 0 ; then
+				break
+		fi
+		echo "Waiting $SLEEP0 seconds for slapd to start..."
+		sleep $SLEEP0
+done
+
+
+echo "Ready"
+sleep 999999
+exit 0
+
+###############################################################################
+###############################################################################
+###############################################################################
+#
+# Instructions on how to run
+#
+
+# https://www.openldap.org/doc/admin26/guide.html
+# https://tylersguides.com/guides/openldap-online-configuration-reference/
+
+cd ~/work/openldap
+autoreconf
+./configure CFLAGS='-g -O0' CXXFLAGS='-g -O0' --enable-backends=yes --enable-overlays=yes --disable-wt
+
+cp -a ~/work/devenvs/openldap/openldap/* ~/work/openldap/
+
+cd ~/work/openldap/tests
+###killall slapd; SLAPD_DEBUG=-1 ./run -b mdb itsLogging
+killall slapd; ./run -b mdb itsLogging
+
+tail -F ~/work/openldap/tests/testrun/slapd.1.log
+
+
+
+ldapsearch -H ldap://localhost:9011/ -LLL -x -D "cn=config" -w "secret" -b cn=config
+
+
+ldapsearch -H ldap://localhost:9011/ -D "cn=joe,dc=example,dc=com" -w "joe" -b dc=example,dc=com
+
+ldapsearch -H ldapi://%2Ftmp%2Fslapdsock -Y EXTERNAL -D "cn=joe,dc=example,dc=com"  -b dc=example,dc=com
+
+# Read monitor
+ldapsearch -H ldap://localhost:9011/ -LLL -x -D cn=config -wsecret -b cn=Monitor +
+
+# Read access log
+ldapsearch -H ldap://localhost:9011/ -LLL -x -D cn=config -wsecret -b cn=accesslog
+
+
+### DOES NOT WORK
+### persistent search
+### https://tools.ietf.org/id/draft-ietf-ldapext-psearch-03.txt
+#~/work/openldap/clients/tools/ldapsearch -H ldap://localhost:9011/ -LLL -x -D cn=config -wsecret -b cn=accesslog -E ps=1/0/0 
+
+
+
+# log levels
+# https://www.openldap.org/doc/admin26/guide.html#Configuration%20Directives
+#    Trace
+#    Packets
+#    Args
+#    Conns
+#    BER
+#    Filter
+#    Config
+#    ACL
+#    Stats
+#    Stats2
+#    Shell
+#    Parse
+#    Sync
+
+ldapmodify -H ldap://localhost:9011 -D cn=config -w secret <<EOF
+dn: cn=config
+changetype: modify
+replace: olcLogLevel
+olcLogLevel: stats
+EOF
+
+
+ldapmodify -H ldap://localhost:9011 -D cn=config -w secret <<EOF
+dn: cn=config
+changetype: modify
+replace: olcLogLevel
+olcLogLevel: conns config
+EOF
+
+
+
+ldapmodify -H ldap://localhost:9011 -D cn=config -w secret <<EOF
+dn: cn=config
+changetype: modify
+replace: olcLogLevel
+olcLogLevel: 0
+EOF
+
+
+#

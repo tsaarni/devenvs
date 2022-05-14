@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: shell
+  labels:
+    app: shell
+spec:
+  containers:
+    - name: shell
+      image: alpine:latest
+      command: ["/bin/sh"]
+      args:
+        - "-c"
+        - "apk add --update-cache py3-pip py3-websockets httpie openssl netcat-openbsd && sleep 99999999"
+      securityContext:
+        privileged: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shell
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  selector:
+    app: shell
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: shell
+spec:
+  virtualhost:
+    fqdn: shell.127-0-0-101.nip.io
+  routes:
+    - services:
+        - name: shell
+          port: 8000
+      enableWebsockets: true
+      timeoutPolicy:
+        idleConnection: 5s
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: shell2
+spec:
+  virtualhost:
+    fqdn: shell2.127-0-0-101.nip.io
+  routes:
+    - services:
+        - name: shell
+          port: 8000
+      timeoutPolicy:
+        idleConnection: infinite

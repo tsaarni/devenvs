@@ -1,0 +1,10 @@
+bases:
+- ../httpbin
+- ../httpbin-without-tls
+resources:
+- contour.yaml
+- httproxy-with-client-auth.yaml
+images:
+- name: docker.io/projectcontour/contour
+  newName: projectcontour/contour
+  newTag: latest

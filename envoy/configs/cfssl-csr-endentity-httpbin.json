@@ -1,0 +1,6 @@
+{
+  "CN": "httpbin",
+  "Hosts": [
+      "httpbin"
+  ]
+}

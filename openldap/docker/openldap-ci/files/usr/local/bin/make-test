@@ -1,0 +1,9 @@
+#!/bin/sh -ex
+cp -a /src /tmp
+cd /tmp/src
+git clean -fdx
+git reset --hard
+./configure --enable-backends=mod --enable-overlays=mod --enable-modules --enable-dynamic --disable-ndb
+make depend -j
+make -j
+make test

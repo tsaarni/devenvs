@@ -1,0 +1,35 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: httpbin-with-client-auth
+spec:
+  virtualhost:
+    fqdn: protected.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+      clientValidation:
+        caSecret: client-root-ca
+  routes:
+    - services:
+        - name: httpbin
+          port: 443
+          protocol: tls
+          validation:
+            caSecret: internal-root-ca
+            subjectName: httpbin
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: httpbin-with-client-auth-2
+spec:
+  virtualhost:
+    fqdn: protected2.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+      clientValidation:
+        caSecret: client-root-ca
+  routes:
+    - services:
+        - name: httpbin-without-tls
+          port: 80

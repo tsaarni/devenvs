@@ -1,0 +1,6 @@
+bases:
+- ../contour
+images:
+- name: docker.io/projectcontour/contour
+  newName: localhost/contour
+  newTag: latest

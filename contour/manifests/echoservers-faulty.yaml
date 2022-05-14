@@ -1,0 +1,508 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-1
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echoserver-1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echoserver-1
+    spec:
+      containers:
+      - name: echoserver
+        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20201006-42d00bd
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - name: http-api
+          containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-2
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echoserver-2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echoserver-2
+    spec:
+      containers:
+      - name: conformance-echo
+        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20201006-42d00bd
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - name: http-api
+          containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-1
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  selector:
+    app.kubernetes.io/name: echoserver-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-2
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  selector:
+    app.kubernetes.io/name: echoserver-2
+---
+# tests:
+#   kubectl get httpproxy multiple-routes           # valid
+#   http multiple-routes.127-0-0-101.nip.io         # echoserver-1
+#   http multiple-routes.127-0-0-101.nip.io/subpage # echoserver-2
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: multiple-routes
+spec:
+  virtualhost:
+    fqdn: multiple-routes.127-0-0-101.nip.io
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: echoserver-1
+          port: 80
+    - conditions:
+      - prefix: /subpage
+      services:
+        - name: echoserver-2
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy multiple-services    # valid
+#   http multiple-services.127-0-0-101.nip.io  # alternates between echoserver-1 and 2
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: multiple-services
+spec:
+  virtualhost:
+    fqdn: multiple-services.127-0-0-101.nip.io
+  routes:
+    - services:
+        - name: echoserver-1
+          port: 80
+          weight: 50
+        - name: echoserver-2
+          port: 80
+          weight: 50
+---
+# tests:
+#   kubectl get httpproxy root-with-includes-no-conditions           # valid
+#   http root-with-includes-no-conditions.127-0-0-101.nip.io         # echoserver-1
+#   http root-with-includes-no-conditions.127-0-0-101.nip.io/subpage # echoserver-2
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: root-with-includes-no-conditions
+spec:
+  virtualhost:
+    fqdn: root-with-includes-no-conditions.127-0-0-101.nip.io
+  includes:
+    - name: child-echoserver-with-conditions-1
+    - name: child-echoserver-with-conditions-2
+---
+# tests:
+#   kubectl get httpproxy child-echoserver-with-conditions-1  # valid
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: child-echoserver-with-conditions-1
+spec:
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: echoserver-1
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy child-echoserver-with-conditions-2  # valid
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: child-echoserver-with-conditions-2
+spec:
+  routes:
+    - conditions:
+      - prefix: /subpage
+      services:
+        - name: echoserver-2
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy root-with-includes-and-conditions           # valid
+#   http root-with-includes-and-conditions.127-0-0-101.nip.io         # echoserver-1
+#   http root-with-includes-and-conditions.127-0-0-101.nip.io/subpage # echoserver-2
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: root-with-includes-and-conditions
+spec:
+  virtualhost:
+    fqdn: root-with-includes-and-conditions.127-0-0-101.nip.io
+  includes:
+    - name: child-echoserver-no-conditions-1
+      conditions:
+        - prefix: /
+    - name: child-echoserver-no-conditions-2
+      conditions:
+        - prefix: /subpage
+
+---
+# tests:
+#   kubectl get httpproxy child-echoserver-no-conditions-1  # valid
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: child-echoserver-no-conditions-1
+spec:
+  routes:
+    - services:
+        - name: echoserver-1
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy child-echoserver-no-conditions-2  # valid
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: child-echoserver-no-conditions-2
+spec:
+  routes:
+    - services:
+        - name: echoserver-2
+          port: 80
+---
+# pre-conditions:
+#   kubectl create secret tls ingress --cert=$WORKDIR/certs/ingress.pem --key=$WORKDIR/certs/ingress-key.pem --dry-run=client -o yaml | kubectl apply -f -
+#   kubectl create secret generic client-root-ca-1 --from-file=ca.crt=$WORKDIR/certs/client-root-ca-1.pem --dry-run=client -o yaml | kubectl apply -f -
+#
+# tests:
+#   http --verify=$WORKDIR/certs/external-root-ca.pem --cert $WORKDIR/certs/client-1.pem --cert-key $WORKDIR/certs/client-1-key.pem https://protected.127-0-0-101.nip.io/        # echoserver-1
+#   http --verify=$WORKDIR/certs/external-root-ca.pem --cert $WORKDIR/certs/client-1.pem --cert-key $WORKDIR/certs/client-1-key.pem https://protected.127-0-0-101.nip.io/subpage # echoserver-2
+#   http protected.127-0-0-101.nip.io  # 301 moved permanently
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: protected
+spec:
+  virtualhost:
+    fqdn: protected.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+      clientValidation:
+        caSecret: client-root-ca-1
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: echoserver-1
+          port: 80
+    - conditions:
+      - prefix: /subpage
+      services:
+        - name: echoserver-2
+          port: 80
+---
+# pre-conditions:
+#   kubectl create secret tls ingress --cert=$WORKDIR/certs/ingress.pem --key=$WORKDIR/certs/ingress-key.pem --dry-run=client -o yaml | kubectl apply -f -
+#
+# tests:
+#    http --verify=$WORKDIR/certs/external-root-ca.pem https://protected2.127-0-0-101.nip.io/  # echoserver-2
+#    http protected2.127-0-0-101.nip.io                 # NOW: 404 not found, but see https://github.com/projectcontour/contour/issues/3800
+#    http protected2.127-0-0-101.nip.io/should-not-work # NOW: echoserver-1, but see https://github.com/projectcontour/contour/issues/3800
+#    http protected2.127-0-0-101.nip.io/subpage         # 301 Moved permanently
+#    http protected2-127-0-0-101.nip.io/non-existing    # NOW: 404 not found, but see https://github.com/projectcontour/contour/issues/3800
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: protected2
+spec:
+  virtualhost:
+    fqdn: protected2.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+  routes:
+    - conditions:
+      - prefix: /should-not-work
+      services:
+        - name: echoserver-1
+          port: 80
+      permitInsecure: true
+    - conditions:
+      - prefix: /subpage
+      services:
+        - name: echoserver-1
+          port: 80
+  tcpproxy:
+    services:
+      - name: echoserver-2
+        port: 80
+---
+# tests:
+#   kubectl get httpproxy multiple-prefix-conditions-in-route      # invalid
+#   kubectl describe httpproxy multiple-prefix-conditions-in-route # errors: route: more than one prefix is not allowed in a condition block
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: multiple-prefix-conditions-in-route
+spec:
+  virtualhost:
+    fqdn: multiple-prefix-conditions-in-route.127-0-0-101.nip.io
+  routes:
+    - conditions:
+      - prefix: /
+      - prefix: /subpage
+      services:
+        - name: echoserver-1
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy multiple-prefix-conditions-in-include      # invalid
+#   kubectl describe httpproxy multiple-prefix-conditions-in-include # errors: include: more than one prefix is not allowed in a condition block
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: multiple-prefix-conditions-in-include
+spec:
+  virtualhost:
+    fqdn: multiple-prefix-conditions-in-include.127-0-0-101.nip.io
+  includes:
+    - name: child-with-multiple-prefix-conditions
+      conditions:
+        - header:
+            name: x-foo
+            contains: bar
+#        - prefix: /api
+  routes:
+    - services:
+      - name: echoserver-2
+        port: 80
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: child-with-multiple-prefix-conditions
+spec:
+  routes:
+    - conditions:
+      - prefix: /v1
+      services:
+        - name: echoserver-1
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy single-missing-service      # invalid
+#   kubectl describe httpproxy single-missing-service # errors: Spec.Routes unresolved service reference: service "default/echoserver-not-existing" not found
+#   http single-missing-service.127-0-0-101.nip.io    # 503 Service not available
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: single-missing-service
+spec:
+  virtualhost:
+    fqdn: single-missing-service.127-0-0-101.nip.io
+  routes:
+    - services:
+        - name: echoserver-not-existing
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy one-working-one-missing-service      # invalid
+#   kubectl describe httpproxy one-working-one-missing-service # errors: Spec.Routes unresolved service reference: service "default/echoserver-not-existing" not found
+#   http one-working-one-missing-service.127-0-0-101.nip.io    # echoserver-1 answer always (weight 100%)
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: one-working-one-missing-service
+spec:
+  virtualhost:
+    fqdn: one-working-one-missing-service.127-0-0-101.nip.io
+  routes:
+    - services:
+        - name: echoserver-1
+          port: 80
+        - name: echoserver-not-existing
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy multiple-routes-missing-service-1           # invalid
+#   kubectl describe httpproxy multiple-routes-missing-service-1      # errors: Spec.Routes unresolved service reference: service "default/echoserver-not-existing" not found
+#   http multiple-routes-missing-service-1.127-0-0-101.nip.io         # echoserver-1
+#   http multiple-routes-missing-service-1.127-0-0-101.nip.io/subpage # 503 Service Unavailable
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: multiple-routes-missing-service-1
+spec:
+  virtualhost:
+    fqdn: multiple-routes-missing-service-1.127-0-0-101.nip.io
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: echoserver-1
+          port: 80
+    - conditions:
+      - prefix: /subpage
+      services:
+        - name: echoserver-not-existing
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy multiple-routes-missing-service-2           # invalid
+#   kubectl describe httpproxy multiple-routes-missing-service-2      # errors: Spec.Routes unresolved service reference: service "default/echoserver-not-existing" not found
+#   http multiple-routes-missing-service-2.127-0-0-101.nip.io         # 503 Service Unavailable
+#   http multiple-routes-missing-service-2.127-0-0-101.nip.io/subpage # echoserver-2
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: multiple-routes-missing-service-2
+spec:
+  virtualhost:
+    fqdn: multiple-routes-missing-service-2.127-0-0-101.nip.io
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: echoserver-not-existing
+          port: 80
+    - conditions:
+      - prefix: /subpage
+      services:
+        - name: echoserver-2
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy root-with-missing-include-no-conditions       # invalid
+#   kubectl describe httpproxy root-with-missing-include-no-conditions  # error: include default/missing-include not found
+#   http root-with-missing-include-no-conditions.127-0-0-101.nip.io     # 404 Not Found
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: root-with-missing-include-no-conditions
+spec:
+  virtualhost:
+    fqdn: root-with-missing-include-no-conditions.127-0-0-101.nip.io
+  includes:
+    - name: missing-include
+---
+# tests:
+#   kubectl get httpproxy root-with-missing-include-and-conditions           # invalid
+#   kubectl describe httpproxy root-with-missing-include-and-conditions      # include default/missing-include not found
+#   http root-with-missing-include-and-conditions.127-0-0-101.nip.io         # 502 Bad Gateway
+#   http root-with-missing-include-and-conditions.127-0-0-101.nip.io/subpage # echoserver-2
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: root-with-missing-include-and-conditions
+spec:
+  virtualhost:
+    fqdn: root-with-missing-include-and-conditions.127-0-0-101.nip.io
+  includes:
+    - name: missing-include
+      conditions:
+        - prefix: /
+    - name: child-echoserver-no-conditions-2
+      conditions:
+        - prefix: /subpage
+---
+# tests:
+#   kubectl get httpproxy root-with-include-with-conditions-and-missing-service            # valid
+#   http root-with-include-with-conditions-and-missing-service.127-0-0-101.nip.io          # 503 service not available
+#   http root-with-include-with-conditions-and-missing-service.127-0-0-101.nip.io/subpage  # echoserver-2 always responds
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: root-with-include-with-conditions-and-missing-service
+spec:
+  virtualhost:
+    fqdn: root-with-include-with-conditions-and-missing-service.127-0-0-101.nip.io
+  includes:
+    - name: child-echoserver-with-conditions-and-missing-service
+---
+# tests:
+#   kubectl get httpproxy child-echoserver-with-conditions-and-missing-service       # invalid
+#   kubectl describe httpproxy child-echoserver-with-conditions-and-missing-service  # errors: Spec.Routes unresolved service reference: service "default/echoserver-not-existing-[1,2]" not found
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: child-echoserver-with-conditions-and-missing-service
+spec:
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: echoserver-not-existing-1
+          port: 80
+    - conditions:
+      - prefix: /subpage
+      services:
+        - name: echoserver-2
+          port: 80
+        - name: echoserver-not-existing-2
+          port: 80
+---
+# tests:
+#   kubectl get httpproxy root-with-conditions-and-missing-include            # invalid
+#   kubectl describe httpproxy root-with-conditions-and-missing-include       # errors: include default/child-not-existing not found
+#   http root-with-conditions-and-missing-include.127-0-0-101.nip.io          # echoserver-1
+#   http root-with-conditions-and-missing-include.127-0-0-101.nip.io/subpage  # 502 bad gateway
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: root-with-conditions-and-missing-include
+spec:
+  virtualhost:
+    fqdn: root-with-conditions-and-missing-include.127-0-0-101.nip.io
+  includes:
+    - name: child-echoserver-no-conditions-1
+      conditions:
+        - prefix: /
+    - name: child-not-existing
+      conditions:
+        - prefix: /subpage

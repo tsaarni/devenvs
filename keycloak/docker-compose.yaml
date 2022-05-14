@@ -1,0 +1,32 @@
+version: "3"
+services:
+  openldap:
+    build: docker/openldap
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - .:/input:ro
+      - ./output:/output
+    environment:
+      - CERT_FILENAME=/input/certs/ldap.pem
+      - KEY_FILENAME=/input/certs/ldap-key.pem
+      - CA_FILENAME=/input/certs/client-ca.pem
+  ldap-client:
+    build: docker/ldap-client
+    ports:
+      - "2222:22"
+    volumes:
+      - .:/input:ro
+  postgres:
+    image: docker.io/postgres:14-alpine
+    command: -c config_file=/configs/postgres.conf
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak
+      - POSTGRES_DB=keycloak
+    volumes:
+      - ./certs:/certs:ro
+      - ./configs:/configs:ro

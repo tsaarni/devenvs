@@ -1,0 +1,36 @@
+# sed "s/REPLACE_ADDRESS_HERE/$(docker network inspect kind | jq -r '.[0].IPAM.Config[0].Gateway')/" testserver/service.yaml | kubectl apply -f -
+# go run testserver/main.go
+# http --stream testserver.127-0-0-101.nip.io
+kind: Service
+apiVersion: v1
+metadata:
+  name: testserver
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: testserver
+subsets:
+ - addresses:
+     - ip: REPLACE_ADDRESS_HERE
+   ports:
+     - port: 8000
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: testserver
+spec:
+  virtualhost:
+    fqdn: testserver.127-0-0-101.nip.io
+  routes:
+    - services:
+        - name: testserver
+          port: 8000
+      timeoutPolicy:
+        idle: 1s

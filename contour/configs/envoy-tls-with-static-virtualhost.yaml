@@ -1,0 +1,107 @@
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+    socket_address:
+      protocol: TCP
+      address: 0.0.0.0
+      port_value: 9901
+static_resources:
+  clusters:
+  - name: httpbin-no-tls
+    type: STRICT_DNS
+    connect_timeout: 1s
+    load_assignment:
+      cluster_name: httpbin-no-tls
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: httpbin-no-tls
+                port_value: 80
+  - name: httpbin-no-tls2
+    type: STRICT_DNS
+    connect_timeout: 1s
+    load_assignment:
+      cluster_name: httpbin-no-tls2
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: httpbin-no-tls2
+                port_value: 80
+  listeners:
+  - name: https
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 443
+    filter_chains:
+    - filter_chain_match:
+        server_names:
+        - sni.example.com
+      filters:
+      - name: envoy.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: httbin-no-tls-route
+            virtual_hosts:
+            - name: httbin-no-tls-virtualhost
+              domains:
+              - "sni.example.com"
+              routes:
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: httpbin-no-tls
+          http_filters:
+          - name: envoy.router
+            typed_config: {}
+      transport_socket:
+        name: "envoy.transport_sockets.tls"
+        typed_config:
+          "@type": type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext
+          common_tls_context:
+            tls_certificates:
+              certificate_chain:
+                inline_bytes: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUIwVENDQVhpZ0F3SUJBZ0lVUGF3VjJFQmpCeTJ1RU1Sdk5KemlTbDI0UzlRd0NnWUlLb1pJemowRUF3SXcKR1RFWE1CVUdBMVVFQXhNT2MyVnlkbVZ5TFhKdmIzUXRZMkV3SGhjTk1qQXdNVEEzTVRBek1qQXdXaGNOTWpFdwpNVEEyTVRBek1qQXdXakFhTVJnd0ZnWURWUVFERXc5emJta3VaWGhoYlhCc1pTNWpiMjB3V1RBVEJnY3Foa2pPClBRSUJCZ2dxaGtqT1BRTUJCd05DQUFSZHpUTlp0Q2pYNWRQM3ZCWHczM0xncUx1UDhIazFWK1RaR2hFK0tzNEwKcEVUZVY4bkx2YmJhUTNMei8vZi81L2ZSaGdIVHdhb2ZmNzBJb2NRT0d3Y0ZvNEdjTUlHWk1BNEdBMVVkRHdFQgovd1FFQXdJRm9EQWRCZ05WSFNVRUZqQVVCZ2dyQmdFRkJRY0RBUVlJS3dZQkJRVUhBd0l3REFZRFZSMFRBUUgvCkJBSXdBREFkQmdOVkhRNEVGZ1FVYUFKaXRaVjNCSE1WUCsrcmxRVW1lOE04Mkdzd0h3WURWUjBqQkJnd0ZvQVUKQmM2SWthakNNeGV2RldDUDI2dGFaWnR0bEtNd0dnWURWUjBSQkJNd0VZSVBjMjVwTG1WNFlXMXdiR1V1WTI5dApNQW9HQ0NxR1NNNDlCQU1DQTBjQU1FUUNJQ1ZodzZuc3hFVk8raTBkdWVQYWhGaWNpcWFuNTNwQytGYnB2S1RQCnFmYlhBaUJDVjZWcWx0bFJUaVlRZWg4MDQ2RzhiQzVjekpNVE9UU016QWloa3NGbzdBPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+              private_key:
+                inline_bytes: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSU12T1hzVVFvZUVQUlNTVmtKQnpOdTNHMCtlVkxMV1ZxQmR3bHJmNXJvSHNvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFWGMweldiUW8xK1hUOTd3VjhOOXk0S2k3ai9CNU5WZmsyUm9SUGlyT0M2UkUzbGZKeTcyMgoya055OC8vMy8rZjMwWVlCMDhHcUgzKzlDS0hFRGhzSEJRPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
+            validation_context:
+              trusted_ca:
+                inline_bytes: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJlRENDQVI2Z0F3SUJBZ0lVZHF2RlBkM0IxdWllZjV1Q1R2T0ExUVhnVWNVd0NnWUlLb1pJemowRUF3SXcKR1RFWE1CVUdBMVVFQXhNT1kyeHBaVzUwTFhKdmIzUXRZMkV3SUJjTk1qQXdNVEEzTVRBME56QXdXaGdQTWpFeApPVEV5TVRReE1EUTNNREJhTUJreEZ6QVZCZ05WQkFNVERtTnNhV1Z1ZEMxeWIyOTBMV05oTUZrd0V3WUhLb1pJCnpqMENBUVlJS29aSXpqMERBUWNEUWdBRUFvYWRCc3hWMHpQV3lhVFZvQmlRSWpyRFVOWDdCOTdwbzZjNzVMYksKYytVWm1kS2g0dHoxbHFYYytxNCtlL1BHY1Vxazd5ZEwyaTdGeGNuemNFb0VTcU5DTUVBd0RnWURWUjBQQVFILwpCQVFEQWdFR01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZNSkQ2eU0ya0ExTXNJY3RRcGZPClg0SjdTSnlSTUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDSVFDYTBRQ3J0bUMwblppaFlKdzd3ejA3YzFvcFRVRE4KSDIyQ1BQNzhVOVdpYmdJZ1hQbjRiZGpnV0dYL3RNbXlOQ2tCby9FM3hqMzBaVHBVMksyUGFBYW94ZGc9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+          require_client_certificate: true
+    - filters:
+      - name: envoy.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: httbin-no-tls-route
+            virtual_hosts:
+            - name: httbin-no-tls-virtualhost
+              domains:
+              - "fallback.example.com"
+              routes:
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: httpbin-no-tls2
+          http_filters:
+          - name: envoy.router
+            typed_config: {}
+      transport_socket:
+        name: "envoy.transport_sockets.tls"
+        typed_config:
+          "@type": type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext
+          common_tls_context:
+            tls_certificates:
+              certificate_chain:
+                inline_bytes: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUIyekNDQVlLZ0F3SUJBZ0lVZlFFdlNObVlhT21LUVFYUTQra1gxRnlEdjk4d0NnWUlLb1pJemowRUF3SXcKR1RFWE1CVUdBMVVFQXhNT2MyVnlkbVZ5TFhKdmIzUXRZMkV3SGhjTk1qQXdNVEEzTVRBek1qQXdXaGNOTWpFdwpNVEEyTVRBek1qQXdXakFmTVIwd0d3WURWUVFERXhSbVlXeHNZbUZqYXk1bGVHRnRjR3hsTG1OdmJUQlpNQk1HCkJ5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEEwSUFCQ1FadFBpVDdQTTJZQXl3RyswU0FhQnY0SVI0cmpHazRueHYKY2dwaC9QT0h3V3RHb1dqRXoyTFpKSkx4ZlVKZUFUTjcxRVN0aVRwV21NbTBlZUljRkRDamdhRXdnWjR3RGdZRApWUjBQQVFIL0JBUURBZ1dnTUIwR0ExVWRKUVFXTUJRR0NDc0dBUVVGQndNQkJnZ3JCZ0VGQlFjREFqQU1CZ05WCkhSTUJBZjhFQWpBQU1CMEdBMVVkRGdRV0JCUmpwQTAwNlRFTmY1OUl5UC9GcXIwSi8wRE5aVEFmQmdOVkhTTUUKR0RBV2dCUUZ6b2lScU1JekY2OFZZSS9icTFwbG0yMlVvekFmQmdOVkhSRUVHREFXZ2hSbVlXeHNZbUZqYXk1bAplR0Z0Y0d4bExtTnZiVEFLQmdncWhrak9QUVFEQWdOSEFEQkVBaUJIenhBTVRNZFk2U1N0c3daVEpTZEo4eGFWCmV6emExOGwyRnJ3NXRpYUN2QUlnR0FnR283bEJNd2x6aE8yS1BmQ0IxSVBtT05WMitoQVdCSnNlb1JESThMZz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+              private_key:
+                inline_bytes: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUZUQmlIaFU2cUJTL3h3VlduNGRKenFoSEVqQjNSdGhPM29pSzZxTFlqVEtvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFSkJtMCtKUHM4elpnRExBYjdSSUJvRy9naEhpdU1hVGlmRzl5Q21IODg0ZkJhMGFoYU1UUApZdGtra3ZGOVFsNEJNM3ZVUksySk9sYVl5YlI1NGh3VU1BPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=

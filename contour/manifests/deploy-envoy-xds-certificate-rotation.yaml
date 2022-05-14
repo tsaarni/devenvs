@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envoy
+  labels:
+    app: envoy
+spec:
+  selector:
+    matchLabels:
+      app: envoy
+  template:
+    metadata:
+      labels:
+        app: envoy
+    spec:
+      containers:
+        - name: envoy
+          image: envoy
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+              hostPort: 80
+            - containerPort: 443
+              hostPort: 443
+          volumeMounts:
+            - mountPath: /etc/envoy
+              name: envoy-config
+          command: ["/bin/sh"]
+          args:
+          - "-c"
+          - "envoy -c /etc/envoy/envoy.yaml --service-cluster mycluster --service-node envoy --log-level debug"
+      volumes:
+        - name: envoy-config
+          projected:
+            sources:
+            - configMap:
+                name: envoy-config
+            - secret:
+                name: envoy

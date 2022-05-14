@@ -1,0 +1,52 @@
+subject: cn=ca
+key_type: RSA
+---
+subject: cn=client-ca
+---
+subject: cn=ldap
+issuer: cn=ca
+sans:
+- DNS:localhost
+- DNS:openldap
+- DNS:ldap.127-0-0-1.nip.io
+- DNS:ldaps.127-0-0-101.nip.io
+key_type: RSA
+---
+subject: cn=user,ou=users,o=example
+issuer: cn=client-ca
+key_type: RSA
+---
+subject: cn=ldap-admin,ou=users,o=example
+issuer: cn=client-ca
+key_type: RSA
+---
+subject: cn=ldap-client,ou=users,o=example
+issuer: cn=client-ca
+key_type: RSA
+---
+subject: cn=foo,uid=admin,ou=system
+issuer: cn=client-ca
+key_usages:
+key_type: RSA
+---
+subject: cn=postgres
+issuer: cn=ca
+sans:
+- DNS:localhost
+---
+subject: cn=postgres-admin
+issuer: cn=client-ca
+---
+subject: cn=keycloak-server
+issuer: cn=ca
+sans:
+- DNS:localhost
+- DNS:keycloak.127-0-0-1.nip.io
+- DNS:keycloak.127-0-0-121.nip.io/
+---
+subject: cn=internal-ca
+---
+subject: cn=keycloak-internal
+issuer: cn=internal-ca
+sans:
+- DNS:keycloak

@@ -1,0 +1,17 @@
+version: "3"
+services:
+  # filebeat-source:
+  #   build: docker pull docker.elastic.co/beats/filebeat:8.1.0
+  #   ports:
+  #     - "9999:9999"
+  #   volumes:
+  #     - ./logstash-source.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+  #     - ./certs:/certs:ro
+  logstash-destination:
+    build: docker/logstash
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./logstash-destination.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./certs:/certs:ro
+

@@ -1,0 +1,84 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: self-signed-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: cluster-ca
+spec:
+  secretName: cluster-ca-keypair
+  commonName: cluster-ca
+  duration: 87600h # 10 years
+  isCA: true
+  usages:
+    - client auth
+    - server auth
+  issuerRef:
+    name: self-signed-issuer
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: ca-issuer
+spec:
+  ca:
+    secretName: cluster-ca-keypair
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: keycloak
+spec:
+  secretName: keycloakcert
+  commonName: keycloak
+  dnsNames:
+    - keycloak
+    - keycloak.default
+    - keycloak.default.svc.cluster.local
+    - keycloak.127-0-0-121.nip.io
+  duration: 60m
+  renewBefore: 50m
+  isCA: false
+  issuerRef:
+    name: ca-issuer
+  keystores:
+    pkcs12:
+      create: true
+      passwordSecretRef:
+        key: password
+        name: keystore-password
+    jks:
+      create: true
+      passwordSecretRef:
+        key: password
+        name: keystore-password
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: keystore-password
+type: Opaque
+stringData:
+  password: secret
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: openldap
+spec:
+  secretName: openldapcert
+  commonName: openldap
+  dnsNames:
+    - openldap
+    - openldap.default
+    - openldap.default.svc.cluster.local
+  duration: 60h
+  renewBefore: 50h
+  isCA: false
+  issuerRef:
+    name: ca-issuer

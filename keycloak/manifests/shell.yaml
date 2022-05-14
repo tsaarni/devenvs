@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: shell
+  labels:
+    app: shell
+spec:
+  containers:
+    - name: shell
+      image: alpine:latest
+      command: ["/bin/sh"]
+      args:
+        - "-c"
+        - "apk add --update-cache py3-pip py3-websockets httpie openssl netcat-openbsd && sleep 99999999"

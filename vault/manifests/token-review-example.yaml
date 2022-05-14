@@ -1,0 +1,78 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: role-tokenreview-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: tokenreview
+  namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tokenreview
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vault
+  labels:
+    app: vault
+spec:
+  containers:
+    - name: vault
+      image: golang:alpine
+      command: ["/bin/sh"]
+      args:
+        - "-c"
+        - "go install github.com/go-delve/delve/cmd/dlv@latest && sleep 99999999"
+  serviceAccountName: tokenreview
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+spec:
+  selector:
+    app: vault
+  ports:
+    - port: 8200
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-client
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vault-client
+  labels:
+    app: vault-client
+spec:
+  containers:
+    - name: shell
+      image: alpine:latest
+      command: ["/bin/sh"]
+      args:
+        - "-c"
+        - "apk add --update-cache py3-pip httpie openssl netcat-openbsd py3-jwt && sleep 99999999"
+      volumeMounts:
+        - name: projected
+          mountPath: "/projected"
+          readOnly: true
+  serviceAccountName: vault-client
+  volumes:
+    - name: projected
+      projected:
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 600
+              path: token
+              audience: http://vault

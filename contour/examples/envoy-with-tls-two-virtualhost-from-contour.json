@@ -1,0 +1,833 @@
+{
+ "configs": [
+  {
+   "@type": "type.googleapis.com/envoy.admin.v2alpha.BootstrapConfigDump",
+   "bootstrap": {
+    "node": {
+     "build_version": "8f2515a19bdcc75bea0bfd7016231a7661d0be6e/1.12.2/Clean/RELEASE/BoringSSL"
+    },
+    "static_resources": {
+     "clusters": [
+      {
+       "name": "contour",
+       "type": "STRICT_DNS",
+       "connect_timeout": "5s",
+       "circuit_breakers": {
+        "thresholds": [
+         {
+          "priority": "HIGH",
+          "max_connections": 100000,
+          "max_pending_requests": 100000,
+          "max_requests": 60000000,
+          "max_retries": 50
+         },
+         {
+          "max_connections": 100000,
+          "max_pending_requests": 100000,
+          "max_requests": 60000000,
+          "max_retries": 50
+         }
+        ]
+       },
+       "tls_context": {
+        "common_tls_context": {
+         "tls_certificates": [
+          {
+           "certificate_chain": {
+            "filename": "/certs/tls.crt"
+           },
+           "private_key": {
+            "filename": "/certs/tls.key"
+           }
+          }
+         ],
+         "validation_context": {
+          "trusted_ca": {
+           "filename": "/ca/cacert.pem"
+          },
+          "verify_subject_alt_name": [
+           "contour"
+          ]
+         }
+        }
+       },
+       "http2_protocol_options": {},
+       "alt_stat_name": "projectcontour_contour_8001",
+       "upstream_connection_options": {
+        "tcp_keepalive": {
+         "keepalive_probes": 3,
+         "keepalive_time": 30,
+         "keepalive_interval": 5
+        }
+       },
+       "load_assignment": {
+        "cluster_name": "contour",
+        "endpoints": [
+         {
+          "lb_endpoints": [
+           {
+            "endpoint": {
+             "address": {
+              "socket_address": {
+               "address": "contour",
+               "port_value": 8001
+              }
+             }
+            }
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "name": "service-stats",
+       "type": "LOGICAL_DNS",
+       "connect_timeout": "0.250s",
+       "alt_stat_name": "projectcontour_service-stats_9001",
+       "load_assignment": {
+        "cluster_name": "service-stats",
+        "endpoints": [
+         {
+          "lb_endpoints": [
+           {
+            "endpoint": {
+             "address": {
+              "socket_address": {
+               "address": "127.0.0.1",
+               "port_value": 9001
+              }
+             }
+            }
+           }
+          ]
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "dynamic_resources": {
+     "lds_config": {
+      "api_config_source": {
+       "api_type": "GRPC",
+       "grpc_services": [
+        {
+         "envoy_grpc": {
+          "cluster_name": "contour"
+         }
+        }
+       ]
+      }
+     },
+     "cds_config": {
+      "api_config_source": {
+       "api_type": "GRPC",
+       "grpc_services": [
+        {
+         "envoy_grpc": {
+          "cluster_name": "contour"
+         }
+        }
+       ]
+      }
+     }
+    },
+    "admin": {
+     "access_log_path": "/dev/null",
+     "address": {
+      "socket_address": {
+       "address": "127.0.0.1",
+       "port_value": 9001
+      }
+     }
+    }
+   },
+   "last_updated": "2020-01-06T13:58:25.628Z"
+  },
+  {
+   "@type": "type.googleapis.com/envoy.admin.v2alpha.ClustersConfigDump",
+   "version_info": "3",
+   "static_clusters": [
+    {
+     "cluster": {
+      "name": "contour",
+      "type": "STRICT_DNS",
+      "connect_timeout": "5s",
+      "circuit_breakers": {
+       "thresholds": [
+        {
+         "priority": "HIGH",
+         "max_connections": 100000,
+         "max_pending_requests": 100000,
+         "max_requests": 60000000,
+         "max_retries": 50
+        },
+        {
+         "max_connections": 100000,
+         "max_pending_requests": 100000,
+         "max_requests": 60000000,
+         "max_retries": 50
+        }
+       ]
+      },
+      "tls_context": {
+       "common_tls_context": {
+        "tls_certificates": [
+         {
+          "certificate_chain": {
+           "filename": "/certs/tls.crt"
+          },
+          "private_key": {
+           "filename": "/certs/tls.key"
+          }
+         }
+        ],
+        "validation_context": {
+         "trusted_ca": {
+          "filename": "/ca/cacert.pem"
+         },
+         "verify_subject_alt_name": [
+          "contour"
+         ]
+        }
+       }
+      },
+      "http2_protocol_options": {},
+      "alt_stat_name": "projectcontour_contour_8001",
+      "upstream_connection_options": {
+       "tcp_keepalive": {
+        "keepalive_probes": 3,
+        "keepalive_time": 30,
+        "keepalive_interval": 5
+       }
+      },
+      "load_assignment": {
+       "cluster_name": "contour",
+       "endpoints": [
+        {
+         "lb_endpoints": [
+          {
+           "endpoint": {
+            "address": {
+             "socket_address": {
+              "address": "contour",
+              "port_value": 8001
+             }
+            }
+           }
+          }
+         ]
+        }
+       ]
+      }
+     },
+     "last_updated": "2020-01-06T13:58:25.631Z"
+    },
+    {
+     "cluster": {
+      "name": "service-stats",
+      "type": "LOGICAL_DNS",
+      "connect_timeout": "0.250s",
+      "alt_stat_name": "projectcontour_service-stats_9001",
+      "load_assignment": {
+       "cluster_name": "service-stats",
+       "endpoints": [
+        {
+         "lb_endpoints": [
+          {
+           "endpoint": {
+            "address": {
+             "socket_address": {
+              "address": "127.0.0.1",
+              "port_value": 9001
+             }
+            }
+           }
+          }
+         ]
+        }
+       ]
+      }
+     },
+     "last_updated": "2020-01-06T13:58:25.632Z"
+    }
+   ],
+   "dynamic_active_clusters": [
+    {
+     "version_info": "3",
+     "cluster": {
+      "name": "default/httpbin/443/5625cf8062",
+      "type": "EDS",
+      "eds_cluster_config": {
+       "eds_config": {
+        "api_config_source": {
+         "api_type": "GRPC",
+         "grpc_services": [
+          {
+           "envoy_grpc": {
+            "cluster_name": "contour"
+           }
+          }
+         ]
+        }
+       },
+       "service_name": "default/httpbin/https"
+      },
+      "connect_timeout": "0.250s",
+      "tls_context": {
+       "common_tls_context": {
+        "validation_context": {
+         "trusted_ca": {
+          "inline_bytes": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJlRENDQVI2Z0F3SUJBZ0lVTElyanRyZ0dYRXV3NytQNkl1czVrdEFtRzBzd0NnWUlLb1pJemowRUF3SXcKR1RFWE1CVUdBMVVFQXhNT2MyVnlkbVZ5TFhKdmIzUXRZMkV3SUJjTk1Ua3hNakE1TVRBek1EQXdXaGdQTWpFeApPVEV4TVRVeE1ETXdNREJhTUJreEZ6QVZCZ05WQkFNVERuTmxjblpsY2kxeWIyOTBMV05oTUZrd0V3WUhLb1pJCnpqMENBUVlJS29aSXpqMERBUWNEUWdBRUs2N29kVDJYQmlqVEMrN0w4cW83TVJuaktnTjlYbTFIN2lTV2tXdlIKUU1jSHUya0N6cnhiK01lMVRNcGRmYS94NUh1Sm1VZnM0bjF1TjFpemJzNWJ0S05DTUVBd0RnWURWUjBQQVFILwpCQVFEQWdFR01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZEblhnQ3VURVkxTmtFWFQwZS9MCkJuUlpLMHFYTUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDSVFEcmxLL2NoVFdIWmludGhTaThOL04yYjl2SDUyY28KaHZ4NGFGcHBuMlV1eVFJZ0pxOUw4cVR5aWJ5eVluaytaaWZFR053UDh4dFBSSnY3MVJmOWx5N0JzY0k9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+         },
+         "verify_subject_alt_name": [
+          "httpbin"
+         ]
+        }
+       }
+      },
+      "common_lb_config": {
+       "healthy_panic_threshold": {}
+      },
+      "alt_stat_name": "default_httpbin_443"
+     },
+     "last_updated": "2020-01-06T14:06:36.139Z"
+    }
+   ]
+  },
+  {
+   "@type": "type.googleapis.com/envoy.admin.v2alpha.ListenersConfigDump",
+   "version_info": "6",
+   "dynamic_active_listeners": [
+    {
+     "version_info": "1",
+     "listener": {
+      "name": "stats-health",
+      "address": {
+       "socket_address": {
+        "address": "0.0.0.0",
+        "port_value": 8002
+       }
+      },
+      "filter_chains": [
+       {
+        "filters": [
+         {
+          "name": "envoy.http_connection_manager",
+          "typed_config": {
+           "@type": "type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager",
+           "stat_prefix": "stats",
+           "http_filters": [
+            {
+             "name": "envoy.router"
+            }
+           ],
+           "normalize_path": true,
+           "route_config": {
+            "virtual_hosts": [
+             {
+              "name": "backend",
+              "domains": [
+               "*"
+              ],
+              "routes": [
+               {
+                "match": {
+                 "prefix": "/ready"
+                },
+                "route": {
+                 "cluster": "service-stats"
+                }
+               },
+               {
+                "match": {
+                 "prefix": "/stats"
+                },
+                "route": {
+                 "cluster": "service-stats"
+                }
+               }
+              ]
+             }
+            ]
+           }
+          }
+         }
+        ]
+       }
+      ]
+     },
+     "last_updated": "2020-01-06T13:58:25.650Z"
+    },
+    {
+     "version_info": "3",
+     "listener": {
+      "name": "ingress_http",
+      "address": {
+       "socket_address": {
+        "address": "0.0.0.0",
+        "port_value": 80
+       }
+      },
+      "filter_chains": [
+       {
+        "filters": [
+         {
+          "name": "envoy.http_connection_manager",
+          "typed_config": {
+           "@type": "type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager",
+           "stat_prefix": "ingress_http",
+           "http_filters": [
+            {
+             "name": "envoy.gzip"
+            },
+            {
+             "name": "envoy.grpc_web"
+            },
+            {
+             "name": "envoy.router"
+            }
+           ],
+           "http_protocol_options": {
+            "accept_http_10": true
+           },
+           "idle_timeout": "60s",
+           "access_log": [
+            {
+             "name": "envoy.file_access_log",
+             "typed_config": {
+              "@type": "type.googleapis.com/envoy.config.accesslog.v2.FileAccessLog",
+              "path": "/dev/stdout"
+             }
+            }
+           ],
+           "use_remote_address": true,
+           "request_timeout": "0s",
+           "normalize_path": true,
+           "preserve_external_request_id": true,
+           "rds": {
+            "config_source": {
+             "api_config_source": {
+              "api_type": "GRPC",
+              "grpc_services": [
+               {
+                "envoy_grpc": {
+                 "cluster_name": "contour"
+                }
+               }
+              ]
+             }
+            },
+            "route_config_name": "ingress_http"
+           }
+          }
+         }
+        ]
+       }
+      ]
+     },
+     "last_updated": "2020-01-06T14:06:36.136Z"
+    },
+    {
+     "version_info": "6",
+     "listener": {
+      "name": "ingress_https",
+      "address": {
+       "socket_address": {
+        "address": "0.0.0.0",
+        "port_value": 443
+       }
+      },
+      "filter_chains": [
+       {
+        "filter_chain_match": {
+         "server_names": [
+          "host1.external.com"
+         ]
+        },
+        "tls_context": {
+         "common_tls_context": {
+          "tls_params": {
+           "tls_minimum_protocol_version": "TLSv1_1",
+           "tls_maximum_protocol_version": "TLSv1_3",
+           "cipher_suites": [
+            "[ECDHE-ECDSA-AES128-GCM-SHA256|ECDHE-ECDSA-CHACHA20-POLY1305]",
+            "[ECDHE-RSA-AES128-GCM-SHA256|ECDHE-RSA-CHACHA20-POLY1305]",
+            "ECDHE-ECDSA-AES128-SHA",
+            "ECDHE-RSA-AES128-SHA",
+            "ECDHE-ECDSA-AES256-GCM-SHA384",
+            "ECDHE-RSA-AES256-GCM-SHA384",
+            "ECDHE-ECDSA-AES256-SHA",
+            "ECDHE-RSA-AES256-SHA"
+           ]
+          },
+          "alpn_protocols": [
+           "h2",
+           "http/1.1"
+          ],
+          "tls_certificate_sds_secret_configs": [
+           {
+            "name": "default/ingress-server-cert/fa454f19b0",
+            "sds_config": {
+             "api_config_source": {
+              "api_type": "GRPC",
+              "grpc_services": [
+               {
+                "envoy_grpc": {
+                 "cluster_name": "contour"
+                }
+               }
+              ]
+             }
+            }
+           }
+          ]
+         }
+        },
+        "filters": [
+         {
+          "name": "envoy.http_connection_manager",
+          "typed_config": {
+           "@type": "type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager",
+           "stat_prefix": "ingress_https",
+           "http_filters": [
+            {
+             "name": "envoy.gzip"
+            },
+            {
+             "name": "envoy.grpc_web"
+            },
+            {
+             "name": "envoy.router"
+            }
+           ],
+           "http_protocol_options": {
+            "accept_http_10": true
+           },
+           "idle_timeout": "60s",
+           "access_log": [
+            {
+             "name": "envoy.file_access_log",
+             "typed_config": {
+              "@type": "type.googleapis.com/envoy.config.accesslog.v2.FileAccessLog",
+              "path": "/dev/stdout"
+             }
+            }
+           ],
+           "use_remote_address": true,
+           "request_timeout": "0s",
+           "normalize_path": true,
+           "preserve_external_request_id": true,
+           "rds": {
+            "config_source": {
+             "api_config_source": {
+              "api_type": "GRPC",
+              "grpc_services": [
+               {
+                "envoy_grpc": {
+                 "cluster_name": "contour"
+                }
+               }
+              ]
+             }
+            },
+            "route_config_name": "ingress_https"
+           }
+          }
+         }
+        ]
+       },
+       {
+        "filter_chain_match": {
+         "server_names": [
+          "host2.external.com"
+         ]
+        },
+        "tls_context": {
+         "common_tls_context": {
+          "tls_params": {
+           "tls_minimum_protocol_version": "TLSv1_1",
+           "tls_maximum_protocol_version": "TLSv1_3",
+           "cipher_suites": [
+            "[ECDHE-ECDSA-AES128-GCM-SHA256|ECDHE-ECDSA-CHACHA20-POLY1305]",
+            "[ECDHE-RSA-AES128-GCM-SHA256|ECDHE-RSA-CHACHA20-POLY1305]",
+            "ECDHE-ECDSA-AES128-SHA",
+            "ECDHE-RSA-AES128-SHA",
+            "ECDHE-ECDSA-AES256-GCM-SHA384",
+            "ECDHE-RSA-AES256-GCM-SHA384",
+            "ECDHE-ECDSA-AES256-SHA",
+            "ECDHE-RSA-AES256-SHA"
+           ]
+          },
+          "alpn_protocols": [
+           "h2",
+           "http/1.1"
+          ],
+          "tls_certificate_sds_secret_configs": [
+           {
+            "name": "default/ingress-server-cert2/fa454f19b0",
+            "sds_config": {
+             "api_config_source": {
+              "api_type": "GRPC",
+              "grpc_services": [
+               {
+                "envoy_grpc": {
+                 "cluster_name": "contour"
+                }
+               }
+              ]
+             }
+            }
+           }
+          ]
+         }
+        },
+        "filters": [
+         {
+          "name": "envoy.http_connection_manager",
+          "typed_config": {
+           "@type": "type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager",
+           "stat_prefix": "ingress_https",
+           "http_filters": [
+            {
+             "name": "envoy.gzip"
+            },
+            {
+             "name": "envoy.grpc_web"
+            },
+            {
+             "name": "envoy.router"
+            }
+           ],
+           "http_protocol_options": {
+            "accept_http_10": true
+           },
+           "idle_timeout": "60s",
+           "access_log": [
+            {
+             "name": "envoy.file_access_log",
+             "typed_config": {
+              "@type": "type.googleapis.com/envoy.config.accesslog.v2.FileAccessLog",
+              "path": "/dev/stdout"
+             }
+            }
+           ],
+           "use_remote_address": true,
+           "request_timeout": "0s",
+           "normalize_path": true,
+           "preserve_external_request_id": true,
+           "rds": {
+            "config_source": {
+             "api_config_source": {
+              "api_type": "GRPC",
+              "grpc_services": [
+               {
+                "envoy_grpc": {
+                 "cluster_name": "contour"
+                }
+               }
+              ]
+             }
+            },
+            "route_config_name": "ingress_https"
+           }
+          }
+         }
+        ]
+       }
+      ],
+      "listener_filters": [
+       {
+        "name": "envoy.listener.tls_inspector"
+       }
+      ]
+     },
+     "last_updated": "2020-01-06T14:13:30.003Z"
+    }
+   ]
+  },
+  {
+   "@type": "type.googleapis.com/envoy.admin.v2alpha.ScopedRoutesConfigDump"
+  },
+  {
+   "@type": "type.googleapis.com/envoy.admin.v2alpha.RoutesConfigDump",
+   "static_route_configs": [
+    {
+     "route_config": {
+      "virtual_hosts": [
+       {
+        "name": "backend",
+        "domains": [
+         "*"
+        ],
+        "routes": [
+         {
+          "match": {
+           "prefix": "/ready"
+          },
+          "route": {
+           "cluster": "service-stats"
+          }
+         },
+         {
+          "match": {
+           "prefix": "/stats"
+          },
+          "route": {
+           "cluster": "service-stats"
+          }
+         }
+        ]
+       }
+      ]
+     },
+     "last_updated": "2020-01-06T13:58:25.649Z"
+    }
+   ],
+   "dynamic_route_configs": [
+    {
+     "version_info": "6",
+     "route_config": {
+      "name": "ingress_https",
+      "virtual_hosts": [
+       {
+        "name": "host1.external.com",
+        "domains": [
+         "host1.external.com",
+         "host1.external.com:*"
+        ],
+        "routes": [
+         {
+          "match": {
+           "prefix": "/"
+          },
+          "route": {
+           "cluster": "default/httpbin/443/5625cf8062"
+          }
+         }
+        ]
+       },
+       {
+        "name": "host2.external.com",
+        "domains": [
+         "host2.external.com",
+         "host2.external.com:*"
+        ],
+        "routes": [
+         {
+          "match": {
+           "prefix": "/"
+          },
+          "route": {
+           "cluster": "default/httpbin/443/5625cf8062"
+          }
+         }
+        ]
+       }
+      ],
+      "request_headers_to_add": [
+       {
+        "header": {
+         "key": "x-request-start",
+         "value": "t=%START_TIME(%s.%3f)%"
+        },
+        "append": true
+       }
+      ]
+     },
+     "last_updated": "2020-01-06T14:13:29.998Z"
+    },
+    {
+     "version_info": "6",
+     "route_config": {
+      "name": "ingress_http",
+      "virtual_hosts": [
+       {
+        "name": "host1.external.com",
+        "domains": [
+         "host1.external.com",
+         "host1.external.com:*"
+        ],
+        "routes": [
+         {
+          "match": {
+           "prefix": "/"
+          },
+          "redirect": {
+           "https_redirect": true
+          }
+         }
+        ]
+       },
+       {
+        "name": "host2.external.com",
+        "domains": [
+         "host2.external.com",
+         "host2.external.com:*"
+        ],
+        "routes": [
+         {
+          "match": {
+           "prefix": "/"
+          },
+          "redirect": {
+           "https_redirect": true
+          }
+         }
+        ]
+       }
+      ],
+      "request_headers_to_add": [
+       {
+        "header": {
+         "key": "x-request-start",
+         "value": "t=%START_TIME(%s.%3f)%"
+        },
+        "append": true
+       }
+      ]
+     },
+     "last_updated": "2020-01-06T14:13:29.997Z"
+    }
+   ]
+  },
+  {
+   "@type": "type.googleapis.com/envoy.admin.v2alpha.SecretsConfigDump",
+   "dynamic_active_secrets": [
+    {
+     "name": "default/ingress-server-cert2/fa454f19b0",
+     "version_info": "6",
+     "last_updated": "2020-01-06T14:13:29.998Z",
+     "secret": {
+      "name": "default/ingress-server-cert2/fa454f19b0",
+      "tls_certificate": {
+       "certificate_chain": {
+        "inline_bytes": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUI2RENDQVk2Z0F3SUJBZ0lVTDZoblRDalZpWENxeVZoN091N3FiL0JSWU8wd0NnWUlLb1pJemowRUF3SXcKR1RFWE1CVUdBMVVFQXhNT2MyVnlkbVZ5TFhKdmIzUXRZMkV3SGhjTk1Ua3hNakE1TVRBek1EQXdXaGNOTWpBeApNakE0TVRBek1EQXdXakFaTVJjd0ZRWURWUVFERXc1cGJtZHlaWE56TFhObGNuWmxjakJaTUJNR0J5cUdTTTQ5CkFnRUdDQ3FHU000OUF3RUhBMElBQk4za1RkY2ZaY2RmWVpkSWVZT1VwckU2UHk4TTFSNUNPSkxLNXVBcDd2NlMKbTBBZVBWclNjbDA2UVMrdHdUWDVCM2hoZU5sMklMMTVGWngzKzNzMnplK2pnYk13Z2JBd0RnWURWUjBQQVFILwpCQVFEQWdXZ01CMEdBMVVkSlFRV01CUUdDQ3NHQVFVRkJ3TUJCZ2dyQmdFRkJRY0RBakFNQmdOVkhSTUJBZjhFCkFqQUFNQjBHQTFVZERnUVdCQlErQ1l6NG1ONWFldlFOL3pIajlDRjUxQlRSUXpBZkJnTlZIU01FR0RBV2dCUTUKMTRBcmt4R05UWkJGMDlIdnl3WjBXU3RLbHpBeEJnTlZIUkVFS2pBb2doSm9iM04wTVM1bGVIUmxjbTVoYkM1agpiMjJDRW1odmMzUXlMbVY0ZEdWeWJtRnNMbU52YlRBS0JnZ3Foa2pPUFFRREFnTklBREJGQWlCYWU3ZnZzRi9SCk5rNEN3NzZBek9NbHZwRXVJbFplUS95VzRPZXNGRW5UandJaEFQUnBCRWMrSFlBSFBBTmpEQm9aVzhkUUhTYUUKU3RHeDI0Qkc5VFZ0dlNwMAotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
+       },
+       "private_key": {
+        "inline_string": "[redacted]"
+       }
+      }
+     }
+    },
+    {
+     "name": "default/ingress-server-cert/fa454f19b0",
+     "version_info": "6",
+     "last_updated": "2020-01-06T14:13:29.997Z",
+     "secret": {
+      "name": "default/ingress-server-cert/fa454f19b0",
+      "tls_certificate": {
+       "certificate_chain": {
+        "inline_bytes": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUI2RENDQVk2Z0F3SUJBZ0lVTDZoblRDalZpWENxeVZoN091N3FiL0JSWU8wd0NnWUlLb1pJemowRUF3SXcKR1RFWE1CVUdBMVVFQXhNT2MyVnlkbVZ5TFhKdmIzUXRZMkV3SGhjTk1Ua3hNakE1TVRBek1EQXdXaGNOTWpBeApNakE0TVRBek1EQXdXakFaTVJjd0ZRWURWUVFERXc1cGJtZHlaWE56TFhObGNuWmxjakJaTUJNR0J5cUdTTTQ5CkFnRUdDQ3FHU000OUF3RUhBMElBQk4za1RkY2ZaY2RmWVpkSWVZT1VwckU2UHk4TTFSNUNPSkxLNXVBcDd2NlMKbTBBZVBWclNjbDA2UVMrdHdUWDVCM2hoZU5sMklMMTVGWngzKzNzMnplK2pnYk13Z2JBd0RnWURWUjBQQVFILwpCQVFEQWdXZ01CMEdBMVVkSlFRV01CUUdDQ3NHQVFVRkJ3TUJCZ2dyQmdFRkJRY0RBakFNQmdOVkhSTUJBZjhFCkFqQUFNQjBHQTFVZERnUVdCQlErQ1l6NG1ONWFldlFOL3pIajlDRjUxQlRSUXpBZkJnTlZIU01FR0RBV2dCUTUKMTRBcmt4R05UWkJGMDlIdnl3WjBXU3RLbHpBeEJnTlZIUkVFS2pBb2doSm9iM04wTVM1bGVIUmxjbTVoYkM1agpiMjJDRW1odmMzUXlMbVY0ZEdWeWJtRnNMbU52YlRBS0JnZ3Foa2pPUFFRREFnTklBREJGQWlCYWU3ZnZzRi9SCk5rNEN3NzZBek9NbHZwRXVJbFplUS95VzRPZXNGRW5UandJaEFQUnBCRWMrSFlBSFBBTmpEQm9aVzhkUUhTYUUKU3RHeDI0Qkc5VFZ0dlNwMAotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
+       },
+       "private_key": {
+        "inline_string": "[redacted]"
+       }
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

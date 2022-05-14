@@ -1,0 +1,19 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: opa-envoy
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9191
+    targetPort: 9191
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+ name: opa-envoy
+subsets:
+ - addresses:
+     - ip: $HOST_ADDRESS
+   ports:
+     - port: 9191

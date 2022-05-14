@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: control-plane
+  labels:
+    app: control-plane
+spec:
+  selector:
+    matchLabels:
+      app: control-plane
+  template:
+    metadata:
+      labels:
+        app: control-plane
+    spec:
+      containers:
+        - name: control-plane
+          image: envoy-control-plane-stub:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /run/secrets/certs/
+              name: controlplane-cert
+              readOnly: true
+      volumes:
+        - name: controlplane-cert
+          secret:
+            secretName: controlplane
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: controlplane
+  labels:
+    app: control-plane
+spec:
+  ports:
+    - name: http
+      port: 8080
+  selector:
+    app: control-plane

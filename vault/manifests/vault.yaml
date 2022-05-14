@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+spec:
+  clusterIP: None
+  selector:
+    app: vault
+  ports:
+  - name: client
+    port: 8200
+    targetPort: 8200
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+spec:
+  selector:
+    matchLabels:
+      app: vault
+  serviceName: vault
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      containers:
+      - name: vault
+        image: alpine:latest
+        # Just install tools and run sleep, since this container is a placeholder
+        # to exec into and run vault & tools manually.
+        command:
+          - "/bin/sh"
+        args:
+          - "-c"
+          - "apk add --update-cache py3-pip httpie openssl netcat-openbsd bind-tools py3-jwt && sleep 99999999"
+        ports:
+          - containerPort: 8200
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        volumeMounts:
+          - mountPath: /config
+            name: vault-config
+      volumes:
+        - name: vault-config
+          configMap:
+            name: vault-config
+      serviceAccountName: vault-auth
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+data:
+  config-etcd.hcl: |
+    listener "tcp" {
+      address     = "0.0.0.0:8200"
+      tls_disable = 1
+    }
+    storage "etcd" {
+      address  = "http://etcd:2379"
+      etcd_api = "v3"
+      sync = "false"
+    }
+    disable_mlock = "true"
+  config-etcd-ha.hcl: |
+    listener "tcp" {
+      address     = "0.0.0.0:8200"
+      tls_disable = 1
+    }
+    storage "etcd" {
+      address  = "http://etcd:2379"
+      etcd_api = "v3"
+      ha_enabled = "true"
+      sync = "false"
+      #request_timeout = "10s"
+    }
+    disable_mlock = "true"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: role-tokenreview-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: vault-auth
+  namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-auth

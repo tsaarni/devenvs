@@ -1,0 +1,21 @@
+version: "3"
+services:
+  backend:
+    build: docker/openldap
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - .:/input:ro
+    environment:
+      - CERT_FILENAME=/input/certs/server.pem
+      - KEY_FILENAME=/input/certs/server-key.pem
+      - CA_FILENAME=/input/certs/ca.pem
+      - LDIF_TEMPLATES_DIR=/input/templates/standard-server
+#  frontend:
+#    build: docker/openldap
+#    ports:
+#      - "389:389"
+#      - "636:636"
+#    volumes:
+#      - .:/input:ro

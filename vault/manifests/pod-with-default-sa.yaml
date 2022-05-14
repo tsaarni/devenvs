@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sa-defaults
+  labels:
+    app: sa-defaults
+spec:
+  containers:
+    - name: shell
+      image: alpine:latest
+      command: ["/bin/sh"]
+      args:
+        - "-c"
+        - "apk add --update-cache py3-pip httpie openssl netcat-openbsd py3-jwt && sleep 99999999"
+      securityContext:
+        privileged: true

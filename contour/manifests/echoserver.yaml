@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echoserver
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echoserver
+    spec:
+      containers:
+      - name: echoserver
+        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20210922-cec7cf2
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - name: http-api
+          containerPort: 3000
+        # readinessProbe:
+        #   httpGet:
+        #     path: /health
+        #     port: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  selector:
+    app.kubernetes.io/name: echoserver
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver
+spec:
+  virtualhost:
+    fqdn: echoserver.127-0-0-101.nip.io
+  routes:
+    - services:
+        - name: echoserver
+          port: 80

@@ -1,0 +1,73 @@
+#
+# Directory tree for users and groups
+#
+
+dn: o=example
+objectClass: organization
+o: example
+
+dn: ou=users,o=example
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,o=example
+objectClass: organizationalUnit
+ou: groups
+
+
+#
+# Users
+#
+
+dn: cn=ldap-admin,ou=users,o=example
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: ldap-admin
+cn: ldap-admin
+uidNumber: 1001
+gidNumber: 1001
+userPassword: {CRYPT}$(mkpasswd -m sha-512 ldap-admin)
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: adminsurename
+givenName: admingivenname
+
+dn: cn=user,ou=users,o=example
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: user
+cn: user
+uidNumber: 1002
+gidNumber: 1002
+userPassword: {CRYPT}$(mkpasswd -m sha-512 user)
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: usersurename
+givenName: usergivenname
+
+dn: cn=ldap-client,ou=users,o=example
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: ldap-client
+cn: ldap-client
+uidNumber: 1003
+gidNumber: 1003
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: clientsurename
+givenName: clientgivenname
+
+
+#
+# Groups
+#
+
+dn: cn=admins,ou=groups,o=example
+objectClass: posixGroup
+objectclass: groupofNames
+cn: admins
+gidNumber: 1001
+member: cn=ldap-admin,ou=users,o=example

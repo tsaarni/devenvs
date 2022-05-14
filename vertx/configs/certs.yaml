@@ -1,0 +1,14 @@
+subject: cn=ca
+---
+subject: cn=server
+issuer: cn=ca
+sans:
+- DNS:localhost
+- DNS:server.127-0-0-1.nip.io
+---
+subject: cn=server2
+issuer: cn=ca
+sans:
+- DNS:server2.127-0-0-1.nip.io
+---
+subject: cn=some-other-ca

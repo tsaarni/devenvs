@@ -1,0 +1,170 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-1
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echoserver-1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echoserver-1
+    spec:
+      containers:
+      - name: echoserver
+        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20201006-42d00bd
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: TLS_SERVER_CERT
+          value: /run/secrets/certs/tls.crt
+        - name: TLS_SERVER_PRIVKEY
+          value: /run/secrets/certs/tls.key
+        ports:
+        - name: http-api
+          containerPort: 3000
+        - name: https-api
+          containerPort: 8443
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+        volumeMounts:
+          - mountPath: /run/secrets/certs/
+            name: echoserver-cert
+            readOnly: true
+      volumes:
+      - name: echoserver-cert
+        secret:
+          secretName: echoserver-1-cert
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-2
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echoserver-2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echoserver-2
+    spec:
+      containers:
+      - name: conformance-echo
+        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20201006-42d00bd
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: TLS_SERVER_CERT
+          value: /run/secrets/certs/tls.crt
+        - name: TLS_SERVER_PRIVKEY
+          value: /run/secrets/certs/tls.key
+        ports:
+        - name: http-api
+          containerPort: 3000
+        - name: https-api
+          containerPort: 8443
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+        volumeMounts:
+          - mountPath: /run/secrets/certs/
+            name: echoserver-cert
+            readOnly: true
+      volumes:
+      - name: echoserver-cert
+        secret:
+          secretName: echoserver-2-cert
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-1
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  - name: https
+    port: 443
+    targetPort: https-api
+  selector:
+    app.kubernetes.io/name: echoserver-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-2
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  - name: https
+    port: 443
+    targetPort: https-api
+  selector:
+    app.kubernetes.io/name: echoserver-2
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: root-proxy
+spec:
+  virtualhost:
+    fqdn: httpproxy.127-0-0-101.nip.io
+    tls:
+      secretName: ingress-cert
+  includes:
+    - name: echoserver-1
+      namespace: default
+    - name: echoserver-2
+      namespace: default
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver-1
+spec:
+  routes:
+    - conditions:
+      - prefix: /echoserver-1
+      services:
+        - name: echoserver-1
+          port: 443
+          protocol: tls
+          validation:
+            caSecret: internal-root-ca
+            subjectName: echoserver-1
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver-2
+spec:
+  routes:
+    - conditions:
+      - prefix: /echoserver-2
+      services:
+        - name: echoserver-2
+          port: 443
+          protocol: tls
+          validation:
+            caSecret: internal-root-ca
+            subjectName: echoserver-2

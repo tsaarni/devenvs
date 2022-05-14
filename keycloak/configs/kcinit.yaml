@@ -1,0 +1,4 @@
+login_client: test-client
+login_secret: ""
+realm_url: http://localhost:8081/auth/realms/master
+save: false

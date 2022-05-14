@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service-account
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: my-binding
+subjects:
+- kind: ServiceAccount
+  name: my-service-account
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: audience
+  labels:
+    app: audience
+spec:
+  containers:
+    - name: shell
+      image: alpine:latest
+      command: ["/bin/sh"]
+      args:
+        - "-c"
+        - "apk add --update-cache py3-pip httpie openssl netcat-openbsd py3-jwt && sleep 99999999"
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: projected
+          mountPath: "/projected"
+          readOnly: true
+  serviceAccountName: my-service-account
+  volumes:
+    - name: projected
+      projected:
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 600
+              path: token
+              audience: https://kubernetes.default.svc.cluster.local

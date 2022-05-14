@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin
+  labels:
+    app: httpbin
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  template:
+    metadata:
+      labels:
+        app: httpbin
+    spec:
+      containers:
+      - name: httpbin
+        image: tsaarni/httpbin:latest
+        ports:
+          - containerPort: 443
+        env:
+          - name: X_SERVER_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        volumeMounts:
+        - mountPath: /run/secrets/certs/
+          name: httpbin-cert
+          readOnly: true
+        command: ["/bin/sh"]
+        # Configure Gunicorn HTTP server to terminate TLS
+        #   - server certificate and key
+        #   - require client certificate and validate against trusted CA cert
+        #     --cert-reqs 0 == ssl.CERT_NONE
+        #     --cert-reqs 1 == ssl.CERT_OPTIONAL
+        #     --cert-reqs 2 == ssl.CERT_REQUIRED
+        args:
+          - "-c"
+          - "gunicorn -b 0.0.0.0:443 --access-logfile - --cert-reqs 0 --certfile /run/secrets/certs/httpbin.pem --keyfile /run/secrets/certs/httpbin-key.pem httpbin:app -k gevent"
+      volumes:
+      - name: httpbin-cert
+        secret:
+          secretName: httpbin
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin
+  labels:
+    app: httpbin
+spec:
+  ports:
+  - name: https
+    port: 443
+  selector:
+    app: httpbin

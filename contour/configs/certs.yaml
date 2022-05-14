@@ -1,0 +1,99 @@
+subject: cn=client-root-ca-1
+---
+subject: cn=client-root-ca-2
+---
+subject: cn=internal-root-ca
+---
+subject: cn=external-root-ca
+---
+subject: cn=contour
+issuer: cn=internal-root-ca
+sans:
+- DNS:contour
+- DNS:contour.projectcontour
+- DNS:contour.projectcontour.svc
+- DNS:contour.projectcontour.svc.cluster.local
+---
+subject: cn=envoy
+issuer: cn=internal-root-ca
+sans:
+- DNS:envoy
+- DNS:envoy.projectcontour
+- DNS:envoy.projectcontour.svc
+- DNS:envoy.projectcontour.svc.cluster.local
+---
+subject: cn=httpbin
+issuer: cn=internal-root-ca
+sans:
+- DNS:httpbin
+---
+subject: cn=echoserver
+issuer: cn=internal-root-ca
+sans:
+- DNS:echoserver
+---
+subject: cn=ingress
+issuer: cn=external-root-ca
+sans:
+- DNS:host1.127-0-0-101.nip.io
+- DNS:host2.127-0-0-101.nip.io
+- DNS:protected.127-0-0-101.nip.io
+- DNS:protected2.127-0-0-101.nip.io
+- DNS:protected-basic-auth.127-0-0-101.nip.io
+- DNS:protected-oauth.127-0-0-101.nip.io
+---
+subject: cn=fallback
+issuer: cn=external-root-ca
+---
+subject: cn=client-1
+issuer: cn=client-root-ca-1
+sans:
+- DNS:client
+---
+subject: cn=client-2
+issuer: cn=client-root-ca-2
+key_usages:
+- KeyEncipherment
+- DigitalSignature
+---
+subject: cn=untrusted-client
+ca: false
+key_usages:
+- KeyEncipherment
+- DigitalSignature
+---
+subject: cn=opa-envoy
+issuer: cn=internal-root-ca
+sans:
+- DNS:opa-envoy
+---
+subject: cn=metrics
+issuer: cn=internal-root-ca
+sans:
+- DNS:contour
+- DNS:localhost
+- DNS:envoy
+---
+subject: cn=metrics-client-root-ca
+---
+subject: cn=metrics-client-1
+issuer: cn=metrics-client-root-ca
+---
+subject: cn=ingress-rsa
+issuer: cn=external-root-ca
+key_type: RSA
+sans:
+- DNS:host1.127-0-0-101.nip.io
+- DNS:host2.127-0-0-101.nip.io
+- DNS:protected.127-0-0-101.nip.io
+- DNS:protected2.127-0-0-101.nip.io
+- DNS:protected-basic-auth.127-0-0-101.nip.io
+- DNS:protected-oauth.127-0-0-101.nip.io
+---
+subject: cn=self-signed
+ca: false
+key_usages:
+- CertSign
+- KeyEncipherment
+- DigitalSignature
+

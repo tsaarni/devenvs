@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envoy
+  labels:
+    app: envoy
+spec:
+  selector:
+    matchLabels:
+      app: envoy
+  template:
+    metadata:
+      labels:
+        app: envoy
+    spec:
+      containers:
+        - name: envoy
+          image: envoy-debug:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+              hostPort: 80
+            - containerPort: 443
+              hostPort: 443
+          volumeMounts:
+            - mountPath: /etc/envoy
+              name: envoy-config
+            - mountPath: /certs
+              name: envoy-certs
+          command: ["/bin/sh"]
+          args:
+          - "-c"
+          - "sleep infinity"
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: envoy-config
+        - name: envoy-certs
+          secret:
+            secretName: envoy

@@ -1,0 +1,29 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: protected-basic-auth
+spec:
+  virtualhost:
+    fqdn: protected-basic-auth.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+    authorization:
+      extensionRef:
+        name: opa-envoy
+        namespace: default
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: echoserver
+          port: 80
+---
+apiVersion: projectcontour.io/v1alpha1
+kind: ExtensionService
+metadata:
+  name: opa-envoy
+spec:
+  protocol: h2c
+  services:
+  - name: opa-envoy
+    port: 9191

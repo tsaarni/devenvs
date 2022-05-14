@@ -1,0 +1,46 @@
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+    socket_address:
+      protocol: TCP
+      address: 0.0.0.0
+      port_value: 9901
+static_resources:
+  clusters:
+  - name: control_plane
+    type: LOGICAL_DNS
+    connect_timeout: 1s
+    load_assignment:
+      cluster_name: control_plane
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: controlplane
+                port_value: 8080
+    http2_protocol_options: {}
+    transport_socket:
+      name: "envoy.transport_sockets.tls"
+      typed_config:
+        "@type": "type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext"
+        common_tls_context:
+          tls_certificate_sds_secret_configs:
+            sds_config:
+              path: /etc/envoy/envoy-sds-auth-secret-tls-certicate.yaml
+          validation_context_sds_secret_config:
+            sds_config:
+              path: /etc/envoy/envoy-sds-auth-secret-validation-context.yaml
+dynamic_resources:
+  lds_config:
+    api_config_source:
+      api_type: GRPC
+      grpc_services:
+      - envoy_grpc:
+          cluster_name: control_plane
+  cds_config:
+    api_config_source:
+      api_type: GRPC
+      grpc_services:
+      - envoy_grpc:
+          cluster_name: control_plane

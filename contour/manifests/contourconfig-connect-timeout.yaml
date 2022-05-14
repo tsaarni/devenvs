@@ -1,0 +1,52 @@
+apiVersion: projectcontour.io/v1alpha1
+kind: ContourConfiguration
+metadata:
+  name: contour
+  namespace: projectcontour
+spec:
+  xdsServer:
+    address: 0.0.0.0
+    port: 8001
+    tls:
+      caFile: ca.crt
+      certFile: tls.crt
+      insecure: false
+      keyFile: tls.key
+    type: contour
+  envoy:
+    cluster:
+      dnsLookupFamily: auto
+    defaultHTTPVersions:
+    - HTTP/1.1
+    - HTTP/2
+    http:
+      accessLog: /dev/stdout
+      address: 0.0.0.0
+      port: 8080
+    https:
+      accessLog: /dev/stdout
+      address: 0.0.0.0
+      port: 8443
+    listener:
+      connectionBalancer: ""
+      disableAllowChunkedLength: false
+      tls:
+        cipherSuites:
+        - '[ECDHE-ECDSA-AES128-GCM-SHA256|ECDHE-ECDSA-CHACHA20-POLY1305]'
+        - '[ECDHE-RSA-AES128-GCM-SHA256|ECDHE-RSA-CHACHA20-POLY1305]'
+        - ECDHE-ECDSA-AES256-GCM-SHA384
+        - ECDHE-RSA-AES256-GCM-SHA384
+        minimumProtocolVersion: "1.2"
+      useProxyProtocol: false
+    logging:
+      accessLogFormat: envoy
+    metrics:
+      address: 0.0.0.0
+      port: 8002
+    network:
+      adminPort: 9001
+    service:
+      name: envoy
+      namespace: projectcontour
+    timeouts:
+      connectTimeout:

@@ -1,0 +1,48 @@
+services:
+  etcd0:
+    image: quay.io/coreos/etcd
+    command:
+      - /bin/sh
+      - -c
+      - etcd --data-dir /etcd-data --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://$$HOSTNAME:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster $$CLUSTER --debug
+    ports:
+      - 2379
+    environment:
+      - HOSTNAME=etcd0
+      - CLUSTER=etcd0=http://etcd0:2380,etcd1=http://etcd1:2380,etcd2=http://etcd2:2380
+    volumes:
+      - ./tmp/etcd0-data:/etcd-data
+  etcd1:
+    image: quay.io/coreos/etcd
+    command:
+      - /bin/sh
+      - -c
+      - etcd --data-dir /etcd-data --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://$$HOSTNAME:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster $$CLUSTER --debug
+    ports:
+      - 2379
+    environment:
+      - HOSTNAME=etcd1
+      - CLUSTER=etcd0=http://etcd0:2380,etcd1=http://etcd1:2380,etcd2=http://etcd2:2380
+    volumes:
+      - ./tmp/etcd1-data:/etcd-data
+  etcd2:
+    image: quay.io/coreos/etcd
+    command:
+      - /bin/sh
+      - -c
+      - etcd --data-dir /etcd-data --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://$$HOSTNAME:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster $$CLUSTER --debug
+    ports:
+      - 2379
+    environment:
+      - HOSTNAME=etcd2
+      - CLUSTER=etcd0=http://etcd0:2380,etcd1=http://etcd1:2380,etcd2=http://etcd2:2380
+    volumes:
+      - ./tmp/etcd2-data:/etcd-data
+  vault:
+    image: alpine:latest
+    command:
+      - /bin/sh
+      - -c
+      - apk add --update-cache py3-pip httpie openssl netcat-openbsd py3-jwt && sleep 99999999
+    volumes:
+      - .:/input:ro

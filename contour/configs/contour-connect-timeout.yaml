@@ -1,0 +1,2 @@
+timeouts:
+  connect-timeout: 7s

@@ -1,0 +1,33 @@
+bases:
+- ../httpbin
+resources:
+- contour.yaml
+- httproxy-with-client-auth.yaml
+replicas:
+- name: contour
+  count: 1
+
+patchesStrategicMerge:
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: contour
+    namespace: projectcontour
+  spec:
+    template:
+      spec:
+        containers:
+        - name: contour
+          image: localhost/contour-debug:latest
+          command:
+          - /bin/sh
+          args:
+          - "-c"
+          - "sleep infinity"
+          livenessProbe:
+            initialDelaySeconds: 99999999
+        securityContext:
+          runAsNonRoot: false
+          runAsUser: 0
+          runAsGroup: 0

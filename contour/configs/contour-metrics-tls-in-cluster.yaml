@@ -1,0 +1,13 @@
+metrics:
+  contour:
+    address: 0.0.0.0
+    port: 8003
+    server-certificate-path: /metrics-cert/metrics.pem
+    server-key-path: /metrics-cert/metrics-key.pem
+    ca-certificate-path: /metrics-cert/metrics-client-root-ca.pem
+  envoy:
+    address: 0.0.0.0
+    port: 8003
+    server-certificate-path: /metrics-cert/metrics.pem
+    server-key-path: /metrics-cert/metrics-key.pem
+    ca-certificate-path: /metrics-cert/metrics-client-root-ca.pem

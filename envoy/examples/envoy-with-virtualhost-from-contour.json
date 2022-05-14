@@ -1,0 +1,684 @@
+{
+    "configs": [
+        {
+            "@type": "type.googleapis.com/envoy.admin.v2alpha.BootstrapConfigDump", 
+            "bootstrap": {
+                "admin": {
+                    "access_log_path": "/dev/null", 
+                    "address": {
+                        "socket_address": {
+                            "address": "127.0.0.1", 
+                            "port_value": 9001
+                        }
+                    }
+                }, 
+                "dynamic_resources": {
+                    "cds_config": {
+                        "api_config_source": {
+                            "api_type": "GRPC", 
+                            "grpc_services": [
+                                {
+                                    "envoy_grpc": {
+                                        "cluster_name": "contour"
+                                    }
+                                }
+                            ]
+                        }
+                    }, 
+                    "lds_config": {
+                        "api_config_source": {
+                            "api_type": "GRPC", 
+                            "grpc_services": [
+                                {
+                                    "envoy_grpc": {
+                                        "cluster_name": "contour"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }, 
+                "node": {
+                    "build_version": "7a12f379e47a9f7cf7211c727fe8fc70b6a0a9ab/1.11.2/Clean/RELEASE/BoringSSL"
+                }, 
+                "static_resources": {
+                    "clusters": [
+                        {
+                            "alt_stat_name": "projectcontour_contour_8001", 
+                            "circuit_breakers": {
+                                "thresholds": [
+                                    {
+                                        "max_connections": 100000, 
+                                        "max_pending_requests": 100000, 
+                                        "max_requests": 60000000, 
+                                        "max_retries": 50, 
+                                        "priority": "HIGH"
+                                    }, 
+                                    {
+                                        "max_connections": 100000, 
+                                        "max_pending_requests": 100000, 
+                                        "max_requests": 60000000, 
+                                        "max_retries": 50
+                                    }
+                                ]
+                            }, 
+                            "connect_timeout": "5s", 
+                            "http2_protocol_options": {}, 
+                            "load_assignment": {
+                                "cluster_name": "contour", 
+                                "endpoints": [
+                                    {
+                                        "lb_endpoints": [
+                                            {
+                                                "endpoint": {
+                                                    "address": {
+                                                        "socket_address": {
+                                                            "address": "contour", 
+                                                            "port_value": 8001
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }, 
+                            "name": "contour", 
+                            "transport_socket": {
+                                "name": "tls", 
+                                "typed_config": {
+                                    "@type": "type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext", 
+                                    "common_tls_context": {
+                                        "tls_certificates": [
+                                            {
+                                                "certificate_chain": {
+                                                    "filename": "/certs/tls.crt"
+                                                }, 
+                                                "private_key": {
+                                                    "filename": "/certs/tls.key"
+                                                }
+                                            }
+                                        ], 
+                                        "validation_context": {
+                                            "trusted_ca": {
+                                                "filename": "/ca/cacert.pem"
+                                            }, 
+                                            "verify_subject_alt_name": [
+                                                "contour"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }, 
+                            "type": "STRICT_DNS", 
+                            "upstream_connection_options": {
+                                "tcp_keepalive": {
+                                    "keepalive_interval": 5, 
+                                    "keepalive_probes": 3, 
+                                    "keepalive_time": 30
+                                }
+                            }
+                        }, 
+                        {
+                            "alt_stat_name": "projectcontour_service-stats_9001", 
+                            "connect_timeout": "0.250s", 
+                            "load_assignment": {
+                                "cluster_name": "service-stats", 
+                                "endpoints": [
+                                    {
+                                        "lb_endpoints": [
+                                            {
+                                                "endpoint": {
+                                                    "address": {
+                                                        "socket_address": {
+                                                            "address": "127.0.0.1", 
+                                                            "port_value": 9001
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }, 
+                            "name": "service-stats", 
+                            "type": "LOGICAL_DNS"
+                        }
+                    ]
+                }
+            }, 
+            "last_updated": "2019-12-17T09:45:03.231Z"
+        }, 
+        {
+            "@type": "type.googleapis.com/envoy.admin.v2alpha.ClustersConfigDump", 
+            "dynamic_active_clusters": [
+                {
+                    "cluster": {
+                        "alt_stat_name": "default_httpbin_443", 
+                        "common_lb_config": {
+                            "healthy_panic_threshold": {}
+                        }, 
+                        "connect_timeout": "0.250s", 
+                        "eds_cluster_config": {
+                            "eds_config": {
+                                "api_config_source": {
+                                    "api_type": "GRPC", 
+                                    "grpc_services": [
+                                        {
+                                            "envoy_grpc": {
+                                                "cluster_name": "contour"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }, 
+                            "service_name": "default/httpbin/https"
+                        }, 
+                        "name": "default/httpbin/443/5625cf8062", 
+                        "transport_socket": {
+                            "name": "tls", 
+                            "typed_config": {
+                                "@type": "type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext", 
+                                "common_tls_context": {
+                                    "validation_context": {
+                                        "trusted_ca": {
+                                            "inline_bytes": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJlRENDQVI2Z0F3SUJBZ0lVTElyanRyZ0dYRXV3NytQNkl1czVrdEFtRzBzd0NnWUlLb1pJemowRUF3SXcKR1RFWE1CVUdBMVVFQXhNT2MyVnlkbVZ5TFhKdmIzUXRZMkV3SUJjTk1Ua3hNakE1TVRBek1EQXdXaGdQTWpFeApPVEV4TVRVeE1ETXdNREJhTUJreEZ6QVZCZ05WQkFNVERuTmxjblpsY2kxeWIyOTBMV05oTUZrd0V3WUhLb1pJCnpqMENBUVlJS29aSXpqMERBUWNEUWdBRUs2N29kVDJYQmlqVEMrN0w4cW83TVJuaktnTjlYbTFIN2lTV2tXdlIKUU1jSHUya0N6cnhiK01lMVRNcGRmYS94NUh1Sm1VZnM0bjF1TjFpemJzNWJ0S05DTUVBd0RnWURWUjBQQVFILwpCQVFEQWdFR01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZEblhnQ3VURVkxTmtFWFQwZS9MCkJuUlpLMHFYTUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDSVFEcmxLL2NoVFdIWmludGhTaThOL04yYjl2SDUyY28KaHZ4NGFGcHBuMlV1eVFJZ0pxOUw4cVR5aWJ5eVluaytaaWZFR053UDh4dFBSSnY3MVJmOWx5N0JzY0k9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+                                        }, 
+                                        "verify_subject_alt_name": [
+                                            "httpbin"
+                                        ]
+                                    }
+                                }
+                            }
+                        }, 
+                        "type": "EDS"
+                    }, 
+                    "last_updated": "2019-12-17T09:45:04.425Z", 
+                    "version_info": "1"
+                }
+            ], 
+            "static_clusters": [
+                {
+                    "cluster": {
+                        "alt_stat_name": "projectcontour_contour_8001", 
+                        "circuit_breakers": {
+                            "thresholds": [
+                                {
+                                    "max_connections": 100000, 
+                                    "max_pending_requests": 100000, 
+                                    "max_requests": 60000000, 
+                                    "max_retries": 50, 
+                                    "priority": "HIGH"
+                                }, 
+                                {
+                                    "max_connections": 100000, 
+                                    "max_pending_requests": 100000, 
+                                    "max_requests": 60000000, 
+                                    "max_retries": 50
+                                }
+                            ]
+                        }, 
+                        "connect_timeout": "5s", 
+                        "http2_protocol_options": {}, 
+                        "load_assignment": {
+                            "cluster_name": "contour", 
+                            "endpoints": [
+                                {
+                                    "lb_endpoints": [
+                                        {
+                                            "endpoint": {
+                                                "address": {
+                                                    "socket_address": {
+                                                        "address": "contour", 
+                                                        "port_value": 8001
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "name": "contour", 
+                        "transport_socket": {
+                            "name": "tls", 
+                            "typed_config": {
+                                "@type": "type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext", 
+                                "common_tls_context": {
+                                    "tls_certificates": [
+                                        {
+                                            "certificate_chain": {
+                                                "filename": "/certs/tls.crt"
+                                            }, 
+                                            "private_key": {
+                                                "filename": "/certs/tls.key"
+                                            }
+                                        }
+                                    ], 
+                                    "validation_context": {
+                                        "trusted_ca": {
+                                            "filename": "/ca/cacert.pem"
+                                        }, 
+                                        "verify_subject_alt_name": [
+                                            "contour"
+                                        ]
+                                    }
+                                }
+                            }
+                        }, 
+                        "type": "STRICT_DNS", 
+                        "upstream_connection_options": {
+                            "tcp_keepalive": {
+                                "keepalive_interval": 5, 
+                                "keepalive_probes": 3, 
+                                "keepalive_time": 30
+                            }
+                        }
+                    }, 
+                    "last_updated": "2019-12-17T09:45:03.267Z"
+                }, 
+                {
+                    "cluster": {
+                        "alt_stat_name": "projectcontour_service-stats_9001", 
+                        "connect_timeout": "0.250s", 
+                        "load_assignment": {
+                            "cluster_name": "service-stats", 
+                            "endpoints": [
+                                {
+                                    "lb_endpoints": [
+                                        {
+                                            "endpoint": {
+                                                "address": {
+                                                    "socket_address": {
+                                                        "address": "127.0.0.1", 
+                                                        "port_value": 9001
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, 
+                        "name": "service-stats", 
+                        "type": "LOGICAL_DNS"
+                    }, 
+                    "last_updated": "2019-12-17T09:45:03.269Z"
+                }
+            ], 
+            "version_info": "1"
+        }, 
+        {
+            "@type": "type.googleapis.com/envoy.admin.v2alpha.ListenersConfigDump", 
+            "dynamic_active_listeners": [
+                {
+                    "last_updated": "2019-12-17T09:45:04.438Z", 
+                    "listener": {
+                        "address": {
+                            "socket_address": {
+                                "address": "0.0.0.0", 
+                                "port_value": 80
+                            }
+                        }, 
+                        "filter_chains": [
+                            {
+                                "filters": [
+                                    {
+                                        "name": "envoy.http_connection_manager", 
+                                        "typed_config": {
+                                            "@type": "type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager", 
+                                            "access_log": [
+                                                {
+                                                    "name": "envoy.file_access_log", 
+                                                    "typed_config": {
+                                                        "@type": "type.googleapis.com/envoy.config.accesslog.v2.FileAccessLog", 
+                                                        "path": "/dev/stdout"
+                                                    }
+                                                }
+                                            ], 
+                                            "common_http_protocol_options": {
+                                                "idle_timeout": "60s"
+                                            }, 
+                                            "http_filters": [
+                                                {
+                                                    "name": "envoy.gzip"
+                                                }, 
+                                                {
+                                                    "name": "envoy.grpc_web"
+                                                }, 
+                                                {
+                                                    "name": "envoy.router"
+                                                }
+                                            ], 
+                                            "http_protocol_options": {
+                                                "accept_http_10": true
+                                            }, 
+                                            "normalize_path": true, 
+                                            "preserve_external_request_id": true, 
+                                            "rds": {
+                                                "config_source": {
+                                                    "api_config_source": {
+                                                        "api_type": "GRPC", 
+                                                        "grpc_services": [
+                                                            {
+                                                                "envoy_grpc": {
+                                                                    "cluster_name": "contour"
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }, 
+                                                "route_config_name": "ingress_http"
+                                            }, 
+                                            "request_timeout": "0s", 
+                                            "stat_prefix": "ingress_http", 
+                                            "use_remote_address": true
+                                        }
+                                    }
+                                ]
+                            }
+                        ], 
+                        "name": "ingress_http"
+                    }, 
+                    "version_info": "1"
+                }, 
+                {
+                    "last_updated": "2019-12-17T09:45:04.442Z", 
+                    "listener": {
+                        "address": {
+                            "socket_address": {
+                                "address": "0.0.0.0", 
+                                "port_value": 443
+                            }
+                        }, 
+                        "filter_chains": [
+                            {
+                                "filter_chain_match": {
+                                    "server_names": [
+                                        "host1.external.com"
+                                    ]
+                                }, 
+                                "filters": [
+                                    {
+                                        "name": "envoy.http_connection_manager", 
+                                        "typed_config": {
+                                            "@type": "type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager", 
+                                            "access_log": [
+                                                {
+                                                    "name": "envoy.file_access_log", 
+                                                    "typed_config": {
+                                                        "@type": "type.googleapis.com/envoy.config.accesslog.v2.FileAccessLog", 
+                                                        "path": "/dev/stdout"
+                                                    }
+                                                }
+                                            ], 
+                                            "common_http_protocol_options": {
+                                                "idle_timeout": "60s"
+                                            }, 
+                                            "http_filters": [
+                                                {
+                                                    "name": "envoy.gzip"
+                                                }, 
+                                                {
+                                                    "name": "envoy.grpc_web"
+                                                }, 
+                                                {
+                                                    "name": "envoy.router"
+                                                }
+                                            ], 
+                                            "http_protocol_options": {
+                                                "accept_http_10": true
+                                            }, 
+                                            "normalize_path": true, 
+                                            "preserve_external_request_id": true, 
+                                            "rds": {
+                                                "config_source": {
+                                                    "api_config_source": {
+                                                        "api_type": "GRPC", 
+                                                        "grpc_services": [
+                                                            {
+                                                                "envoy_grpc": {
+                                                                    "cluster_name": "contour"
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }, 
+                                                "route_config_name": "ingress_https"
+                                            }, 
+                                            "request_timeout": "0s", 
+                                            "stat_prefix": "ingress_https", 
+                                            "use_remote_address": true
+                                        }
+                                    }
+                                ], 
+                                "transport_socket": {
+                                    "name": "tls", 
+                                    "typed_config": {
+                                        "@type": "type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext", 
+                                        "common_tls_context": {
+                                            "alpn_protocols": [
+                                                "h2", 
+                                                "http/1.1"
+                                            ], 
+                                            "tls_certificate_sds_secret_configs": [
+                                                {
+                                                    "name": "default/ingress-server-cert/fa454f19b0", 
+                                                    "sds_config": {
+                                                        "api_config_source": {
+                                                            "api_type": "GRPC", 
+                                                            "grpc_services": [
+                                                                {
+                                                                    "envoy_grpc": {
+                                                                        "cluster_name": "contour"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            ], 
+                                            "tls_params": {
+                                                "cipher_suites": [
+                                                    "[ECDHE-ECDSA-AES128-GCM-SHA256|ECDHE-ECDSA-CHACHA20-POLY1305]", 
+                                                    "[ECDHE-RSA-AES128-GCM-SHA256|ECDHE-RSA-CHACHA20-POLY1305]", 
+                                                    "ECDHE-ECDSA-AES128-SHA", 
+                                                    "ECDHE-RSA-AES128-SHA", 
+                                                    "ECDHE-ECDSA-AES256-GCM-SHA384", 
+                                                    "ECDHE-RSA-AES256-GCM-SHA384", 
+                                                    "ECDHE-ECDSA-AES256-SHA", 
+                                                    "ECDHE-RSA-AES256-SHA"
+                                                ], 
+                                                "tls_maximum_protocol_version": "TLSv1_3", 
+                                                "tls_minimum_protocol_version": "TLSv1_1"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ], 
+                        "listener_filters": [
+                            {
+                                "name": "envoy.listener.tls_inspector"
+                            }
+                        ], 
+                        "name": "ingress_https"
+                    }, 
+                    "version_info": "1"
+                }, 
+                {
+                    "last_updated": "2019-12-17T09:45:04.442Z", 
+                    "listener": {
+                        "address": {
+                            "socket_address": {
+                                "address": "0.0.0.0", 
+                                "port_value": 8002
+                            }
+                        }, 
+                        "filter_chains": [
+                            {
+                                "filters": [
+                                    {
+                                        "name": "envoy.http_connection_manager", 
+                                        "typed_config": {
+                                            "@type": "type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager", 
+                                            "http_filters": [
+                                                {
+                                                    "name": "envoy.router"
+                                                }
+                                            ], 
+                                            "normalize_path": true, 
+                                            "route_config": {
+                                                "virtual_hosts": [
+                                                    {
+                                                        "domains": [
+                                                            "*"
+                                                        ], 
+                                                        "name": "backend", 
+                                                        "routes": [
+                                                            {
+                                                                "match": {
+                                                                    "prefix": "/ready"
+                                                                }, 
+                                                                "route": {
+                                                                    "cluster": "service-stats"
+                                                                }
+                                                            }, 
+                                                            {
+                                                                "match": {
+                                                                    "prefix": "/stats"
+                                                                }, 
+                                                                "route": {
+                                                                    "cluster": "service-stats"
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }, 
+                                            "stat_prefix": "stats"
+                                        }
+                                    }
+                                ]
+                            }
+                        ], 
+                        "name": "stats-health"
+                    }, 
+                    "version_info": "1"
+                }
+            ], 
+            "version_info": "1"
+        }, 
+        {
+            "@type": "type.googleapis.com/envoy.admin.v2alpha.ScopedRoutesConfigDump"
+        }, 
+        {
+            "@type": "type.googleapis.com/envoy.admin.v2alpha.RoutesConfigDump", 
+            "dynamic_route_configs": [
+                {
+                    "last_updated": "2019-12-17T09:45:04.446Z", 
+                    "route_config": {
+                        "name": "ingress_https", 
+                        "request_headers_to_add": [
+                            {
+                                "append": true,
+                                "header": {
+                                    "key": "x-request-start",
+                                    "value": "t=%START_TIME(%s.%3f)%"
+                                }
+                            }
+                        ],
+                        "virtual_hosts": [
+                            {
+                                "domains": [
+                                    "host1.external.com",
+                                    "host1.external.com:*"
+                                ],
+                                "name": "host1.external.com",
+                                "routes": [
+                                    {
+                                        "match": {
+                                            "prefix": "/"
+                                        },
+                                        "route": {
+                                            "cluster": "default/httpbin/443/5625cf8062"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "version_info": "1"
+                },
+                {
+                    "last_updated": "2019-12-17T09:45:04.445Z",
+                    "route_config": {
+                        "name": "ingress_http",
+                        "request_headers_to_add": [
+                            {
+                                "append": true,
+                                "header": {
+                                    "key": "x-request-start",
+                                    "value": "t=%START_TIME(%s.%3f)%"
+                                }
+                            }
+                        ],
+                        "virtual_hosts": [
+                            {
+                                "domains": [
+                                    "host1.external.com",
+                                    "host1.external.com:*"
+                                ],
+                                "name": "host1.external.com",
+                                "routes": [
+                                    {
+                                        "match": {
+                                            "prefix": "/"
+                                        },
+                                        "redirect": {
+                                            "https_redirect": true
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "version_info": "1"
+                }
+            ],
+            "static_route_configs": [
+                {
+                    "last_updated": "2019-12-17T09:45:04.442Z",
+                    "route_config": {
+                        "virtual_hosts": [
+                            {
+                                "domains": [
+                                    "*"
+                                ],
+                                "name": "backend",
+                                "routes": [
+                                    {
+                                        "match": {
+                                            "prefix": "/ready"
+                                        },
+                                        "route": {
+                                            "cluster": "service-stats"
+                                        }
+                                    },
+                                    {
+                                        "match": {
+                                            "prefix": "/stats"
+                                        },
+                                        "route": {
+                                            "cluster": "service-stats"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

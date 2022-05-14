@@ -1,0 +1,8 @@
+---
+SpacesInCStyleCastParentheses: 'true'
+SpacesInConditionalStatement: 'true'
+SpacesInParentheses: 'true'
+UseTab: ForIndentation
+IndentWidth: 8
+
+...

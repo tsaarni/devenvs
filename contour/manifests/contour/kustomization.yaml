@@ -1,0 +1,4 @@
+resources:
+- contour-dev.yaml
+- deploy-backend-httpbin-with-tls.yaml
+- ingress-httpbin-with-tls.yaml

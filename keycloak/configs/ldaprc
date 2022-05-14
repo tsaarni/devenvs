@@ -1,0 +1,7 @@
+#TLS_KEY certs/ldap-client-key.pem
+#TLS_CERT certs/ldap-client.pem
+TLS_KEY certs/ldap-admin-key.pem
+TLS_CERT certs/ldap-admin.pem
+TLS_CACERT certs/ca.pem
+TLS_REQCERT allow
+#SASL_MECH EXTERNAL

@@ -1,0 +1,57 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: protected-oauth
+spec:
+  virtualhost:
+    fqdn: protected-oauth.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+    authorization:
+      extensionRef:
+        name: opa-envoy
+        namespace: default
+    oAuth2Config:
+      authorizationEndpoint: http://localhost:8081/auth/realms/master/protocol/openid-connect/auth
+      credentials:
+        clientId: test-client
+        hmacSecretName: oauth2hmac
+        tokenSecretName: oauth2token
+      tokenEndpoint: http://${HOST_ADDRESS}:8081/auth/realms/master/protocol/openid-connect/token
+#      redirectUri: "%REQ(:x-forwarded-proto)%://%REQ(:authority)%/callback"
+      redirectUri: https://protected-oauth.127-0-0-101.nip.io/callback
+      redirectPathMatcher: /callback
+      signoutPathMatcher: /logout
+      forwardBearerToken: true
+  routes:
+    - conditions:
+      - prefix: /
+      services:
+        - name: echoserver
+          port: 80
+---
+apiVersion: projectcontour.io/v1alpha1
+kind: ExtensionService
+metadata:
+  name: opa-envoy
+spec:
+  protocol: h2c
+  services:
+  - name: opa-envoy
+    port: 9191
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: oauth2token
+type: Opaque
+stringData:
+  secret: $OAUTH_DUMMY_CLIENT_SECRET
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: oauth2hmac
+type: Opaque
+stringData:
+  secret: $OAUTH_DUMMY_HMAC

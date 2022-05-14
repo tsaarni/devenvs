@@ -1,0 +1,400 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2020 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+ITS=OLC
+ITSDIR=$DATADIR/regressions/its$ITS
+
+if test $BACKLDAP = "ldapno" ; then
+	echo "LDAP backend not available, test skipped"
+	exit 0
+fi
+if test $RWM = "rwmno" ; then
+	echo "rwm (rewrite/remap) overlay not available, test skipped"
+	exit 0
+fi
+
+mkdir -p $TESTDIR $TESTDIR/remote-slapd.d $TESTDIR/proxy-slapd.d $TESTDIR/certs
+certyaml --destination $TESTDIR/certs $ITSDIR/certs.yaml
+
+#
+# Start slapd that acts as a remote LDAP server that will be proxied
+#
+
+echo "Creating configuration for remote slapd"
+$SLAPADD -F $TESTDIR/remote-slapd.d -n 0 <<EOF
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcTLSCACertificateFile: $TESTDIR/certs/external-client-ca.pem
+olcTLSCertificateKeyFile: $TESTDIR/certs/remote-server-key.pem
+olcTLSCertificateFile: $TESTDIR/certs/remote-server.pem
+#olcTLSVerifyClient: never
+olcTLSVerifyClient: allow
+#olcTLSVerifyClient: demand
+
+dn: olcDatabase=config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: config
+olcRootPW: secret
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file://$ABS_SCHEMADIR/core.ldif
+include: file://$ABS_SCHEMADIR/cosine.ldif
+include: file://$ABS_SCHEMADIR/inetorgperson.ldif
+include: file://$ABS_SCHEMADIR/openldap.ldif
+include: file://$ABS_SCHEMADIR/nis.ldif
+
+dn: olcDatabase=$BACKEND,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc${BACKEND}Config
+olcDatabase: $BACKEND
+olcSuffix: dc=example,dc=com
+olcDbDirectory: $TESTDIR/remote-slapd.d
+olcAccess: to attrs=userPassword,shadowLastChange
+  by dn="cn=admin-account,dc=example,dc=com" read
+  by self write
+  by anonymous auth
+  by * none
+olcAccess: to dn.base="" by * read
+olcAccess: to *
+  by dn="cn=admin-account,dc=example,dc=com" read
+  by * none
+olcAccess: to * by * none
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+        echo "slapadd failed ($RC)!"
+        exit $RC
+fi
+
+$SLAPADD -F $TESTDIR/remote-slapd.d -n 1 <<EOF
+dn: dc=example,dc=com
+objectclass: top
+objectclass: organization
+objectclass: dcobject
+dc: example
+o: Example
+
+dn: cn=joe,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: joe
+uid: joe
+uidNumber: 1001
+gidNumber: 1001
+userPassword: joe
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: Average
+givenName: Joe
+pwdReset: true
+
+dn: cn=admin-account,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: admin-account
+uid: admin-account
+uidNumber: 1001
+gidNumber: 1001
+userPassword: admin-account
+loginShell: /bin/bash
+homeDirectory: /home/
+sn:
+
+dn: ou=policies,dc=example,dc=com
+objectClass: organizationalUnit
+ou: policies
+
+dn: cn=default,ou=policies,dc=example,dc=com
+objectClass: pwdPolicy
+objectClass: organizationalRole
+cn: default
+pwdAttribute: userPassword
+pwdMinLength: 3
+pwdCheckQuality: 2
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+        echo "slapadd failed ($RC)!"
+        exit $RC
+fi
+
+echo "Starting remote slapd server on $URI1"
+$SLAPD -F $TESTDIR/remote-slapd.d -h "$URI1" -d $LVL >$LOG1 2>&1 &
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+		$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+				'objectclass=*' > /dev/null 2>&1
+		RC=$?
+		if test $RC = 0 ; then
+				break
+		fi
+		echo "Waiting $SLEEP0 seconds for slapd to start..."
+		sleep $SLEEP0
+done
+
+#
+# Start slapd that will proxy for the remote server
+#
+echo "Creating configuration for proxy slapd"
+$SLAPADD -F $TESTDIR/proxy-slapd.d -n 0 <<EOF
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcTLSCACertificateFile: $TESTDIR/certs/internal-client-ca.pem
+olcTLSCertificateKeyFile: $TESTDIR/certs/proxy-server-key.pem
+olcTLSCertificateFile: $TESTDIR/certs/proxy-server.pem
+#olcTLSVerifyClient: never
+#olcTLSVerifyClient: allow
+olcTLSVerifyClient: demand
+
+dn: olcDatabase=config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: config
+olcRootPW: secret
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file://$ABS_SCHEMADIR/core.ldif
+include: file://$ABS_SCHEMADIR/cosine.ldif
+include: file://$ABS_SCHEMADIR/inetorgperson.ldif
+include: file://$ABS_SCHEMADIR/openldap.ldif
+include: file://$ABS_SCHEMADIR/nis.ldif
+
+dn: olcDatabase=$BACKEND,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc${BACKEND}Config
+olcDatabase: $BACKEND
+olcSuffix: dc=local,dc=com
+olcDbDirectory: $TESTDIR/proxy-slapd.d
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+        echo "slapadd failed ($RC)!"
+        exit $RC
+fi
+
+echo "Create local user to proxy slapd"
+$SLAPADD -F $TESTDIR/proxy-slapd.d -n 1 <<EOF
+dn: dc=local,dc=com
+objectclass: top
+objectclass: organization
+objectclass: dcobject
+dc: local
+o: Local
+
+dn: cn=admin-account,dc=local,dc=com
+objectClass: applicationProcess
+cn: admin-account
+
+dn: cn=admin-account2,dc=local,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: admin-account2
+uid: admin-account2
+uidNumber: 1001
+gidNumber: 1001
+userPassword: admin-account2
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: Admin
+givenName: Admin
+
+dn: cn=jill,dc=local,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: jill
+uid: jill
+uidNumber: 1001
+gidNumber: 1001
+userPassword: jill
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: Average
+givenName: Jill
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+        echo "slapadd failed ($RC)!"
+        exit $RC
+fi
+
+
+URI2=ldap://0.0.0.0:9012
+
+if [ -e $HOME/work/devenvs/openldap/docker/openldap/sslkeylog/libsslkeylog.so ]; then
+	echo "Starting slapd proxy with TLS session key interception on $URI2"
+	LD_PRELOAD=$HOME/work/devenvs/openldap/docker/openldap/sslkeylog/libsslkeylog.so \
+	SSLKEYLOGFILE=$TESTDIR/wireshark-keys.log \
+	$SLAPD -F $TESTDIR/proxy-slapd.d -h "$URI2" -d $LVL >$LOG2 2>&1 &
+else
+	echo "Starting slapd proxy on $URI2"
+	$SLAPD -F $TESTDIR/proxy-slapd.d -h "$URI2" -d $LVL >$LOG2 2>&1 &
+fi
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+		$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
+				'objectclass=*' > /dev/null 2>&1
+		RC=$?
+		if test $RC = 0 ; then
+				break
+		fi
+		echo "Waiting $SLEEP0 seconds for slapd to start..."
+		sleep $SLEEP0
+done
+if test $RC != 0 ; then
+        echo "slapd failed ($RC)!"
+        exit $RC
+fi
+
+# https://linux.die.net/man/5/slapd-ldap
+# https://tylersguides.com/guides/openldap-online-configuration-reference/
+echo "Adding proxy backend"
+$LDAPADD -D cn=config -H $URI2 -w secret  >$LOG2 <<EOF
+dn: olcDatabase=ldap,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcLDAPConfig
+olcDatabase: LDAP
+olcSuffix: dc=example,dc=com
+olcDbURI: $URI1
+#olcDbStartTLS: start tls_cert=$TESTDIR/certs/admin-account.pem tls_key=$TESTDIR/certs/admin-account-key.pem tls_cacert=$TESTDIR/certs/external-server-ca.pem
+olcDbStartTLS: start tls_cacert=$TESTDIR/certs/external-server-ca.pem
+olcDbIdleTimeout: 3
+#olcDbConnTtl: 3
+#olcDbIDAssertBind: bindmethod=simple mode=legacy binddn="cn=admin-account,dc=example,dc=com" credentials="admin-account" tls_cert=$TESTDIR/certs/admin-account.pem tls_key=$TESTDIR/certs/admin-account-key.pem tls_cacert=$TESTDIR/certs/external-server-ca.pem tls_reqcert=demand starttls=critical flags=override
+#olcDbIDAssertBind: bindmethod=simple binddn="cn=admin-account,dc=example,dc=com" credentials="admin-account" tls_cert=$TESTDIR/certs/admin-account.pem tls_key=$TESTDIR/certs/admin-account-key.pem tls_cacert=$TESTDIR/certs/external-server-ca.pem tls_reqcert=demand starttls=critical
+olcDbIDAssertBind: bindmethod=simple binddn="cn=admin-account,dc=example,dc=com" credentials="admin-account" mode=legacy starttls=critical tls_cacert=$TESTDIR/certs/external-server-ca.pem
+#olcDbIDAssertBind: bindmethod=simple binddn="cn=admin-account,dc=example,dc=com" credentials="admin-account" mode=none tls_cacert=$TESTDIR/certs/external-server-ca.pem
+#olcDbIDAssertBind: bindmethod=simple mode=none binddn="cn=admin-account,dc=example,dc=com" credentials="admin-account"
+#olcDbIDAssertAuthzFrom: dn.exact:dc=com,dc=local,cn=admin-account
+#olcDbIDAssertPassThru: dn.exact:cn=joe,dc=example,dc=com
+EOF
+
+
+echo "Ready"
+sleep 999999
+exit 0
+
+###############################################################################
+###############################################################################
+###############################################################################
+#
+# Instructions on how to run
+#
+
+# compile libsslkeylog.so in order to capture TLS session key
+(cd docker/openldap/sslkeylog/ && make)
+
+cd /home/tsaarni/work/devenvs/openldap
+docker build -t ldap-client:latest docker/ldap-client/
+docker run --rm -it --publish=2222:22 --add-host=openldap:host-gateway --volume=$HOME/work/openldap/tests/testrun/certs:/certs:ro ldap-client
+
+# capture client -> proxy -> remote
+wireshark -i lo -f "portrange 9011-9012" -d tcp.port==9011,ldap -d tcp.port==9012,ldap -k -o tls.keylog_file:$HOME/work/openldap/tests/testrun/wireshark-keys.log
+
+# run the test
+tail -F tests/testrun/slapd.2.log
+killall slapd; SLAPD_DEBUG=-1 ./run -b mdb itsOLC
+
+# print OLC configuration from remote server
+./clients/tools/ldapsearch -H ldap://localhost:9011/ -D "cn=config" -w "secret" -b cn=config -o ldif-wrap=no
+
+# print OLC configuration from proxy
+./clients/tools/ldapsearch -H ldap://localhost:9012/ -D "cn=config" -w "secret" -b cn=config -o ldif-wrap=no
+
+# set client certificates
+export LDAPTLS_CACERT=tests/testrun/certs/internal-server-ca.pem
+export LDAPTLS_CERT=tests/testrun/certs/client.pem
+export LDAPTLS_KEY=tests/testrun/certs/client-key.pem
+
+# execute search as remote user
+./clients/tools/ldapsearch -H ldap://localhost:9012/ -D "cn=joe,dc=example,dc=com" -w "joe" -b dc=example,dc=com
+./clients/tools/ldapsearch -H ldap://localhost:9012/ -D "cn=joe,dc=example,dc=com" -w "joe" -ZZ -b dc=example,dc=com
+
+# execute search as local user
+./clients/tools/ldapsearch -H ldap://localhost:9012/ -D "cn=jill,dc=local,dc=com" -w "jill" -b dc=example,dc=com
+
+# modify OLC configuration (e.g. to rotate client certificates)
+# note:
+#   - modify operation fails to initialize slapd-ldap if replace is used instead of delete+add
+#   - slapd-ldap crashes to assert if mode=legacy is not given when changing OLC, even when mode=legacy is the default
+#
+./clients/tools/ldapmodify -H ldap://localhost:9012 -D cn=config -w secret <<EOF
+dn: olcDatabase={2}ldap,cn=config
+changetype: modify
+delete: olcDbStartTLS
+-
+add: olcDbStartTLS
+olcDbStartTLS: start tls_cacert=$HOME/work/openldap/tests/testrun/certs/external-server-ca.pem tls_key=$HOME/work/openldap/tests/testrun/certs/admin-account2-key.pem tls_cert=$HOME/work/openldap/tests/testrun/certs/admin-account2.pem
+-
+delete: olcDbIDAssertBind
+-
+add: olcDbIDAssertBind
+olcDbIDAssertBind: bindmethod=simple mode=legacy binddn="cn=admin-account,dc=example,dc=com" credentials="admin-account" tls_cacert=$HOME/work/openldap/tests/testrun/certs/external-server-ca.pem tls_key=$HOME/work/openldap/tests/testrun/certs/admin-account2-key.pem tls_cert=$HOME/work/openldap/tests/testrun/certs/admin-account2.pem
+EOF
+
+
+export LDAPTLS_CACERT=tests/testrun/certs/internal-server-ca.pem
+export LDAPTLS_CERT=tests/testrun/certs/admin-account.pem
+export LDAPTLS_KEY=tests/testrun/certs/admin-account-key.pem
+./clients/tools/ldapsearch -H ldap://localhost:9012/ -ZZ -Y EXTERNAL -b dc=example,dc=com
+
+# following will not work with "demand" in proxy since ldapsearch does not support combining SASL EXTERNAL + simple bind
+./clients/tools/ldapsearch -H ldap://localhost:9012/ -ZZ -D "cn=joe,dc=example,dc=com" -w "joe" -b dc=example,dc=com
+
+export LDAPTLS_CACERT=tests/testrun/certs/internal-server-ca.pem
+export LDAPTLS_CERT=tests/testrun/certs/admin-account2.pem
+export LDAPTLS_KEY=tests/testrun/certs/admin-account2-key.pem
+./clients/tools/ldapsearch -H ldap://localhost:9012/ -ZZ -Y EXTERNAL -b dc=example,dc=com
+
+
+./clients/tools/ldapsearch -H ldap://localhost:9012/ -ZZ -D "cn=jill,dc=local,dc=com" -w "jill" -b dc=local,dc=com
+
+
+./clients/tools/ldapmodify -H ldap://localhost:9012 -D cn=config -w secret <<EOF
+dn: cn=config
+changetype: modify
+add: olcSecurity
+olcSecurity: ssf=128
+EOF
+
+
+./clients/tools/ldapmodify -H ldap://localhost:9012 -D cn=config -w secret <<EOF
+dn: cn=config
+changetype: modify
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /home/tsaarni/work/openldap/tests/testrun/certs/proxy-server.pem
+-
+replace: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /home/tsaarni/work/openldap/tests/testrun/certs/proxy-server-key.pem
+EOF

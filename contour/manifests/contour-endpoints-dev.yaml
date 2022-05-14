@@ -1,0 +1,21 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: contour
+  namespace: projectcontour
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8001
+    targetPort: 8001
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: contour
+  namespace: projectcontour
+subsets:
+ - addresses:
+     - ip: REPLACE_ADDRESS_HERE
+   ports:
+     - port: 8001

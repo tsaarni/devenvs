@@ -1,0 +1,173 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-1
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echoserver-1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echoserver-1
+    spec:
+      containers:
+      - name: echoserver
+        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20201006-42d00bd
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - name: http-api
+          containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-2
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echoserver-2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echoserver-2
+    spec:
+      containers:
+      - name: conformance-echo
+        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20201006-42d00bd
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - name: http-api
+          containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-1
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  selector:
+    app.kubernetes.io/name: echoserver-1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-2
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  selector:
+    app.kubernetes.io/name: echoserver-2
+---
+# pre-conditions:
+#   kubectl create secret tls ingress --cert=$WORKDIR/certs/ingress.pem --key=$WORKDIR/certs/ingress-key.pem --dry-run=client -o yaml | kubectl apply -f -
+#   kubectl create secret generic client-root-ca-1 --from-file=ca.crt=$WORKDIR/certs/client-root-ca-1.pem --dry-run=client -o yaml | kubectl apply -f -
+#
+# tests:
+#    http --verify=$WORKDIR/certs/external-root-ca.pem https://host1.127-0-0-101.nip.io/  # echoserver-2
+#    http host1.127-0-0-101.nip.io                 # NOW: 404 not found, but see https://github.com/projectcontour/contour/issues/3800
+#    http host1.127-0-0-101.nip.io/should-not-work # NOW: echoserver-1, but see https://github.com/projectcontour/contour/issues/3800
+#    http host1.127-0-0-101.nip.io/subpage         # 301 Moved permanently
+#    http host1-127-0-0-101.nip.io/non-existing    # NOW: 404 not found, but see https://github.com/projectcontour/contour/issues/3800
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: tcpproxy
+spec:
+  virtualhost:
+    fqdn: host1.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+  # routes:
+  #   - conditions:
+  #     - prefix: /should-not-work
+  #     services:
+  #       - name: echoserver-1
+  #         port: 80
+  #     permitInsecure: true
+  #   - conditions:
+  #     - prefix: /subpage
+  #     services:
+  #       - name: echoserver-1
+  #         port: 80
+  tcpproxy:
+    services:
+      - name: echoserver-2
+        port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: overlapping
+spec:
+  rules:
+    - host: host1.127-0-0-101.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: echoserver-1
+                port:
+                  number: 80
+#  tls:
+#    - hosts:
+#      - host1.127-0-0-101.nip.io
+#      secretName: ingress
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: root
+spec:
+  virtualhost:
+    fqdn: host2.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+  tcpproxy:
+    services:
+      - name: echoserver-1
+        port: 80
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: child
+spec:
+  routes:
+    - conditions:
+      - prefix: /should-not-work
+      services:
+        - name: echoserver-2
+          port: 80
+      permitInsecure: true

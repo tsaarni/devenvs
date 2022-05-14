@@ -1,0 +1,142 @@
+{
+  "static_resources": {
+    "clusters": [
+      {
+        "name": "contour",
+        "alt_stat_name": "projectcontour_contour_8001",
+        "type": "STRICT_DNS",
+        "connect_timeout": "5s",
+        "load_assignment": {
+          "cluster_name": "contour",
+          "endpoints": [
+            {
+              "lb_endpoints": [
+                {
+                  "endpoint": {
+                    "address": {
+                      "socket_address": {
+                        "address": "contour",
+                        "port_value": 8001
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "circuit_breakers": {
+          "thresholds": [
+            {
+              "priority": "HIGH",
+              "max_connections": 100000,
+              "max_pending_requests": 100000,
+              "max_requests": 60000000,
+              "max_retries": 50
+            },
+            {
+              "max_connections": 100000,
+              "max_pending_requests": 100000,
+              "max_requests": 60000000,
+              "max_retries": 50
+            }
+          ]
+        },
+        "http2_protocol_options": {},
+        "transport_socket": {
+          "name": "tls",
+          "typed_config": {
+            "@type": "type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext",
+            "common_tls_context": {
+              "tls_certificates": [
+                {
+                  "certificate_chain": {
+                    "filename": "/certs/tls.crt"
+                  },
+                  "private_key": {
+                    "filename": "/certs/tls.key"
+                  }
+                }
+              ],
+              "validation_context": {
+                "trusted_ca": {
+                  "filename": "/ca/cacert.pem"
+                },
+                "verify_subject_alt_name": [
+                  "contour"
+                ]
+              }
+            }
+          }
+        },
+        "upstream_connection_options": {
+          "tcp_keepalive": {
+            "keepalive_probes": 3,
+            "keepalive_time": 30,
+            "keepalive_interval": 5
+          }
+        }
+      },
+      {
+        "name": "service-stats",
+        "alt_stat_name": "projectcontour_service-stats_9001",
+        "type": "LOGICAL_DNS",
+        "connect_timeout": "0.250s",
+        "load_assignment": {
+          "cluster_name": "service-stats",
+          "endpoints": [
+            {
+              "lb_endpoints": [
+                {
+                  "endpoint": {
+                    "address": {
+                      "socket_address": {
+                        "address": "127.0.0.1",
+                        "port_value": 9001
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "dynamic_resources": {
+    "lds_config": {
+      "api_config_source": {
+        "api_type": "GRPC",
+        "grpc_services": [
+          {
+            "envoy_grpc": {
+              "cluster_name": "contour"
+            }
+          }
+        ]
+      }
+    },
+    "cds_config": {
+      "api_config_source": {
+        "api_type": "GRPC",
+        "grpc_services": [
+          {
+            "envoy_grpc": {
+              "cluster_name": "contour"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "admin": {
+    "access_log_path": "/dev/null",
+    "address": {
+      "socket_address": {
+        "address": "127.0.0.1",
+        "port_value": 9001
+      }
+    }
+  }
+}

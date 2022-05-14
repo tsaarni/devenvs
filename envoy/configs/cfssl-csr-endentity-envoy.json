@@ -1,0 +1,6 @@
+{
+  "CN": "envoy-control-plane",
+  "Hosts": [
+    "envoy"
+  ]
+}

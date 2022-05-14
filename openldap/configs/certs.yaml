@@ -1,0 +1,27 @@
+subject: cn=ca
+key_type: rsa
+---
+subject: cn=server
+issuer: cn=ca
+sans:
+- DNS:localhost
+- DNS:openldap
+- DNS:127.0.0.1.xip.io
+key_type: rsa
+---
+subject: cn=user,ou=users,o=example
+issuer: cn=ca
+key_type: rsa
+---
+subject: cn=ldap-admin,ou=users,o=example
+issuer: cn=ca
+key_type: rsa
+---
+subject: cn=ldap-client,ou=users,o=example
+issuer: cn=ca
+key_type: rsa
+---
+subject: cn=foo,uid=admin,ou=system
+issuer: cn=ca
+key_type: rsa
+key_usages:

@@ -1,0 +1,88 @@
+#
+# http://www.openldap.org/software/man.cgi?query=slapd-config
+# http://www.openldap.org/doc/admin24/slapdconf2.html
+#
+
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcPidFile: /var/run/slapd/slapd.pid
+olcArgsFile: /var/run/slapd/slapd.args
+olcPasswordCryptSaltFormat: \$6\$%.86s
+olcTLSCACertificateFile: $CA_FILENAME
+olcTLSCertificateKeyFile: $KEY_FILENAME
+olcTLSCertificateFile: $CERT_FILENAME
+olcTLSVerifyClient: allow
+#olcTLSVerifyClient: demand
+
+
+
+#
+# Modules
+#
+
+dn: cn=module,cn=config
+objectClass: olcModuleList
+cn: module
+olcModulePath: /usr/lib/ldap
+olcModuleLoad: back_hdb
+olcModuleLoad: ppolicy
+
+
+#
+# Schemas
+#
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file:///etc/ldap/schema/core.ldif
+include: file:///etc/ldap/schema/cosine.ldif
+include: file:///etc/ldap/schema/inetorgperson.ldif
+include: file:///etc/ldap/schema/rfc2307bis.ldif
+
+
+#
+# Frontend config
+#
+
+dn: olcDatabase=frontend,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
+olcDatabase: frontend
+olcPasswordHash: {CRYPT}
+
+
+#
+# Online configuration
+#
+
+dn: olcDatabase=config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: config
+olcRootDN: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
+olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
+
+
+#
+# Backend database
+#
+
+dn: olcDatabase=hdb,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcHdbConfig
+olcDatabase: hdb
+olcSuffix: o=example
+olcDbDirectory: /data/db/
+olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
+olcAccess: to attrs=userPassword,shadowLastChange
+  by dn="cn=ldap-client,ou=users,o=example" read
+  by self write
+  by anonymous auth
+  by * none
+olcAccess: to dn.base="" by * read
+olcAccess: to *
+  by dn="cn=ldap-client,ou=users,o=example" read
+  by * none
+olcAccess: to * by * none
