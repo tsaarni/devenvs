@@ -1,50 +1,59 @@
 package mytestapp;
 
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.PemKeyCertOptions;
+import io.vertx.core.net.PfxOptions;
 
 public class App {
 
-    public static void main(String[] args) {
-        int port = 8443;
+  static final int port = 8443;
 
-        HttpServerOptions options = new HttpServerOptions()
-                .setPort(port)
-                .setSsl(true)
-                .setPemKeyCertOptions(
-                        new PemKeyCertOptions()
-                                .addCertPath("/home/tsaarni/work/devenvs/vertx/certs/server.pem")
-                                .addKeyPath("/home/tsaarni/work/devenvs/vertx/certs/server-key.pem")
-                                .addCertPath("/home/tsaarni/work/devenvs/vertx/certs/server2.pem")
-                                .addKeyPath("/home/tsaarni/work/devenvs/vertx/certs/server2-key.pem"))
-                .setSni(true)
-                .addEnabledSecureTransportProtocol("TLSv1.3");
+  public static void main(String[] args) {
 
-        Vertx vertx = Vertx.vertx();
+    System.setProperty("javax.net.debug", "keymanager");
+    System.setProperty("vertxweb.environment", "development");
 
-        vertx.exceptionHandler(new Handler<Throwable>() {
-            @Override
-            public void handle(Throwable event) {
-                System.err.println("Exception: " + event + event.getStackTrace());
-            }
+    Vertx vertx = Vertx.vertx();
+
+    HttpServerOptions options = new HttpServerOptions()
+        .setPort(port)
+        .setSsl(true)
+        .setSni(true)
+        .addEnabledSecureTransportProtocol("TLSv1.3");
+    configurePkcs12(options);
+    //configurePem(options);
+
+    HttpServer server = vertx.createHttpServer(options);
+
+    server.requestHandler(request -> request.response().end("Hello world"))
+        .exceptionHandler(e -> System.err.println("Exception: " + e.getStackTrace()))
+        .listen(r -> {
+          if (r.failed()) {
+            r.cause().printStackTrace();
+          }
         });
+  }
 
-        HttpServer server = vertx.createHttpServer(options);
+  static void configurePkcs12(HttpServerOptions options) {
+    options.setPfxKeyCertOptions(
+        new PfxOptions()
+            //.setPath("/home/tsaarni/work/devenvs/vertx/certs/server.p12")
+            //.setPassword("secret"));
+            .setPath("/home/tsaarni/work/vert.x/src/test/resources/tls/sni-keystore.jks")
+            .setPassword("wibble"));
 
-        server.requestHandler(
-                request -> {
-                    request.response().end("Hello world");
-                })
-                .listen(res -> {
-                    if (res.succeeded()) {
-                        System.out.println("listening :" + port);
-                    } else {
-                        System.out.println("Failed: " + res.cause());
-                    }
-                });
-    }
+  }
+
+  static void configurePem(HttpServerOptions options) {
+    options.setPemKeyCertOptions(
+        new PemKeyCertOptions()
+            .addCertPath("/home/tsaarni/work/devenvs/vertx/certs/server.pem")
+            .addKeyPath("/home/tsaarni/work/devenvs/vertx/certs/server-key.pem")
+            .addCertPath("/home/tsaarni/work/devenvs/vertx/certs/server2.pem")
+            .addKeyPath("/home/tsaarni/work/devenvs/vertx/certs/server2-key.pem"));
+
+  }
+
 }
-

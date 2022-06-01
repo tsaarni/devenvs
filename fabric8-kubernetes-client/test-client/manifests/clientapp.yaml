@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service-account
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: my-binding
+subjects:
+- kind: ServiceAccount
+  name: my-service-account
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fabric8io-kubernetes-client-app
+  labels:
+    app: fabric8io-kubernetes-client-app
+spec:
+  containers:
+    - name: shell
+      image: fabric8io-kubernetes-client-app:latest
+      imagePullPolicy: Never
+      env:
+        - name: KUBERNETES_AUTH_SERVICEACCOUNT_TOKEN
+          value: /projected/token
+        - name: APP_OPTS
+          value: -Dorg.slf4j.simpleLogger.defaultLogLevel=DEBUG
+      volumeMounts:
+        - name: projected
+          mountPath: "/projected"
+          readOnly: true
+  serviceAccountName: my-service-account
+  volumes:
+    - name: projected
+      projected:
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 600
+              path: token
+              audience: https://kubernetes.default.svc.cluster.local

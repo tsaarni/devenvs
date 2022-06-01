@@ -11,4 +11,13 @@ issuer: cn=ca
 sans:
 - DNS:server2.127-0-0-1.nip.io
 ---
+subject: cn=wildcard
+issuer: cn=ca
+sans:
+- DNS:*.server2.127-0-0-1.nip.io
+- DNS:*.127.0.0.1.nip.io
+---
+subject: cn=no-dns-name
+issuer: cn=ca
+---
 subject: cn=some-other-ca

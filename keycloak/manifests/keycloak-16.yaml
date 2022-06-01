@@ -65,7 +65,7 @@ spec:
         - name: keycloak
           # https://github.com/keycloak/keycloak-containers
           # https://quay.io/repository/keycloak/keycloak?tab=tags
-          image: quay.io/keycloak/keycloak:16.1.1
+          image: quay.io/keycloak/keycloak:16.1.0
           #imagePullPolicy: Never
 
           env:

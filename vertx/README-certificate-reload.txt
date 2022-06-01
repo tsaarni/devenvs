@@ -12,8 +12,7 @@ Choose debugger in vscode, launch App
 
 
 
-
-# install vert.x to local maven repo
+# compile on command line to install vert.x to local maven repo for quarkus to use
 mvn install -DskipTests=true
 mvn clean install -DskipTests=true
 
@@ -21,10 +20,31 @@ mvn clean install -DskipTests=true
 cp -a target/vertx-core-4.3.0-SNAPSHOT.jar ~/work/keycloak/quarkus/server/target/lib/lib/main/io.vertx.vertx-core-4.3.0-SNAPSHOT.jar
 
 
+# run unit tests
+mvn test -Dtest=Http1xTLSTest
+mvn test -Dtest=Http2TLSTest
+mvn test -Dtest=Http2TLSTest#testSNISubjectAltenativeNameCNMatch1
 
 
 mkdir -p certs
+
+rm -f certs/*
 certyaml -d certs configs/certs.yaml
+
+# import certs to p12 and combine into single p12 file with multiple server certs
+openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/server.pem -inkey certs/server-key.pem -out certs/server.p12  -name server.127-0-0-1.nip.io
+openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/server2.pem -inkey certs/server2-key.pem -out certs/server2.p12 -name server2.127-0-0-1.nip.io
+openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/wildcard.pem -inkey certs/wildcard-key.pem -out certs/wildcard.p12 -name *.server2.127-0-0-1.nip.io
+openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/no-dns-name.pem -inkey certs/no-dns-name-key.pem -out certs/no-dns-name.p12 -name foo
+
+for s in certs/server.p12 certs/server2.p12 certs/wildcard.p12 certs/no-dns-name.p12; do keytool -importkeystore -srckeystore $s -srcstoretype pkcs12 -srcstorepass secret -destkeystore certs/keystore.p12 -deststoretype pkcs12 -deststorepass secret; done
+
+for s in certs/server.p12 certs/server2.p12 certs/wildcard.p12 certs/no-dns-name.p12; do keytool -importkeystore -srckeystore $s -srcstoretype pkcs12 -srcstorepass secret -destkeystore certs/keystore.jks -deststoretype jks -deststorepass secret; done
+
+keytool -list -v -keystore certs/keystore.p12 -storepass secret
+keytool -list -v -keystore certs/keystore.jks -storepass secret
+
+
 
 
 http --verify certs/ca.pem https://localhost:8443/
@@ -34,11 +54,22 @@ http --verify certs/ca.pem https://server2.127-0-0-1.nip.io:8443/
 openssl s_client -connect localhost:8443 | openssl x509 -text -noout # returns the first certificate loaded: server.127-0-0-1.nip.io
 openssl s_client -connect localhost:8443 -servername server.127-0-0-1.nip.io | openssl x509 -text -noout
 openssl s_client -connect localhost:8443 -servername server2.127-0-0-1.nip.io | openssl x509 -text -noout
+openssl s_client -connect localhost:8443 -servername wildcard.server2.127-0-0-1.nip.io | openssl x509 -text -noout
+openssl s_client -connect localhost:8443 -servername wildcard.127.0.0.1.nip.io | openssl x509 -text -noout
+openssl s_client -connect localhost:8443 -servername not-matching | openssl x509 -text -noout
 
 openssl s_client -tls1_3 -connect localhost:8443  -requestCAfile certs/some-other-ca.pem
 
-rm certs/* && certyaml -d certs
 
+apps/sni-tester.sh localhost:8443 "" server.127-0-0-1.nip.io server2.127-0-0-1.nip.io wildcard.server2.127-0-0-1.nip.io wildcard.127.0.0.1.nip.io not-matching
+apps/sni-tester.sh localhost:8443 "" host1 host2.com wildcard.host3.com host4.com www.host4.com host5.com wildcard.host5.com localhost not-matching
+
+
+# convert jks to p12
+keytool -importkeystore -srckeystore /home/tsaarni/work/vert.x/src/test/resources/tls/sni-keystore.jks -destkeystore certs/sni-keystore.p12 -srcstoretype JKS -deststoretype PKCS12 -srcstorepass wibble -deststorepass wibble
+
+keytool -list -v -keystore /home/tsaarni/work/vert.x/src/test/resources/tls/sni-keystore.jks -storepass wibble
+keytool -list -v -keystore certs/sni-keystore.p12 -storepass wibble
 
 
 
@@ -160,3 +191,18 @@ index d7e5e94e72..5a963add6b 100644
 
              <dependency>
                  <groupId>org.keycloak</groupId>
+
+
+
+
+
+
+
+
+
+
+Reasons for NewSunX509
+
+- key type for selection logic
+
+https://hg.openjdk.java.net/jdk/jdk/file/ee1d592a9f53/src/java.base/share/classes/sun/security/ssl/X509KeyManagerImpl.java#l699

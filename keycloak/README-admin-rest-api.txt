@@ -65,7 +65,31 @@ http -v DELETE http://localhost:8081/auth/admin/realms/master/users/24b39570-bc5
 http -v GET http://localhost:8081/auth/admin/realms/master/admin-events Authorization:"bearer $TOKEN"
 
 
+#####################################
+#
+# create confidential client
+#
 
+# get admin token
+TOKEN=$(http --form POST http://keycloak.127-0-0-121.nip.io/auth/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token)
+
+# create client
+http POST http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/clients Authorization:"bearer $TOKEN" clientId=foo publicClient=false redirectUris:='["http://localhost"]' serviceAccountsEnabled=true secret=mysecret
+
+
+# get client token using client credentials (requires serviceAccountsEnabled=true for the client)
+http --form POST http://keycloak.127-0-0-121.nip.io/auth/realms/master/protocol/openid-connect/token grant_type=client_credentials client_id=foo client_secret=mysecret
+
+
+
+# list all clients
+http GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/clients Authorization:"bearer $TOKEN"
+
+# list specific client
+http GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/clients/29d6a41b-766f-42f6-9cbf-d5b18e476d8a Authorization:"bearer $TOKEN"
+
+# list client secret
+http GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/clients/29d6a41b-766f-42f6-9cbf-d5b18e476d8a/client-secret Authorization:"bearer $TOKEN"
 
 
 
@@ -112,4 +136,8 @@ http -v --form post http://keycloak.127-0-0-121.nip.io/auth/realms/master/protoc
 
 # Use Keycloak's whoami endpoint to get user permissions
 http -v http://keycloak.127-0-0-121.nip.io/auth/admin/master/console/whoami Authorization:"bearer $TOKEN"
+
+
+
+
 
