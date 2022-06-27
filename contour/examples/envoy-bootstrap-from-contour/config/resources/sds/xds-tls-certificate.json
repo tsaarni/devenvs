@@ -1,0 +1,1 @@
+{"resources":[{"@type":"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.Secret","name":"contour_xds_tls_certificate","tls_certificate":{"certificate_chain":{"filename":"/certs/tls.crt"},"private_key":{"filename":"/certs/tls.key"}}}]}

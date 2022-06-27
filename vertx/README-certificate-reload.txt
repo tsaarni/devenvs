@@ -3,6 +3,13 @@
 # copy sample application to vertx repo
 cp -a files/src/ ~/work/vert.x/
 
+mvn clean install -DskipTests=true
+
+
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+
 
 Choose debugger in vscode, launch App
 

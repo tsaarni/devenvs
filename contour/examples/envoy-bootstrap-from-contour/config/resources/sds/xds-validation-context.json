@@ -1,0 +1,1 @@
+{"resources":[{"@type":"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.Secret","name":"contour_xds_tls_validation_context","validation_context":{"trusted_ca":{"filename":"/certs/ca.crt"},"match_typed_subject_alt_names":[{"san_type":"DNS","matcher":{"exact":"contour"}}]}}]}
