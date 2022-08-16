@@ -1,3 +1,4 @@
+//
 // java -Djavax.net.ssl.trustStore=truststore.p12 -Djavax.net.ssl.trustStorePassword=secret ConnectWithLdaps.java
 
 import java.util.Hashtable;

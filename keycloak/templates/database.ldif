@@ -1,6 +1,7 @@
 #
 # http://www.openldap.org/software/man.cgi?query=slapd-config
 # http://www.openldap.org/doc/admin24/slapdconf2.html
+# https://tylersguides.com/guides/openldap-online-configuration-reference/
 #
 
 dn: cn=config
@@ -14,7 +15,6 @@ olcTLSCertificateKeyFile: $KEY_FILENAME
 olcTLSCertificateFile: $CERT_FILENAME
 olcTLSVerifyClient: allow
 #olcTLSVerifyClient: demand
-
 
 
 #

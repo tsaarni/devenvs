@@ -71,16 +71,21 @@ spec:
               echo 'PostgreSQL OK ✓'
       containers:
         - name: keycloak
-          # https://www.keycloak.org/server/configuration
-          # https://www.keycloak.org/server/containers
-          # https://quay.io/repository/keycloak/keycloak?tab=tags
-          image: quay.io/keycloak/keycloak:18.0.0
+
+          ## Releases
+          ## https://www.keycloak.org/downloads-archive.html
+          ## https://quay.io/repository/keycloak/keycloak?tab=tags
+          image: quay.io/keycloak/keycloak:18.0.2
           #imagePullPolicy: Never
           command:
             - /opt/keycloak/bin/kc.sh
             - start
             - --auto-build
 
+          ## Options
+          ## https://www.keycloak.org/server/configuration
+          ## https://www.keycloak.org/server/containers
+          ## https://www.keycloak.org/server/all-config
           env:
             - name: KC_DB
               value: "postgres"
@@ -92,9 +97,14 @@ spec:
               value: "keycloak"
             - name: KC_HOSTNAME
               value: "keycloak.127-0-0-121.nip.io"
-            # https://github.com/keycloak/keycloak/pull/11823
+            ## https://github.com/keycloak/keycloak/pull/11823
+            ## https://github.com/keycloak/keycloak/discussions/11856
+            ## https://github.com/keycloak/keycloak/pull/11872
             - name: KC_HTTP_ENABLED
               value: "true"
+            ## hostname-strict-https is "hidden" config option
+            ##  - true by default for production mode
+            ##  - false by default for dev mode
             #- name: KC_HOSTNAME_STRICT_HTTPS
             #  value: "false"
             - name: KC_PROXY
@@ -127,4 +137,3 @@ spec:
           secret:
             optional: true
             secretName: keycloak-internal
-

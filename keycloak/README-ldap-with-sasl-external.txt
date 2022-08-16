@@ -19,8 +19,8 @@ Create truststore and keystore for Keycloak and LDAP server
 
 ```bash
 # trusted cert for keycloak
-rm -f truststore.p12
-keytool -importcert -storetype PKCS12 -keystore truststore.p12 -storepass secret -noprompt -alias ca -file certs/ca.pem
+rm -f certs/truststore.p12
+keytool -importcert -storetype PKCS12 -keystore certs/truststore.p12 -storepass secret -noprompt -alias ca -file certs/ca.pem
 
 # ldap client cert for keycloak
 openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/ldap-admin.pem -inkey certs/ldap-admin-key.pem -out admin-keystore.p12
@@ -203,6 +203,7 @@ mvn clean install -DskipTests
 mvn clean install -DskipTests -pl util/embedded-ldap/
 
 # run with remote debugger
+#  attach to 5005
 mvn verify -DforkMode=never -Dmaven.surefire.debug -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPAnonymousBindTest -Dkeycloak.logging.level=debug
 
 # run without debugger
@@ -211,13 +212,19 @@ mvn install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.test
 
 mvn install -f testsuite/integration-arquillian/pom.xml -Dkeycloak.logging.level=debug -Dtest="org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationSASLExternalEncryptionSSL"
 
+
+mvn install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.**
+mvn install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.admin.UserFederationLdapConnectionTest
+
+
+
 # run with quarkus
-mvn clean install -e -Pauth-server-quarkus -f testsuite/integration-arquillian/pom.xml -Dkeycloak.logging.level=debug -Dtest="org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationSASLExternalEncryptionSSL"
+mvn clean install -e -Pauth-server-quarkus -f testsuite/integration-arquillian/pom.xml -Dkeycloak.logging.level=debug -Dtest="org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationSASLExternalEncryptionSSL" 
 
 mvn clean install -e -Pauth-server-wildfly -f testsuite/integration-arquillian/pom.xml -Dkeycloak.logging.level=debug -Dtest="org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationSASLExternalEncryptionSSL"
 
 
-to remote debug unittest: -Dauth.server.debug=true -Dauth.server.debug.port=5005
+to remote debug unittests on quarkus: -Dauth.server.debug=true -Dauth.server.debug.port=5005
 
 
 
@@ -364,4 +371,30 @@ To access H2 database
 
 Solution:
 
-remove old h2 file database ~/data/
+remove old h2 file database ~/data/ or target/kc/data/h2/
+rm /home/tsaarni/work/keycloak/target/kc/data/h2/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+# undertow
+TOKEN=$(http --form POST http://localhost:8081/auth/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token)
+http -v POST http://localhost:8081/auth/admin/realms/master/components Authorization:"bearer $TOKEN" < rest-requests/create-ldap-starttls-provider.json
+http -v "http://localhost:8081/auth/admin/realms/master/components?parent=master&type=org.keycloak.storage.UserStorageProvider" Authorization:"bearer $TOKEN"
+
+
+
+# quarkus
+TOKEN=$(http --form POST http://localhost:8080/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token)
+http -v POST http://localhost:8080/admin/realms/master/components Authorization:"bearer $TOKEN" < rest-requests/create-ldap-starttls-provider.json
+http -v POST http://localhost:8080/admin/realms/master/components Authorization:"bearer $TOKEN" < rest-requests/create-ldaps-provider.json 
+http -v "http://localhost:8080/admin/realms/master/components?parent=master&type=org.keycloak.storage.UserStorageProvider" Authorization:"bearer $TOKEN"

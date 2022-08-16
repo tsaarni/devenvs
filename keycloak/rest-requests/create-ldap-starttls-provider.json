@@ -1,0 +1,97 @@
+{
+  "providerId": "ldap",
+  "providerType": "org.keycloak.storage.UserStorageProvider",
+  "name": "ldap",
+  "config": {
+      "connectionUrl": [
+          "ldap://localhost"
+      ],
+      "connectionTimeout": [
+          ""
+      ],
+      "bindDn": [
+          "this-binddn-is-not-used"
+      ],
+      "bindCredential": [
+          "this-password-is-not-used"
+      ],
+      "usersDn": [
+          "ou=users,o=example"
+      ],
+      "usernameLDAPAttribute": [
+          "cn"
+      ],
+      "rdnLDAPAttribute": [
+          "cn"
+      ],
+      "uuidLDAPAttribute": [
+          "objectGUID"
+      ],
+      "userObjectClasses": [
+          "person, organizationalPerson, user"
+      ],
+      "customUserSearchFilter": [
+          ""
+      ],
+      "readTimeout": [
+          ""
+      ],
+      "batchSizeForSync": [
+          ""
+      ],
+      "enabled": [
+          "true"
+      ],
+      "vendor": [
+          "ad"
+      ],
+      "startTls": [
+          "true"
+      ],
+      "useTruststoreSpi": [
+          "always"
+      ],
+      "connectionPooling": [
+          "false"
+      ],
+      "authType": [
+          "EXTERNAL"
+      ],
+      "editMode": [
+          "WRITABLE"
+      ],
+      "searchScope": [
+          ""
+      ],
+      "pagination": [
+          "false"
+      ],
+      "importEnabled": [
+          "true"
+      ],
+      "allowKerberosAuthentication": [
+          "false"
+      ],
+      "useKerberosForPasswordAuthentication": [
+          "false"
+      ],
+      "cachePolicy": [
+          "DEFAULT"
+      ],
+      "usePasswordModifyExtendedOp": [
+          "false"
+      ],
+      "validatePasswordPolicy": [
+          "false"
+      ],
+      "trustEmail": [
+          "false"
+      ],
+      "changedSyncPeriod": [
+          "-1"
+      ],
+      "fullSyncPeriod": [
+          "-1"
+      ]
+  }
+}
