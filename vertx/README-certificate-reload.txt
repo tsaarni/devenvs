@@ -212,4 +212,77 @@ Reasons for NewSunX509
 
 - key type for selection logic
 
-https://hg.openjdk.java.net/jdk/jdk/file/ee1d592a9f53/src/java.base/share/classes/sun/security/ssl/X509KeyManagerImpl.java#l699
+https://github.com/openjdk/jdk/blob/6e55a72f25f7273e3a8a19e0b9a97669b84808e9/src/java.base/share/classes/sun/security/ssl/X509KeyManagerImpl.java#L696-L721
+
+
+Problems
+
+
+Certificate selection order is not predictable
+  - True for both overriding KeyManager and KeyStore SPI
+  - order comes from underlying keystores
+    https://stackoverflow.com/questions/72446019/how-does-java-pick-default-certificate-when-keystore-has-multiple-server-certifi/72450047
+
+
+
+SNI support cannot be disabled even though Vert.x has this assumed by default 
+  - KeyStore always implements SNI
+    not obeying server options setSni(false)
+  - Custom KeyManager also always implements SNI unless setSni(false) information is delegated to it somehow
+  - The result is that Vert.x would return correct certificate (according to SNI) when it previously might have returned incorrect one.
+
+JSSE NewSunX509 KeyManager does not consider Subject CN field for SNI match if DNS SAN is present
+  - Following test cases set SNI host5.com which will not work since DNS SAN in certificate is *.host5.com
+  - testSNISubjectAltenativeNameCNMatch2
+    testSNISubjectAltenativeNameCNMatch2PKCS12
+
+
+SNI support might not be in parity with Netty
+  - For example, if encrypted handshake gets implemnted in Netty, it might be unsupported by NewSunX509 KeyManager
+    https://github.com/netty/netty/issues/12155 get implemented
+  - Same is true the other way around too: JSSE NewSunX509 KeyManager implements key selection by key type, requested authority etc
+    https://hg.openjdk.java.net/jdk/jdk/file/ee1d592a9f53/src/java.base/share/classes/sun/security/ssl/X509KeyManagerImpl.java#l699
+
+
+
+
+Following fail because distringuished names (authority) in certificate request are not considered anymore in case of custom KeyManager
+-Dtest=NetTest#testSniWithServerNameTrustFail
+-Dtest=Http1xTLSTest#testSNIWithServerNameTrustFail
+
+
+
+o
+
+Failed tests: 
+  KeyStoreHelperTest.testKeyStoreHelperSupportsECPrivateKeys:71->assertKeyType:75->AsyncTestBase.assertThat:473 
+Expected: an instance of java.security.interfaces.ECPrivateKey
+     but: null
+  KeyStoreHelperTest.testKeyStoreHelperSupportsRSAPrivateKeys:55->assertKeyType:75->AsyncTestBase.assertThat:473 
+Expected: an instance of java.security.interfaces.RSAPrivateKey
+     but: null
+  KeyStoreTest.testKeyCertPath:396->testKeyManager:467->AsyncTestBase.assertNotNull:351 null
+  KeyStoreTest.testKeyCertValue:415->testKeyManager:467->AsyncTestBase.assertNotNull:351 null
+  KeyStoreTest.testRsaKeyCertPath:405->testKeyManager:467->AsyncTestBase.assertNotNull:351 null
+  NetTest>AsyncTestBase.lambda$onFailure$0:592->AsyncTestBase.assertFalse:214 null
+Tests in error: 
+io.vertx.core.net.NetTest.testServerCertificateMultipleWithKeyPassword(io.vertx.core.net.NetTest)
+  Run 1: NetTest.testServerCertificateMultipleWithKeyPassword:1619->AsyncTestBase.assertEquals:362->AsyncTestBase.handleThrowable:183 » IllegalState
+  Run 2: NetTest>AsyncTestBase.after:83->tearDown:132->VertxTestBase.tearDown:93->AsyncTestBase.tearDown:73->AsyncTestBase.afterAsyncTestBase:166 » IllegalState
+
+  NetTest.testSniWithServerNameTrustFail:1571->AsyncTestBase.await:121->AsyncTestBase.await:133 » IllegalState
+
+
+
+  KeyStoreTest.testKeyCertPath:396->testKeyManager:467->AsyncTestBase.assertNotNull:351 null
+  KeyStoreTest.testKeyCertValue:415->testKeyManager:467->AsyncTestBase.assertNotNull:351 null
+  KeyStoreTest.testRsaKeyCertPath:405->testKeyManager:467->AsyncTestBase.assertNotNull:351 null
+
+
+KeyStoreHelperTest#testKeyStoreHelperSupportsECPrivateKeys
+KeyStoreHelperTest#testKeyStoreHelperSupportsRSAPrivateKeys
+
+
+
+
+

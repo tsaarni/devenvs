@@ -3,10 +3,10 @@ export WORKDIR=/home/tsaarni/work/devenvs/keycloak
 
 
 # build and install org.keycloak modules into maven cache
-mvn -f pom.xml clean install -DskipTestsuite -DskipExamples -DskipTests
+mvn clean install -DskipTestsuite -DskipExamples -DskipTests
 
 # after main codebase is built, to build the quarkus distribution
-mvn clean install -DskipTests
+mvn -f quarkus/pom.xml clean install -DskipTests
 
 
 #########################
@@ -17,6 +17,9 @@ mvn clean install -DskipTests
 rm -rf certs
 mkdir -p certs
 certyaml --destination certs configs/certs.yaml
+
+rm -f certs/truststore.p12
+keytool -importcert -storetype PKCS12 -keystore certs/truststore.p12 -storepass secret -noprompt -alias ca -file certs/ca.pem
 
 
 # renew test
@@ -29,15 +32,6 @@ openssl s_client -connect keycloak.127-0-0-1.nip.io:8443 | openssl x509 -text -n
 #
 # postgress
 #
-
-# postgres requires specific permissions for the certs
-mkdir -p certs/pg
-cp certs/postgres.pem certs/postgres-key.pem certs/client-ca.pem certs/pg
-sudo chown 70 certs/pg/*
-sudo chmod 600 certs/pg/*
-
-# postgres requires private key in DER format
-openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in certs/postgres-admin-key.pem -out certs/postgres-admin-key2.pem
 
 # run postgres in docker
 docker-compose up postgres
@@ -67,7 +61,8 @@ java -jar quarkus/server/target/lib/quarkus-run.jar build --db=postgres  # chang
 # import realm at start  https://www.keycloak.org/server/importExport
 
 # clean realms
-rm -rf ~/data/h2/
+# OLD: rm -rf ~/data
+rm /home/tsaarni/work/keycloak/target/kc/data/h2/*
 
 
 
@@ -107,3 +102,33 @@ http --verify false -v POST https://keycloak.127-0-0-1.nip.io:8443/admin/realms/
 
 
 
+#######################
+#
+# Parameters
+#
+
+https://www.keycloak.org/server/all-config
+https://quarkus.io/guides/all-config
+
+https://www.keycloak.org/server/reverseproxy
+https://www.keycloak.org/server/hostname
+
+- quarkus.http.proxy.proxy-address-forwarding
+
+   If this is true then the address, scheme etc. will be set from headers forwarded by the proxy server, such as X-Forwarded-For. This should only be set if you are behind a proxy that sets these headers.
+
+  - false if proxy=none (default)
+  - true  if proxy==edge
+  - true  if proxy==reencrypt
+  - true  if proxy==passthrough
+
+- quarkus.http.proxy.enable-forwarded-host
+
+  Enable override the received request’s host through a forwarded host header.
+
+  - false if proxy==none
+  - true otherwise
+
+
+
+hostname-strict-https=false (default)

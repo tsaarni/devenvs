@@ -2,6 +2,11 @@ subject: cn=client-root-ca-1
 ---
 subject: cn=client-root-ca-2
 ---
+subject: cn=client-sub-ca-2
+ca: true
+issuer: cn=client-root-ca-2
+revoked: true
+---
 subject: cn=internal-root-ca
 ---
 subject: cn=external-root-ca
@@ -51,11 +56,22 @@ issuer: cn=client-root-ca-1
 sans:
 - DNS:client
 ---
+subject: cn=revoked-client-1
+issuer: cn=client-root-ca-1
+revoked: true
+---
 subject: cn=client-2
 issuer: cn=client-root-ca-2
 key_usages:
 - KeyEncipherment
 - DigitalSignature
+---
+subject: cn=revoked-client-2
+issuer: cn=client-sub-ca-2
+revoked: true
+---
+subject: cn=notrevoked-client-2
+issuer: cn=client-sub-ca-2
 ---
 subject: cn=untrusted-client
 ca: false
@@ -92,9 +108,10 @@ sans:
 - DNS:protected-oauth.127-0-0-101.nip.io
 ---
 subject: cn=self-signed
+sans:
+- DNS:protected.127-0-0-101.nip.io
 ca: false
 key_usages:
 - CertSign
 - KeyEncipherment
 - DigitalSignature
-
