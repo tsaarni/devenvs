@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch QuorumPeerMain",
+            "request": "launch",
+            "mainClass": "org.apache.zookeeper.server.quorum.QuorumPeerMain",
+            "projectName": "zookeeper",
+            "args": "/home/tsaarni/work/devenvs/zookeeper/configs/zoo.cfg",
+        },
+    ]
+}
+

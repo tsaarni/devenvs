@@ -1,0 +1,10 @@
+subject: cn=cacert
+---
+issuer: cn=cacert
+subject: cn=cert1
+key_type: RSA
+---
+subject: cn=clientcacert
+---
+issuer: cn=clientcacert
+subject: cn=clicert

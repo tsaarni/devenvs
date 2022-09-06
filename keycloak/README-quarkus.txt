@@ -21,6 +21,10 @@ certyaml --destination certs configs/certs.yaml
 rm -f certs/truststore.p12
 keytool -importcert -storetype PKCS12 -keystore certs/truststore.p12 -storepass secret -noprompt -alias ca -file certs/ca.pem
 
+# for PostgreSQL JDBC Driver
+openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in certs/postgres-admin-key.pem -out certs/postgres-admin-key.der
+
+
 
 # renew test
 rm certs/* && certyaml --destination certs configs/certs.yaml
@@ -83,6 +87,7 @@ java -jar quarkus/server/target/lib/quarkus-run.jar --verbose start --auto-build
 
 
 
+
 http://keycloak.127-0-0-1.nip.io:8080/q/dev/
 http://keycloak.127-0-0-1.nip.io:8080/
 https://keycloak.127-0-0-1.nip.io:8443/
@@ -100,6 +105,7 @@ http --verify false -v POST https://keycloak.127-0-0-1.nip.io:8443/admin/realms/
 
 
 
+bin/kc.sh start --auto-build --db=postgres --hostname=keycloak.127-0-0-1.nip.io:8443 --db-username=keycloak --db-password=keycloak --https-certificate-file=$WORKDIR/certs/keycloak-server.pem --https-certificate-key-file=$WORKDIR/certs/keycloak-server-key.pem --db-url="\"jdbc:postgresql://localhost:5432/keycloak?sslcert=$WORKDIR/certs/postgres-admin.pem&sslkey=$WORKDIR/certs/postgres-admin-key.der&sslrootcert=$WORKDIR/certs/ca.pem&sslmode=verify-full\"" --spi-truststore-file-file=$WORKDIR/certs/truststore.p12 --spi-truststore-file-password=secret --spi-keystore-default-ldap-certificate-file=$WORKDIR/certs/ldap-client.pem --spi-keystore-default-ldap-certificate-key-file=$WORKDIR/certs/ldap-client-key.pem
 
 
 #######################

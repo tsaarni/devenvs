@@ -1,8 +1,16 @@
+# Pre-condition to run:
+#     rm -rf certs && mkdir certs && certyaml --destination certs configs/certs.yaml
+#
+# Start
+#     docker-compose up
+#
+# Cleanup
+#     docker-compose rm -f -v
+#
+
 version: "3"
 services:
   # OLC configuration for the server is in templates/*
-  # Pre-condition to run:
-  #   rm -rf certs && mkdir certs && certyaml --destination certs configs/certs.yaml
   openldap:
     build: docker/openldap
     ports:
@@ -15,6 +23,9 @@ services:
       - CERT_FILENAME=/input/certs/ldap.pem
       - KEY_FILENAME=/input/certs/ldap-key.pem
       - CA_FILENAME=/input/certs/client-ca.pem
+
+  # sshd with sssd
+  #   sshpass -p user ssh user@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "echo Hello world!"
   ldap-client:
     build: docker/ldap-client
     ports:
@@ -26,13 +37,16 @@ services:
   postgres-init:
     image: docker.io/postgres:14-alpine
     entrypoint: sh
-    # PEM -> DER conversion for private key is not needed anymore?
-    # openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in input/certs/postgres-admin-key.pem -out certs/postgres-admin-key.pem
     command: -x -c "cp -a input/certs/* /certs && chown 70 certs/* && chmod 600 certs/*"
     volumes:
       - .:/input:ro
       - postgres-certs:/certs
 
+  # Connect to postgresql CLI
+  #
+  # docker exec -it keycloak-postgres-1 psql --username=keycloak
+  #   \dt                         # show tables
+  #   select * from user_entity;  # show users
   postgres:
     image: docker.io/postgres:14-alpine
     command: -c config_file=/configs/postgres.conf
