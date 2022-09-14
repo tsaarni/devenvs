@@ -12,6 +12,12 @@ services:
     ports:
       - "12345:12345"
     volumes:
-      - ./logstash-destination.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./logstash-destination-beats.conf:/usr/share/logstash/pipeline/logstash.conf:ro
       - ./certs:/certs:ro
 
+  rsyslog:
+    build: docker/rsyslog
+    ports:
+      - "6514-6515:6514-6515"
+    volumes:
+      - ./certs:/certs:ro
