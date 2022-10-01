@@ -65,8 +65,12 @@ java -jar quarkus/server/target/lib/quarkus-run.jar build --db=postgres  # chang
 # import realm at start  https://www.keycloak.org/server/importExport
 
 # clean realms
-# OLD: rm -rf ~/data
-rm /home/tsaarni/work/keycloak/target/kc/data/h2/*
+rm ~/data/h2/keycloakdb*
+or
+rm ~/work/keycloak/target/kc/data/h2/keycloakdb*
+
+# access DB qith H2 console (keycloak must not be running while using console)
+java -cp /home/tsaarni/.m2/repository/com/h2database/h2/1.4.197/h2-1.4.197.jar org.h2.tools.Console -url "jdbc:h2:~/data/h2/keycloakdb" -user sa -password password
 
 
 

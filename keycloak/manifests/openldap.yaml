@@ -67,7 +67,7 @@ spec:
             name: openldap-config
         - name: certs
           secret:
-            secretName: openldapcert
+            secretName: openldap-cert
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

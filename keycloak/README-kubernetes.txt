@@ -19,23 +19,24 @@ kubectl create secret tls keycloak-internal --cert=certs/keycloak-internal.pem -
 kubectl create secret generic internal-ca --from-file=ca.crt=certs/internal-ca.pem --dry-run=client -o yaml | kubectl apply -f -
 
 
+# openldap
 
-# create certs with cert-manager
-kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.0/cert-manager.yaml
-kubectl apply -f manifests/certificates.yaml
+docker build docker/openldap/ -t localhost/openldap:latest
+kind load docker-image --name keycloak localhost/openldap:latest
+kubectl create configmap openldap-config --dry-run=client -o yaml --from-file=templates/database.ldif --from-file=templates/users-and-groups.ldif | kubectl apply -f -
+kubectl create secret tls openldap-cert --cert=certs/ldap.pem --key=certs/ldap-key.pem --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl get secret keycloakcert -o jsonpath="{..tls\.crt}" | base64 -d | openssl x509 -text -noout
-kubectl get secret keycloakcert -o jsonpath="{..keystore\.p12}" | base64 -d | openssl pkcs12 -password pass:secret -nodes
+# patch tls secret to inject ca.crt
+kubectl patch secret openldap-cert --patch-file /dev/stdin <<EOF
+data:
+  ca.crt: $(cat certs/client-ca.pem | base64 -w 0)
+EOF
 
-kubectl create configmap openldap-config --dry-run -o yaml --from-file=templates/database.ldif --from-file=templates/users-and-groups.ldif | kubectl apply -f -
 kubectl create configmap keycloak-config --dry-run -o yaml --from-file=configs/master-realm.json | kubectl apply -f -
 
 
 docker build docker/keycloak/ -t localhost/keycloak:latest
 kind load docker-image --name keycloak localhost/keycloak:latest
-
-docker build docker/openldap/ -t localhost/openldap:latest
-kind load docker-image --name keycloak localhost/openldap:latest
 
 
 kubectl apply -f manifests
@@ -43,11 +44,18 @@ kubectl apply -f manifests
 https://keycloak.127-0-0-121.nip.io/auth/
 
 
-# reference
-helm repo add codecentric https://codecentric.github.io/helm-charts
-cd helm
-helm fetch --untar codecentric/keycloak
+### for reference
+# helm repo add codecentric https://codecentric.github.io/helm-charts
+# cd helm
+# helm fetch --untar codecentric/keycloak
 
+
+
+### CERT-MANAGER ALTERNATIVE
+### deploy cert-manager and certificates
+# kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.9.1/cert-manager.yaml
+# kubectl apply -f manifests/certificates.yaml
+# kubectl get secret keycloak-external -o jsonpath="{..ca\.crt}" > ca.pem
 
 
 
@@ -133,8 +141,3 @@ TOKEN=$(http --form POST http://keycloak.127-0-0-121.nip.io/auth/realms/master/p
 
 http -v GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/users Authorization:"bearer $TOKEN"
 http -v POST http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/users Authorization:"bearer $TOKEN" username=foo
-
-
-
-
-

@@ -12,13 +12,24 @@ issuer: cn=client-ca
 subject: cn=client-rsa
 key_type: RSA
 ---
+issuer: cn=client-ca
+subject: cn=client-revoked
+key_type: EC
+revoked: true
+---
 issuer: cn=server-ca
 subject: cn=server
 sans:
 - DNS:logstash-destination
+- DNS:localhost
 key_type: RSA
+---
+issuer: cn=server-ca
+subject: cn=server-revoked
+revoked: true
 ---
 issuer: cn=server-ca
 subject: cn=rsyslog
 sans:
 - DNS:localhost
+revoked: true

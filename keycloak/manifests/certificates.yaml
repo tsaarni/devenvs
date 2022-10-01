@@ -1,11 +1,11 @@
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: self-signed-issuer
 spec:
   selfSigned: {}
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: cluster-ca
@@ -21,7 +21,7 @@ spec:
     name: self-signed-issuer
     kind: Issuer
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: ca-issuer
@@ -29,20 +29,20 @@ spec:
   ca:
     secretName: cluster-ca-keypair
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: keycloak
 spec:
-  secretName: keycloakcert
+  secretName: keycloak-external
   commonName: keycloak
   dnsNames:
     - keycloak
     - keycloak.default
     - keycloak.default.svc.cluster.local
     - keycloak.127-0-0-121.nip.io
-  duration: 60m
-  renewBefore: 50m
+  duration: 60h
+  renewBefore: 50h
   isCA: false
   issuerRef:
     name: ca-issuer
@@ -66,12 +66,12 @@ type: Opaque
 stringData:
   password: secret
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: openldap
 spec:
-  secretName: openldapcert
+  secretName: openldap-cert
   commonName: openldap
   dnsNames:
     - openldap
