@@ -98,8 +98,8 @@ curl https://raw.githubusercontent.com/projectcontour/contour/release-1.7/exampl
 # compile binary
 go build -o contour -v github.com/projectcontour/contour/cmd/contour
 
-kubectl -n projectcontour logs $(kubectl -n projectcontour get pod -l app=contour -o jsonpath='{.items[0].metadata.name}') -f   # contour logs
-kubectl -n projectcontour logs $(kubectl -n projectcontour get pod -l app=envoy -o jsonpath='{.items[0].metadata.name}') -f     # envoy logs
+kubectl -n projectcontour logs deployments/contour
+kubectl -n projectcontour logs daemonsets/envoy envoy
 
 
 

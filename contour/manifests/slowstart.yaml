@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: echoserver
-  replicas: 5
+  replicas: 2
   template:
     metadata:
       labels:
@@ -52,19 +52,10 @@ spec:
   virtualhost:
     fqdn: echoserver.127-0-0-101.nip.io
   routes:
-    - conditions:
-        - prefix: /foo
-      services:
+     - services:
         - name: echoserver
           port: 80
-          slowStart:
-            window: 1s
-    - conditions:
-        - prefix: /bar
-      services:
-        - name: echoserver
-          port: 80
-          slowStart:
-            window: 2us
-            aggression: "1.0"
-            minWeightPercent: 25
+          slowStartPolicy:
+            window: 30s
+            minWeightPercent: 10
+#            aggression: ".1"
