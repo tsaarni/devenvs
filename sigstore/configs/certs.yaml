@@ -1,0 +1,8 @@
+subject: cn=ca
+---
+subject: cn=registry
+issuer: cn=ca
+sans:
+  - DNS:localhost
+  - DNS:registry.127-0-10-80.nip.io
+  - DNS:registry.127-0-10-81.nip.io
