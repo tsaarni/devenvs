@@ -41,6 +41,7 @@ include: file:///etc/ldap/schema/core.ldif
 include: file:///etc/ldap/schema/cosine.ldif
 include: file:///etc/ldap/schema/inetorgperson.ldif
 include: file:///etc/ldap/schema/rfc2307bis.ldif
+include: file:///etc/ldap/schema/ppolicy.ldif
 
 
 #
@@ -69,7 +70,7 @@ olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
 # Backend database
 #
 
-dn: olcDatabase=hdb,cn=config
+dn: olcDatabase={1}hdb,cn=config
 objectClass: olcDatabaseConfig
 objectClass: olcHdbConfig
 olcDatabase: hdb
@@ -86,3 +87,10 @@ olcAccess: to *
   by dn="cn=ldap-client,ou=users,o=example" read
   by * none
 olcAccess: to * by * none
+
+
+dn: olcOverlay=ppolicy,olcDatabase={1}hdb,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcPPolicyConfig
+olcOverlay: ppolicy
+olcPPolicyDefault: cn=default,ou=ppolicy,o=example

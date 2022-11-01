@@ -37,15 +37,14 @@
             "env": {
                 "KEYCLOAK_ADMIN": "admin",
                 "KEYCLOAK_ADMIN_PASSWORD": "admin",
-                "KC_SPI_TRUSTSTORE_FILE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/truststore.p12",
-                "KC_SPI_TRUSTSTORE_FILE_PASSWORD": "secret",
-                "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client.pem",
-                "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client-key.pem",
+                // "KC_SPI_TRUSTSTORE_FILE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/truststore.p12",
+                // "KC_SPI_TRUSTSTORE_FILE_PASSWORD": "secret",
+                // "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client.pem",
+                // "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client-key.pem",
                 // "KC_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
                 // "KC_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
-                "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
-                "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
-
+                // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
+                // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
             },
             //      "KC_DB": "postgres",
             // // //     "KC_DB_URL": "jdbc:postgresql://localhost:5432/keycloak",
@@ -54,10 +53,17 @@
             //       "KC_HOSTNAME": "localhost:8080",
             // }
         },
+        {
+            "type": "java",
+            "name": "Import realm",
+            "request": "launch",
+            "mainClass": "org.keycloak.quarkus._private.IDELauncher",
+            "projectName": "keycloak-quarkus-server-app",
+            "args": "import --dir /home/tsaarni/work/devenvs/keycloak/migrations/ldap-federation-simple/",
+        }
 
     ]
 }
 
     ]
 }
-

@@ -15,6 +15,10 @@ mvn -Pdistribution -DskipTests clean install
 # Dependency tree
 mvn dependency:tree -Pdistribution
 
+# Dedendency on particular package
+mvn dependency:tree -Pdistribution -Dincludes=jakarta.xml.bind:jakarta.xml.bind-api
+
+
 
 
 

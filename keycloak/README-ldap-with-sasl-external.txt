@@ -1,23 +1,16 @@
 
-# Environment to develop, test and experiment with Keycloak and LDAP federation
-
-
-![](diagram.png)
+export WORKDIR=~/work/devenvs/keycloak
 
 
 ## Preparation
 
-Create certificates and keys for LDAP server and clients
-
-```bash
+# Create certificates and keys for LDAP server and clients
 rm -rf certs
 mkdir -p certs
 certyaml --destination certs configs/certs.yaml   # generate certificates and keys
-```
 
-Create truststore and keystore for Keycloak and LDAP server
 
-```bash
+# Create truststore and keystore for Keycloak and LDAP server
 # trusted cert for keycloak
 rm -f certs/truststore.p12
 keytool -importcert -storetype PKCS12 -keystore certs/truststore.p12 -storepass secret -noprompt -alias ca -file certs/ca.pem
@@ -27,28 +20,18 @@ openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/ldap-ad
 
 # optional: keycloak embedded ldap test server cert
 openssl pkcs12 -export -passout pass:password -noiter -nomaciter -in certs/server.pem -inkey certs/server-key.pem -out server-keystore.p12
-```
 
-Set environment variable pointing to this repo
 
-```bash
-export WORKDIR=/home/tsaarni/work/keycloak-devenv
-```
 
 
 ## Build and run test services
+# Run LDAP server (OpenLDAP) and LDAP client (SSH and SSSD)
 
-Run LDAP server (OpenLDAP) and LDAP client (SSH and SSSD)
-
-```bash
 docker-compose up
 docker-compose rm -f  # clean previous containers
-```
 
 
-Test that LDAP is up and running
-
-```bash
+## Test that LDAP is up and running
 # dump configuration
 docker exec keycloak-devenv-openldap-1 ldapsearch -H ldapi:/// -Y EXTERNAL -b cn=config
 
@@ -78,10 +61,11 @@ ldapsearch -H ldaps://localhost:636  -b ou=users,o=example "(&(uid=user)(objectc
 
 # test bind (by changing password)
 ldappasswd -ZZ -D cn=user,ou=users,o=example -w user -s user
-```
 
-The client configuration is read from `ldaprc` in home directory by default.
-For parameters seem https://www.openldap.org/software/man.cgi?query=ldap.conf
+
+
+# The client configuration is read from `ldaprc` in home directory by default.
+# For parameters seem https://www.openldap.org/software/man.cgi?query=ldap.conf
 
 
 
@@ -147,9 +131,8 @@ ls distribution/server-dist/target/keycloak*.tar.gz
 To debug LDAP traffic, first get the interface name from LDAP server container
 and then run wireshark.
 
-```bash
 sudo nsenter -n -t $(pidof slapd) wireshark -f "port 389 or port 636" -k -o tls.keylog_file:$WORKDIR/output/wireshark-keys.log
-```
+
 
 The LDAP server container uses openssl wrapper ([see here](docker/openldap/sslkeylog/))
 that dumps TLS pre-master secrets to `output/wireshark-keys.log`.
@@ -219,7 +202,7 @@ mvn install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.test
 
 
 # run with quarkus
-mvn clean install -e -Pauth-server-quarkus -f testsuite/integration-arquillian/pom.xml -Dkeycloak.logging.level=debug -Dtest="org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationSASLExternalEncryptionSSL" 
+mvn clean install -e -Pauth-server-quarkus -f testsuite/integration-arquillian/pom.xml -Dkeycloak.logging.level=debug -Dtest="org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationSASLExternalEncryptionSSL"
 
 mvn clean install -e -Pauth-server-wildfly -f testsuite/integration-arquillian/pom.xml -Dkeycloak.logging.level=debug -Dtest="org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationSASLExternalEncryptionSSL"
 
@@ -396,5 +379,5 @@ http -v "http://localhost:8081/auth/admin/realms/master/components?parent=master
 # quarkus
 TOKEN=$(http --form POST http://localhost:8080/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token)
 http -v POST http://localhost:8080/admin/realms/master/components Authorization:"bearer $TOKEN" < rest-requests/create-ldap-starttls-provider.json
-http -v POST http://localhost:8080/admin/realms/master/components Authorization:"bearer $TOKEN" < rest-requests/create-ldaps-provider.json 
+http -v POST http://localhost:8080/admin/realms/master/components Authorization:"bearer $TOKEN" < rest-requests/create-ldaps-provider.json
 http -v "http://localhost:8080/admin/realms/master/components?parent=master&type=org.keycloak.storage.UserStorageProvider" Authorization:"bearer $TOKEN"

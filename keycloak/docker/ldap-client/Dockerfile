@@ -9,7 +9,8 @@ RUN apt-get update && \
         libpam-sss \
         openssh-server \
         sssd \
-        sssd-tools
+        sssd-tools \
+        cracklib-runtime
 
 RUN  curl -fsSL https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/v1.4/files/docker/systemctl3.py -o /bin/systemctl && \
      chmod +x /bin/systemctl
