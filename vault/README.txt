@@ -1,5 +1,40 @@
 
 
+# build (only for amd64)
+XC_OSARCH=linux/amd64 make
+
+
+
+
+
+
+# basic config
+
+cat > config.hcl <<EOF
+storage "file" {
+  path = "/tmp/vault-test"
+}
+listener "tcp" {
+    address = "127.0.0.1:8200"
+    tls_disable = true
+}
+disable_mlock = true
+EOF
+
+bin/vault server -config=config.hcl
+
+http POST http://127.0.0.1:8200/v1/sys/init secret_shares:=1 secret_threshold:=1
+http POST http://127.0.0.1:8200/v1/sys/unseal key=PASTE_KEY_HERE
+http http://127.0.0.1:8200/v1/sys/seal-status
+
+http -v POST http://127.0.0.1:8200/v1/sys/seal X-Vault-Token:PASTE_ROOT_TOKEN_HERE
+
+rm -rf /tmp/vault-test/
+
+
+
+
+
 # build debug version
 make GCFLAGS="all=-N -l"
 
@@ -26,23 +61,3 @@ cat >.vscode/launch.json <<EOF
     ]
 }
 EOF
-
-
-
-
-
-
-
-
-
-
-
-Vault kubernetes auth method
-
-
-make test
-make testacc
-
-
-# test compile
-XC_OSARCH=linux/amd64 make

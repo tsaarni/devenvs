@@ -35,7 +35,25 @@ http://localhost:8080/realms/master/account/
 ###
 #
 # integration tests
+#
 
+# preparation
 mvn clean install -DskipTests
-(cd distribution; mvn clean install)
-mvn install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPPasswordPolicyForcedPasswordChange -Dkeycloak.logging.level=debug
+mvn clean install -DskipTests -pl util/embedded-ldap/
+mvn clean install -DskipTests -pl federation/ldap/
+
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPPasswordPolicyTest -Dkeycloak.logging.level=debug
+
+
+# failing test case
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPProvidersIntegrationTest -Dkeycloak.logging.level=debug
+
+# capture the traffic towards embedded-ldap during test case
+wireshark -i lo -d tcp.port==10389,ldap -f "port 10389" -Y ldap -k -o tls.keylog_file:/tmp/wireshark-keys.log
+
+
+# display filter:
+#   ldap.bindResponse_element or ldap.bindRequest_element
+#
+# and add new column with field
+#   tls.record.version
