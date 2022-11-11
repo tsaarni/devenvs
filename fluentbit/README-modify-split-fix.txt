@@ -19,8 +19,8 @@ echo '{ "message": "Hello FOO world!" }' > /dev/tcp/localhost/5170
 
 # tests
 
-cmake -DFLB_DEV=On -DFLB_TESTS_RUNTIME=On -DFLB_TESTS_INTERNAL=On ..
-make -j
+    cmake -DFLB_DEV=On -DFLB_TESTS_RUNTIME=On -DFLB_TESTS_INTERNAL=On ..
+    make -j
 make test
 
 
@@ -39,3 +39,8 @@ bin/flb-it-signv4
 
 # possibly fails always, patch or not
 bin/flb-rt-out_td
+
+
+# run just single test
+make flb-rt-filter_modify
+bin/flb-rt-filter_modify operation_with_whitespace
