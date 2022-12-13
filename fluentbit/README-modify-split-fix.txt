@@ -44,3 +44,43 @@ bin/flb-rt-out_td
 # run just single test
 make flb-rt-filter_modify
 bin/flb-rt-filter_modify operation_with_whitespace
+
+
+
+
+
+
+
+
+
+# Same test with tail plugin
+
+
+cat >fluent-bit.conf <<EOF
+[INPUT]
+   name tail
+   path test.log
+   parser json
+
+[OUTPUT]
+   name stdout
+
+[FILTER]
+   name modify
+   match *
+   condition key_value_matches message .*FOO.*
+   add facility "foo bar"
+EOF
+
+
+cat >parsers.conf <<EOF
+[PARSER]
+   name   json
+   format json
+EOF
+
+
+bin/fluent-bit --config=fluent-bit.conf --parser=parsers.conf
+
+echo '{ "message": "Hello FOO world!" }' >> test.log
+

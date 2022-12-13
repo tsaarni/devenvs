@@ -40,20 +40,25 @@ http://localhost:8080/realms/master/account/
 # preparation
 mvn clean install -DskipTests
 mvn clean install -DskipTests -pl util/embedded-ldap/
+
+# compile only changed code
 mvn clean install -DskipTests -pl federation/ldap/
 
+# run policy test case
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPPasswordPolicyTest -Dkeycloak.logging.level=debug
 
 
 # failing test case
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPProvidersIntegrationTest -Dkeycloak.logging.level=debug
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest -Dkeycloak.logging.level=debug
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationNoneEncryptionStartTLS -Dkeycloak.logging.level=debug
 
 # capture the traffic towards embedded-ldap during test case
+patch -p1 < ~/work/devenvs/keycloak/testsuite-tls-secrets-for-wireshark.patch
 wireshark -i lo -d tcp.port==10389,ldap -f "port 10389" -Y ldap -k -o tls.keylog_file:/tmp/wireshark-keys.log
 
+wireshark -i lo -d tcp.port==10389,ldap -f "port 10389" -Y ldap.bindResponse_element or ldap.bindRequest_element -k -o tls.keylog_file:/tmp/wireshark-keys.log
 
-# display filter:
-#   ldap.bindResponse_element or ldap.bindRequest_element
-#
 # and add new column with field
 #   tls.record.version
+# to see which bind requests were sent over TLS and which not
