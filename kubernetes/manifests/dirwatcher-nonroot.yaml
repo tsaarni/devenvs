@@ -12,11 +12,10 @@ spec:
 
       image: dirwatcher:latest
       imagePullPolicy: Never
-      command: ["/bin/sh"]
-      args:
-        - "-c"
-        - "/app/main /secret /secret/password"
-      #  - "/app/main /var/run/secrets/kubernetes.io/serviceaccount/ /var/run/secrets/kubernetes.io/serviceaccount/token"
+      command: ["/app/main"]
+      env:
+        - name: DEBUG
+          value: "false"
       volumeMounts:
         - mountPath: /secret
           name: mysecret
@@ -28,18 +27,16 @@ spec:
         privileged: false
         readOnlyRootFilesystem: true
         runAsNonRoot: true
-
+  #serviceAccountName: my-service-account
   securityContext:
     fsGroup: 10000
     #supplementalGroups:
     #  - 0
     # runAsUser: 1234
     # runAsGroup: 5678
-    #fsGroupChangePolicy: "OnRootMismatch"
 
   volumes:
   - name: mysecret
     secret:
       secretName: mysecret
       defaultMode: 0440
-      optional: true

@@ -3,6 +3,8 @@
 kind delete cluster --name permissions
 kind create cluster --name permissions
 
+kind create cluster --name permissions --config configs/kind-cluster-with-version.conf
+
 # build test app
 docker build --tag dirwatcher:latest docker/dirwatcher/
 kind load docker-image dirwatcher:latest --name permissions
@@ -13,12 +15,12 @@ kubectl delete -f manifests/dirwatcher-nonroot.yaml --force   # delete previous 
 kubectl apply -f manifests/dirwatcher-nonroot.yaml
 
 # update secret
-while true; do kubectl create secret generic mysecret --from-file=password=/proc/sys/kernel/random/uuid --dry-run=client -o yaml | kubectl apply -f -; sleep 1; done
+while true; do kubectl create secret generic mysecret --from-file=password=/proc/sys/kernel/random/uuid --dry-run=client -o yaml | kubectl apply -f -; sleep 30; done
 
 # read testapp logs
 kubectl logs -f dirwatcher-nonroot
 
-
+kubectl exec dirwatcher-nonroot ls -laR /secret /var/run/secrets/kubernetes.io/serviceaccount
 
 
 ###########
@@ -26,12 +28,13 @@ kubectl logs -f dirwatcher-nonroot
 # tips when working with kubelet code in kind
 #
 
+# run unit tests
+make check test
+make test WHAT=./pkg/volume GOFLAGS=-v
+
 # build kubelet
 make WHAT=cmd/kubelet
 ls -l ./_output/local/bin/linux/amd64/kubelet
-
-# run unit tests
-make check WHAT=./pkg/kubelet GOFLAGS=-v
 
 # replace kubelet version with own build
 docker exec permissions-control-plane systemctl stop kubelet
@@ -43,6 +46,8 @@ docker exec permissions-control-plane systemctl restart kubelet
 
 # read logs
 docker exec -it permissions-control-plane bash
+sed -i.bak 's/verbosity: 0/verbosity: 4/' /var/lib/kubelet/config.yaml
+systemctl restart kubelet
 journalctl -u kubelet -f
 
 # check syscalls
