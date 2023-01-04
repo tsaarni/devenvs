@@ -17,4 +17,4 @@ RUN curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh |
 # Copy entrypoint.sh script to the container.
 COPY files .
 
-ENTRYPOINT /docker-entrypoint-with-fluentbit.sh
+ENTRYPOINT ["/usr/libexec/catatonit/catatonit", "/docker-entrypoint-with-fluentbit.sh"]

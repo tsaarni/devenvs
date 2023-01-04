@@ -8,4 +8,4 @@ exec > >(/opt/fluent-bit/bin/fluent-bit --quiet --config=/configs/fluentbit-envo
 
 # Start envoy with catatonit as the init process.
 # Exec will replace the current (bash) process with the catatonit process.
-exec /usr/libexec/catatonit/catatonit -g /usr/local/bin/envoy -- --config-path /etc/envoy/envoy-httpbingo-config.yaml
+exec /usr/local/bin/envoy --config-path /etc/envoy/envoy-httpbingo-config.yaml
