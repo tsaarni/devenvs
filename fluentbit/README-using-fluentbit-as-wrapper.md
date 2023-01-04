@@ -149,6 +149,13 @@ root           9       8  0 12:43 ?        00:00:00 /opt/fluent-bit/bin/fluent-b
 ```
 
 As discussed, `catatonit` is the initial command run inside the container (PID 1).
-Envoy has replaced the entrypoint script process which was `bash` before the `exec /usr/local/bin/envoy` command (PID 7).
-There shell process that runs subshell with `fluent-bit` in it (PID 8 and its child PID 9).
-The reason for the shell (PID 8) to remain running is to execute `kill -SIGTERM` on envoy process if `fluent-bit` (PID 9) would exit for any reason.
+Envoy has replaced the entrypoint script process which was `bash` before the `exec /usr/local/bin/envoy` command was called (PID 7).
+There is a `bash` process (PID 8) for the subshell with `fluent-bit` running as a child (PID 9).
+The reason for the subshell to remain running is to execute `kill -SIGTERM` on envoy process if `fluent-bit` (PID 9) would exit for any reason.
+
+
+## Other thoughts
+
+Sometimes more complicated logic is required.
+For example, the timestamp format in Envoy debug log might need to be converted into "zulu time" or the severity field might need to be changed to uppercase letters.
+For such cases, it is possible to use Fluent Bit [Lua filter](https://docs.fluentbit.io/manual/pipeline/filters/lua) to implement the logic.
