@@ -18,9 +18,8 @@ echo '{ "message": "Hello FOO world!" }' > /dev/tcp/localhost/5170
 
 
 # tests
-
-    cmake -DFLB_DEV=On -DFLB_TESTS_RUNTIME=On -DFLB_TESTS_INTERNAL=On ..
-    make -j
+cmake -DFLB_DEV=On -DFLB_TESTS_RUNTIME=On -DFLB_TESTS_INTERNAL=On ..
+make -j
 make test
 
 
