@@ -1,0 +1,10 @@
+{
+  "connectionUrl": "ldap://localhost",
+  "bindDn": "",
+  "bindCredential": "",
+  "useTruststoreSpi": "always",
+  "connectionTimeout": "",
+  "startTls": "true",
+  "authType": "EXTERNAL",
+  "action": "testAuthentication"
+}

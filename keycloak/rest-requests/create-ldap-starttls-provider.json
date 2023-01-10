@@ -19,16 +19,16 @@
           "ou=users,o=example"
       ],
       "usernameLDAPAttribute": [
-          "cn"
+          "uid"
       ],
       "rdnLDAPAttribute": [
-          "cn"
+          "uid"
       ],
       "uuidLDAPAttribute": [
-          "objectGUID"
+          "entryUUID"
       ],
       "userObjectClasses": [
-          "person, organizationalPerson, user"
+          "inetOrgPerson"
       ],
       "customUserSearchFilter": [
           ""
@@ -43,7 +43,7 @@
           "true"
       ],
       "vendor": [
-          "ad"
+          "other"
       ],
       "startTls": [
           "true"
@@ -92,6 +92,9 @@
       ],
       "fullSyncPeriod": [
           "-1"
+      ],
+      "syncRegistrations": [
+          "true"
       ]
   }
 }

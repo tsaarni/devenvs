@@ -301,65 +301,6 @@ http -v GET http://localhost:8081/auth/admin/realms/master/users/c3240bbe-c996-4
 
 
 
-###
-
-To access H2 database
-
---- a/testsuite/utils/src/main/resources/META-INF/keycloak-server.json
-+++ b/testsuite/utils/src/main/resources/META-INF/keycloak-server.json
-@@ -96,7 +96,7 @@
-
-     "connectionsJpa": {
-         "default": {
--            "url": "${keycloak.connectionsJpa.url:jdbc:h2:mem:test;DB_CLOSE_DELAY=-1}",
-+            "url": "${keycloak.connectionsJpa.url:jdbc:h2:${jboss.server.data.dir}/test;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE;AUTO_SERVER_PORT=9090}",
-             "driver": "${keycloak.connectionsJpa.driver:org.h2.Driver}",
-             "driverDialect": "${keycloak.connectionsJpa.driverDialect:}",
-             "user": "${keycloak.connectionsJpa.user:sa}",
-
-
-
-
-
-
-
-### H2 wrong user name or password
-
-2022-03-08 09:49:47,422 WARN  [io.agroal.pool] (agroal-11) Datasource '<default>': Wrong user name or password [28000-197]
-2022-03-08 09:49:47,423 DEBUG [io.agroal.pool] (agroal-11) Cause: : org.h2.jdbc.JdbcSQLException: Wrong user name or password [28000-197]
-        at org.h2.message.DbException.getJdbcSQLException(DbException.java:357)
-        at org.h2.message.DbException.get(DbException.java:179)
-        at org.h2.message.DbException.get(DbException.java:155)
-        at org.h2.message.DbException.get(DbException.java:144)
-        at org.h2.engine.Engine.validateUserAndPassword(Engine.java:341)
-        at org.h2.engine.Engine.createSessionAndValidate(Engine.java:165)
-        at org.h2.engine.Engine.createSession(Engine.java:140)
-        at org.h2.engine.Engine.createSession(Engine.java:28)
-        at org.h2.engine.SessionRemote.connectEmbeddedOrServer(SessionRemote.java:351)
-        at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:124)
-        at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:103)
-        at org.h2.Driver.connect(Driver.java:69)
-        at org.h2.jdbcx.JdbcDataSource.getJdbcConnection(JdbcDataSource.java:189)
-        at org.h2.jdbcx.JdbcDataSource.getXAConnection(JdbcDataSource.java:352)
-        at io.agroal.pool.ConnectionFactory.createConnection(ConnectionFactory.java:216)
-        at io.agroal.pool.ConnectionPool$CreateConnectionTask.call(ConnectionPool.java:513)
-        at io.agroal.pool.ConnectionPool$CreateConnectionTask.call(ConnectionPool.java:494)
-        at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-        at io.agroal.pool.util.PriorityScheduledExecutor.beforeExecute(PriorityScheduledExecutor.java:75)
-        at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1126)
-        at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
-        at java.base/java.lang.Thread.run(Thread.java:829)
-
-
-
-Solution:
-
-remove old h2 file database ~/data/ or target/kc/data/h2/
-rm /home/tsaarni/work/keycloak/target/kc/data/h2/*
-
-
-
-
 
 
 
@@ -381,3 +322,63 @@ TOKEN=$(http --form POST http://localhost:8080/realms/master/protocol/openid-con
 http -v POST http://localhost:8080/admin/realms/master/components Authorization:"bearer $TOKEN" < rest-requests/create-ldap-starttls-provider.json
 http -v POST http://localhost:8080/admin/realms/master/components Authorization:"bearer $TOKEN" < rest-requests/create-ldaps-provider.json
 http -v "http://localhost:8080/admin/realms/master/components?parent=master&type=org.keycloak.storage.UserStorageProvider" Authorization:"bearer $TOKEN"
+
+
+
+
+
+
+#
+# Test LDAP client certificate rotation
+#
+
+docker-compose rm -f  # clean previous containers
+docker-compose up
+
+# run wireshark to check the client certificate from keycloak
+sudo nsenter -n -t $(pidof slapd) wireshark -f "port 389 or port 636" -k -o tls.keylog_file:$WORKDIR/output/wireshark-keys.log
+
+
+
+# generate certificates and keystores
+rm -rf certs
+mkdir -p certs
+certyaml --destination certs configs/certs.yaml
+keytool -importcert -storetype PKCS12 -keystore certs/truststore.p12 -storepass secret -noprompt -alias ca -file certs/ca.pem
+
+openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/ldap-admin.pem -inkey certs/ldap-admin-key.pem -out certs/ldap-admin.p12
+
+
+
+# run keycloak with keystore and truststore SPI
+
+rm ~/data/h2/*  # remove database
+
+export KEYCLOAK_ADMIN=admin
+export KEYCLOAK_ADMIN_PASSWORD=admin
+
+java -jar quarkus/server/target/lib/quarkus-run.jar --verbose start --hostname-strict-https=false --http-enabled=true --hostname=keycloak.127-0-0-1.nip.io --spi-keystore-default-ldap-keystore-file=$WORKDIR/certs/ldap-admin.p12 --spi-keystore-default-ldap-keystore-password=secret --spi-truststore-file-file=$WORKDIR/certs/truststore.p12 --spi-truststore-file-password=secret
+
+# create provider for LDAP federation
+TOKEN=$(http --form POST http://keycloak.127-0-0-1.nip.io:8080/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token)
+
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/components Authorization:"bearer $TOKEN" < rest-requests/create-ldap-starttls-provider.json
+
+# observe certificate details on wireshark
+
+# test LDAP authentication
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/testLDAPConnection  Authorization:"bearer $TOKEN" < rest-requests/test-ldap-authentication.json
+
+# create user
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users Authorization:"bearer $TOKEN" username=user2 enabled:=true totp:=false emailVerified:=false firstName="" lastName="" email="" credentials:='[{"type": "password", "value": "mypass", "temporary": false}]'
+
+# check that user was created
+ldapsearch -H ldap://localhost:389 -D cn=ldap-admin,ou=users,o=example -w ldap-admin  -b ou=users,o=example
+
+# regenerate ldap-admin certificate and keystore
+rm certs/ldap-admin*
+certyaml --destination certs configs/certs.yaml
+openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/ldap-admin.pem -inkey certs/ldap-admin-key.pem -out certs/ldap-admin.p12
+
+
+# do above again and expiration date on client certificate

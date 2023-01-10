@@ -1,4 +1,47 @@
 
+
+
+# build and install org.keycloak modules into maven cache
+mvn clean install -DskipTestsuite -DskipExamples -DskipTests
+
+# after main codebase is built, to build the quarkus distribution
+mvn -f quarkus/pom.xml clean install -DskipTests
+
+
+
+#
+# Test server certificate rotation
+#
+
+rm -rf certs
+mkdir -p certs
+certyaml --destination certs configs/certs.yaml
+openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/keycloak-server.pem -inkey certs/keycloak-server-key.pem -out certs/keycloak-server.p12
+
+
+export WORKDIR=/home/tsaarni/work/devenvs/keycloak
+
+java -jar quarkus/server/target/lib/quarkus-run.jar --verbose start --hostname=keycloak.127-0-0-1.nip.io --https-key-store-file=$WORKDIR/certs/keycloak-server.p12 --https-key-store-password=secret
+
+# check the expiration date of current server certificate
+echo Q | openssl s_client -connect keycloak.127-0-0-1.nip.io:8443 | openssl x509 -text -noout
+
+# create new server certificate and keystore
+rm certs/keycloak-server*
+certyaml --destination certs configs/certs.yaml
+openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/keycloak-server.pem -inkey certs/keycloak-server-key.pem -out certs/keycloak-server.p12
+
+# check the expiration date of current server certificate
+echo Q | openssl s_client -connect keycloak.127-0-0-1.nip.io:8443 | openssl x509 -text -noout
+
+
+
+
+
+
+
+### OLDOLDOLD
+
 diff --git a/pom.xml b/pom.xml
 index 177bf6bd2c..b3bff9c71a 100644
 --- a/pom.xml
@@ -6,10 +49,10 @@ index 177bf6bd2c..b3bff9c71a 100644
 @@ -41,7 +41,7 @@
          <jboss.snapshots.repo.id>jboss-snapshots-repository</jboss.snapshots.repo.id>
          <jboss.snapshots.repo.url>https://s01.oss.sonatype.org/content/repositories/snapshots/</jboss.snapshots.repo.url>
- 
+
 -        <quarkus.version>2.7.5.Final</quarkus.version>
 +        <quarkus.version>999-SNAPSHOT</quarkus.version>
- 
+
          <!--
          Performing a Wildfly upgrade? Run the:
 @@ -82,7 +82,7 @@
@@ -23,7 +66,7 @@ index 177bf6bd2c..b3bff9c71a 100644
          <infinispan.protostream.processor.version>4.4.1.Final</infinispan.protostream.processor.version>
 @@ -283,6 +283,12 @@
      <dependencyManagement>
- 
+
          <dependencies>
 +<!-- https://mvnrepository.com/artifact/io.vertx/vertx-core -->
 +<dependency>
@@ -31,7 +74,7 @@ index 177bf6bd2c..b3bff9c71a 100644
 +    <artifactId>vertx-core</artifactId>
 +    <version>4.3.1-SNAPSHOT</version>
 +</dependency>
- 
+
              <dependency>
                  <groupId>org.keycloak</groupId>
 diff --git a/quarkus/pom.xml b/quarkus/pom.xml
@@ -58,7 +101,7 @@ index 072db49bd7..12e7c05092 100644
 -import org.mariadb.jdbc.MySQLDataSource;
 +import org.mariadb.jdbc.MariaDbDataSource;
  import org.postgresql.xa.PGXADataSource;
- 
+
  public class ConfigurationTest {
 @@ -325,7 +325,7 @@ public class ConfigurationTest {
          config = createConfig();
@@ -66,7 +109,6 @@ index 072db49bd7..12e7c05092 100644
          assertEquals(MariaDBDialect.class.getName(), config.getConfigValue("quarkus.hibernate-orm.dialect").getValue());
 -        assertEquals(MySQLDataSource.class.getName(), config.getConfigValue("quarkus.datasource.jdbc.driver").getValue());
 +        assertEquals(MariaDbDataSource.class.getName(), config.getConfigValue("quarkus.datasource.jdbc.driver").getValue());
- 
+
          System.setProperty(CLI_ARGS, "--db=postgres");
          config = createConfig();
-
