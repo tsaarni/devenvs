@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-hotrod
+spec:
+  selector:
+    matchLabels:
+      app: example-hotrod
+  template:
+    metadata:
+      labels:
+        app: example-hotrod
+    spec:
+      containers:
+      - name: example-hotrod
+        image: jaegertracing/example-hotrod:latest
+
+        args:
+        - --jaeger-ui=http://jaeger.127-0-0-163.nip.io
+        - all
+
+        ports:
+        - containerPort: 8080
+
+        env:
+        - name: JAEGER_AGENT_HOST
+          value: jaeger
+        # Note: if your application is using Node.js Jaeger Client, you need port 6832,
+        #       unless issue https://github.com/jaegertracing/jaeger/issues/1596 is resolved.
+        - name: JAEGER_AGENT_PORT
+          value: "6831"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-hotrod
+spec:
+  selector:
+    app: example-hotrod
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: example-hotrod
+spec:
+  virtualhost:
+    fqdn: hotrod.127-0-0-163.nip.io
+  routes:
+  - services:
+    - name: example-hotrod
+      port: 8080

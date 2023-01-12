@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+spec:
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+    spec:
+      containers:
+      - name: jaeger
+        image: jaegertracing/all-in-one:1.41
+
+        env:
+        - name: SPAN_STORAGE_TYPE
+          value: elasticsearch
+
+        args:
+        - --es.server-urls=https://opensearch:9200
+        - --es.tls.enabled=true
+        - --es.tls.ca=/certs/server-ca.pem
+        - --es.tls.cert=/certs/opensearch-admin.pem
+        - --es.tls.key=/certs/opensearch-admin-key.pem
+        - --es.tls.server-name=opensearch
+        - --es.tls.skip-host-verify=false
+
+        volumeMounts:
+        - name: jaeger-certs
+          mountPath: /certs
+
+      volumes:
+        - name: jaeger-certs
+          secret:
+            secretName: jaeger-certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+spec:
+  selector:
+    app: jaeger
+  ports:
+  - name: jaeger-thrift-1
+    port: 6831
+    targetPort: 6831
+    protocol: UDP
+  - name: jaeger-thrift-2
+    port: 6832
+    targetPort: 6832
+    protocol: UDP
+  - name: http
+    port: 16686
+    targetPort: 16686
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: jaeger
+spec:
+  virtualhost:
+    fqdn: jaeger.127-0-0-163.nip.io
+  routes:
+  - services:
+    - name: jaeger
+      port: 16686

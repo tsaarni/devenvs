@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jaeger
+  labels:
+    app: jaeger
+spec:
+  containers:
+  - name: jaeger
+    image: alpine:latest
+
+    command: ["/bin/sh"]
+    args:
+    - -c
+    - "apk add --update-cache httpie openssl inotify-tools && sleep 99999999"
+
+    env:
+    - name: SPAN_STORAGE_TYPE
+      value: elasticsearch
+
+    volumeMounts:
+    - name: jaeger-certs
+      mountPath: /certs
+
+  volumes:
+    - name: jaeger-certs
+      secret:
+        secretName: jaeger-certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+spec:
+  selector:
+    app: jaeger
+  ports:
+  - name: jaeger-thrift-1
+    port: 6831
+    targetPort: 6831
+    protocol: UDP
+  - name: jaeger-thrift-2
+    port: 6832
+    targetPort: 6832
+    protocol: UDP
+  - name: http
+    port: 16686
+    targetPort: 16686
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: jaeger
+spec:
+  virtualhost:
+    fqdn: jaeger.127-0-0-163.nip.io
+  routes:
+  - services:
+    - name: jaeger
+      port: 16686

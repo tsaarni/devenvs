@@ -1,0 +1,18 @@
+subject: CN=server-ca
+---
+subject: CN=client-ca
+---
+subject: CN=opensearch-server
+issuer: CN=server-ca
+sans:
+  - DNS:opensearch
+  - DNS:opensearch.127-0-0-163.nip.io
+---
+subject: CN=opensearch-admin
+issuer: CN=client-ca
+---
+filename: expired-opensearch-admin
+subject: CN=opensearch-admin
+issuer: CN=client-ca
+not_before: 2023-01-01T09:00:00Z
+not_after: 2023-01-01T10:00:00Z
