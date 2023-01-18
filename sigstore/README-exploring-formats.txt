@@ -67,8 +67,9 @@ docker push registry.127-0-10-80.nip.io/alpine:latest
 IMGHASH=$(docker inspect --format="{{(index .RepoDigests 1)}}" registry.127-0-10-80.nip.io/alpine:latest)
 
 # sign image
-./cosign sign --key cosign.key $IMGHASH
-./cosign verify --key cosign.pub $IMGHASH
+export SSL_CERT_FILE=/etc/docker/certs.d/registry.127-0-10-80.nip.io/ca.crt
+./cosign sign --tlog-upload=false --key cosign.key $IMGHASH
+./cosign verify --insecure-ignore-tlog --key cosign.pub $IMGHASH | jq .
 
 # OUTPUT:
 #
@@ -160,6 +161,6 @@ https://github.com/sigstore/cosign/pull/985
 https://github.com/sigstore/cosign/blob/main/KMS.md
 
 
-## for reading 
+## for reading
 ##  https://github.com/salrashid123/go_pkcs11
 ##  https://github.com/salrashid123/mtls_pkcs11
