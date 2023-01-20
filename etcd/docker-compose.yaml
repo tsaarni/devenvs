@@ -10,7 +10,7 @@ services:
     environment:
       - HOSTNAME=etcd0
       - CLUSTER=etcd0=https://etcd0:2380,etcd1=https://etcd1:2380,etcd2=https://etcd2:2380
-      - GODEBUG=tls13=1
+#      - GODEBUG=tls13=1
     volumes:
       - ./tmp/etcd0-data:/etcd-data
       - .:/input:ro
@@ -25,7 +25,7 @@ services:
     environment:
       - HOSTNAME=etcd1
       - CLUSTER=etcd0=https://etcd0:2380,etcd1=https://etcd1:2380,etcd2=https://etcd2:2380
-      - GODEBUG=tls13=1
+#      - GODEBUG=tls13=1
     volumes:
       - ./tmp/etcd1-data:/etcd-data
       - .:/input:ro
@@ -40,7 +40,7 @@ services:
     environment:
       - HOSTNAME=etcd2
       - CLUSTER=etcd0=https://etcd0:2380,etcd1=https://etcd1:2380,etcd2=https://etcd2:2380
-      - GODEBUG=tls13=1
+#      - GODEBUG=tls13=1
     volumes:
       - ./tmp/etcd2-data:/etcd-data
       - .:/input:ro

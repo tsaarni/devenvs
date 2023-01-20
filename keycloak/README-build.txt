@@ -25,6 +25,13 @@ mvn dependency:tree -Pdistribution -Dincludes=jakarta.xml.bind:jakarta.xml.bind-
 
 
 
+*** Debugging
+
+mkdir -p .vscode
+cp -a ~/work/devenvs/keycloak/configs/launch.json .vscode
+
+
+mvn clean install -f testsuite/integration-arquillian/pom.xml -DforkMode=never -Dmaven.surefire.debug  ...   # attach to port 5005 (not 8000)
 
 
 
@@ -32,10 +39,6 @@ mvn dependency:tree -Pdistribution -Dincludes=jakarta.xml.bind:jakarta.xml.bind-
 
 
 #### Troubleshooting
-
-
-
-
 
 # To access H2 database
 
