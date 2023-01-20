@@ -1,0 +1,8 @@
+subject: cn=ca
+---
+subject: cn=etcd
+issuer: cn=ca
+sans:
+  - DNS:etcd0
+  - DNS:etcd1
+  - DNS:etcd2
