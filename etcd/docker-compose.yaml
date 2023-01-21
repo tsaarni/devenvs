@@ -1,54 +1,133 @@
 services:
   etcd0:
+    build:
+      # context is the source directory (relative to current working directory)
+      # dockerfile is the path to the Dockerfile (relative to the context)
+      context: ../../etcd
+      dockerfile: ../devenvs/etcd/docker/etcd/Dockerfile
     image: quay.io/coreos/etcd:v3.5.5
     command:
       - /bin/sh
       - -c
-      - etcd --data-dir /etcd-data --name $$HOSTNAME --initial-advertise-peer-urls https://$$HOSTNAME:2380 --listen-peer-urls https://0.0.0.0:2380 --advertise-client-urls https://$$HOSTNAME:2379 --listen-client-urls https://0.0.0.0:2379 --initial-cluster $$CLUSTER --peer-client-cert-auth --peer-trusted-ca-file=/input/certs/ca.pem --peer-cert-file=/input/certs/etcd.pem --peer-key-file=/input/certs/etcd-key.pem --client-cert-auth --trusted-ca-file=/input/certs/ca.pem --cert-file=/input/certs/etcd.pem --key-file=/input/certs/etcd-key.pem
+      - |
+        mkdir -p /etcd-data/$$HOSTNAME;
+        etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME \
+          --initial-advertise-peer-urls https://$$HOSTNAME:2380 \
+          --listen-peer-urls https://0.0.0.0:2380 \
+          --advertise-client-urls https://$$HOSTNAME:2379 \
+          --listen-client-urls https://0.0.0.0:2379 \
+          --initial-cluster $$CLUSTER \
+          --peer-client-cert-auth \
+          --peer-trusted-ca-file=/certs/ca.pem \
+          --peer-cert-file=/certs/etcd.pem \
+          --peer-key-file=/certs/etcd-key.pem \
+          --client-cert-auth \
+          --trusted-ca-file=/certs/ca.pem \
+          --cert-file=/certs/etcd.pem \
+          --key-file=/certs/etcd-key.pem
+
     ports:
       - 2379
+
     environment:
       - HOSTNAME=etcd0
       - CLUSTER=etcd0=https://etcd0:2380,etcd1=https://etcd1:2380,etcd2=https://etcd2:2380
+# note: not relevant for go 1.13 and newer
 #      - GODEBUG=tls13=1
+
     volumes:
-      - ./tmp/etcd0-data:/etcd-data
-      - .:/input:ro
+      - etcd-data:/etcd-data
+      - ./certs:/certs:ro
+
   etcd1:
+    build:
+      # context is the source directory (relative to current working directory)
+      # dockerfile is the path to the Dockerfile (relative to the context)
+      context: ../../etcd
+      dockerfile: ../devenvs/etcd/docker/etcd/Dockerfile
     image: quay.io/coreos/etcd:v3.5.5
     command:
       - /bin/sh
       - -c
-      - etcd --data-dir /etcd-data --name $$HOSTNAME --initial-advertise-peer-urls https://$$HOSTNAME:2380 --listen-peer-urls https://0.0.0.0:2380 --advertise-client-urls https://$$HOSTNAME:2379 --listen-client-urls https://0.0.0.0:2379 --initial-cluster $$CLUSTER --peer-client-cert-auth --peer-trusted-ca-file=/input/certs/ca.pem --peer-cert-file=/input/certs/etcd.pem --peer-key-file=/input/certs/etcd-key.pem --client-cert-auth --trusted-ca-file=/input/certs/ca.pem --cert-file=/input/certs/etcd.pem --key-file=/input/certs/etcd-key.pem
+      - |
+        mkdir -p /etcd-data/$$HOSTNAME;
+        etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME \
+          --initial-advertise-peer-urls https://$$HOSTNAME:2380 \
+          --listen-peer-urls https://0.0.0.0:2380 \
+          --advertise-client-urls https://$$HOSTNAME:2379 \
+          --listen-client-urls https://0.0.0.0:2379 \
+          --initial-cluster $$CLUSTER \
+          --peer-client-cert-auth \
+          --peer-trusted-ca-file=/certs/ca.pem \
+          --peer-cert-file=/certs/etcd.pem \
+          --peer-key-file=/certs/etcd-key.pem \
+          --client-cert-auth \
+          --trusted-ca-file=/certs/ca.pem \
+          --cert-file=/certs/etcd.pem \
+          --key-file=/certs/etcd-key.pem
+
     ports:
       - 2379
+
     environment:
       - HOSTNAME=etcd1
       - CLUSTER=etcd0=https://etcd0:2380,etcd1=https://etcd1:2380,etcd2=https://etcd2:2380
+# note: not relevant for go 1.13 and newer
 #      - GODEBUG=tls13=1
+
     volumes:
-      - ./tmp/etcd1-data:/etcd-data
-      - .:/input:ro
+      - etcd-data:/etcd-data
+      - ./certs:/certs:ro
+
   etcd2:
+    build:
+      # context is the source directory (relative to current working directory)
+      # dockerfile is the path to the Dockerfile (relative to the context)
+      context: ../../etcd
+      dockerfile: ../devenvs/etcd/docker/etcd/Dockerfile
     image: quay.io/coreos/etcd:v3.5.5
     command:
       - /bin/sh
       - -c
-      - etcd --data-dir /etcd-data --name $$HOSTNAME --initial-advertise-peer-urls https://$$HOSTNAME:2380 --listen-peer-urls https://0.0.0.0:2380 --advertise-client-urls https://$$HOSTNAME:2379 --listen-client-urls https://0.0.0.0:2379 --initial-cluster $$CLUSTER --peer-client-cert-auth --peer-trusted-ca-file=/input/certs/ca.pem --peer-cert-file=/input/certs/etcd.pem --peer-key-file=/input/certs/etcd-key.pem --client-cert-auth --trusted-ca-file=/input/certs/ca.pem --cert-file=/input/certs/etcd.pem --key-file=/input/certs/etcd-key.pem
+      - |
+        mkdir -p /etcd-data/$$HOSTNAME;
+        etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME \
+          --initial-advertise-peer-urls https://$$HOSTNAME:2380 \
+          --listen-peer-urls https://0.0.0.0:2380 \
+          --advertise-client-urls https://$$HOSTNAME:2379 \
+          --listen-client-urls https://0.0.0.0:2379 \
+          --initial-cluster $$CLUSTER \
+          --peer-client-cert-auth \
+          --peer-trusted-ca-file=/certs/ca.pem \
+          --peer-cert-file=/certs/etcd.pem \
+          --peer-key-file=/certs/etcd-key.pem \
+          --client-cert-auth \
+          --trusted-ca-file=/certs/ca.pem \
+          --cert-file=/certs/etcd.pem \
+          --key-file=/certs/etcd-key.pem
+
     ports:
       - 2379
+
     environment:
       - HOSTNAME=etcd2
       - CLUSTER=etcd0=https://etcd0:2380,etcd1=https://etcd1:2380,etcd2=https://etcd2:2380
+# note: not relevant for go 1.13 and newer
 #      - GODEBUG=tls13=1
+
     volumes:
-      - ./tmp/etcd2-data:/etcd-data
-      - .:/input:ro
+      - etcd-data:/etcd-data
+      - ./certs:/certs:ro
+
   shell:
-    image: alpine:latest
+    image: alpine:3
     command:
       - /bin/sh
       - -c
       - apk add --update-cache py3-pip httpie openssl netcat-openbsd py3-jwt && pip install sslyze && sleep 99999999
     volumes:
-      - .:/input:ro
+      - ./certs:/certs:ro
+
+
+volumes:
+  etcd-data:
