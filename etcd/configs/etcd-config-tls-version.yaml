@@ -1,0 +1,22 @@
+# https://github.com/etcd-io/etcd/blob/main/etcd.conf.yml.sample
+# https://github.com/etcd-io/etcd/blob/add-minmax-allow-tls13/server/embed/config.go
+
+data-dir: /tmp/etcd-datadir
+
+advertise-client-urls: https://localhost:2379
+
+listen-client-urls: https://localhost:2379
+listen-peer-urls: https://localhost:2380
+
+client-transport-security:
+  cert-file: /home/tsaarni/work/devenvs/etcd/certs/etcd.pem
+  key-file: /home/tsaarni/work/devenvs/etcd/certs/etcd-key.pem
+  trusted-ca-file: /home/tsaarni/work/devenvs/etcd/certs/ca.pem
+
+peer-transport-security:
+  cert-file: /home/tsaarni/work/devenvs/etcd/certs/etcd.pem
+  key-file: /home/tsaarni/work/devenvs/etcd/certs/etcd-key.pem
+  trusted-ca-file: /home/tsaarni/work/devenvs/etcd/certs/ca.pem
+
+min-tls-version: TLS10
+max-tls-version: TLS12

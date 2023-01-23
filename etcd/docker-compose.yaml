@@ -13,7 +13,9 @@ services:
       - -c
       - |
         mkdir -p /etcd-data/$$HOSTNAME;
-        etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME \
+        etcd \
+          --data-dir /etcd-data/$$HOSTNAME \
+          --name $$HOSTNAME \
           --initial-advertise-peer-urls https://$$HOSTNAME:2380 \
           --listen-peer-urls https://0.0.0.0:2380 \
           --advertise-client-urls https://$$HOSTNAME:2379 \
@@ -55,7 +57,9 @@ services:
       - -c
       - |
         mkdir -p /etcd-data/$$HOSTNAME;
-        etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME \
+        etcd \
+          --data-dir /etcd-data/$$HOSTNAME \
+          --name $$HOSTNAME \
           --initial-advertise-peer-urls https://$$HOSTNAME:2380 \
           --listen-peer-urls https://0.0.0.0:2380 \
           --advertise-client-urls https://$$HOSTNAME:2379 \
@@ -97,7 +101,9 @@ services:
       - -c
       - |
         mkdir -p /etcd-data/$$HOSTNAME;
-        etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME \
+        etcd \
+          --data-dir /etcd-data/$$HOSTNAME \
+          --name $$HOSTNAME \
           --initial-advertise-peer-urls https://$$HOSTNAME:2380 \
           --listen-peer-urls https://0.0.0.0:2380 \
           --advertise-client-urls https://$$HOSTNAME:2379 \

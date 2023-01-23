@@ -22,7 +22,7 @@ docker exec -it etcd-shell-1 sslyze etcd0:2380
 
 
 
-#### Build own image version
+#### Build image
 
 cd etcd
 
@@ -45,3 +45,19 @@ docker-compose up
 # cleanup
 docker-compose rm -f
 docker volume rm etcd_etcd-data
+
+
+
+
+#### Test on a command line
+
+make
+bin/etcd --config-file ~/work/devenvs/etcd/configs/etcd-config-tls-version.yaml
+
+
+
+bin/etcd --data-dir /tmp/etcd-datadir --listen-peer-urls https://localhost:2380 --listen-client-urls https://localhost:2379 --advertise-client-urls https://localhost:2379 --peer-trusted-ca-file=/home/tsaarni/work/devenvs/etcd/certs/ca.pem --peer-cert-file=/home/tsaarni/work/devenvs/etcd/certs/etcd.pem --peer-key-file=/home/tsaarni/work/devenvs/etcd/certs/etcd-key.pem --client-cert-auth --trusted-ca-file=/home/tsaarni/work/devenvs/etcd/certs/ca.pem --cert-file=/home/tsaarni/work/devenvs/etcd/certs/etcd.pem --key-file=/home/tsaarni/work/devenvs/etcd/certs/etcd-key.pem --min-tls-version TLS10 --max-tls-version TLS13
+
+
+sslyze localhost:2379
+sslyze localhost:2380
