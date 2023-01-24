@@ -15,32 +15,9 @@ kind delete cluster --name contour
 kind create cluster --config $WORKDIR/configs/kind-cluster-config.yaml --name contour
 
 
-mkdir .vscode
-cat >.vscode/launch.json <<EOF
-{
-        "version": "0.2.0",
-        "configurations": [
-                {
-                        "name": "Run contour",
-                        "type": "go",
-                        "request": "launch",
-                        "mode": "auto",
-                        "cwd": "${workspaceRoot}",
-                        "program": "cmd/contour",
-                        "args": ["serve", "--xds-address=0.0.0.0", "--xds-port=8001", "--envoy-service-http-port=8080", "--envoy-service-https-port=8443", "--contour-cafile=ca.crt", "--contour-cert-file=tls.crt", "--contour-key-file=tls.key", "--debug"]
-                },
-                {
-                        "name": "Attach remote",
-                        "type": "go",
-                        "request": "attach",
-                        "mode": "remote",
-                        "port": 8181,
-                        "host": "127.0.0.1",
-                        "apiVersion": 2,
-                },
-        ]
-}
-EOF
+mkdir -p .vscode
+cp ~/work/devencs/contour/configs/contour-vscode-launch.json .vscode/launch.json
+
 
 ##############################################################################
 #
@@ -369,8 +346,6 @@ if CurrentSpecReport().Failed {
 ##############
 
 
-Install specific old version 
+Install specific old version
 
 https://raw.githubusercontent.com/projectcontour/contour/v1.18.3/examples/render/contour.yaml
-
-
