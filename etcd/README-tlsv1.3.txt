@@ -57,7 +57,7 @@ make
 bin/etcd --config-file ~/work/devenvs/etcd/configs/etcd-config-tls-version.yaml
 
 # run with command line options
-bin/etcd --data-dir /tmp/etcd-datadir --listen-peer-urls https://localhost:2380 --listen-client-urls https://localhost:2379 --advertise-client-urls https://localhost:2379 --peer-trusted-ca-file=/home/tsaarni/work/devenvs/etcd/certs/ca.pem --peer-cert-file=/home/tsaarni/work/devenvs/etcd/certs/etcd.pem --peer-key-file=/home/tsaarni/work/devenvs/etcd/certs/etcd-key.pem --client-cert-auth --trusted-ca-file=/home/tsaarni/work/devenvs/etcd/certs/ca.pem --cert-file=/home/tsaarni/work/devenvs/etcd/certs/etcd.pem --key-file=/home/tsaarni/work/devenvs/etcd/certs/etcd-key.pem --tls-min-version TLS13 --tls-max-version TLS13
+bin/etcd --data-dir /tmp/etcd-datadir --listen-peer-urls https://localhost:2380 --listen-client-urls https://localhost:2379 --advertise-client-urls https://localhost:2379 --peer-trusted-ca-file=/home/tsaarni/work/devenvs/etcd/certs/ca.pem --peer-cert-file=/home/tsaarni/work/devenvs/etcd/certs/etcd.pem --peer-key-file=/home/tsaarni/work/devenvs/etcd/certs/etcd-key.pem --client-cert-auth --trusted-ca-file=/home/tsaarni/work/devenvs/etcd/certs/ca.pem --cert-file=/home/tsaarni/work/devenvs/etcd/certs/etcd.pem --key-file=/home/tsaarni/work/devenvs/etcd/certs/etcd-key.pem --tls-min-version TLS1.3 --tls-max-version TLS1.3
 
 
 sslyze localhost:2379

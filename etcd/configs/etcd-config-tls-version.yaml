@@ -18,5 +18,11 @@ peer-transport-security:
   key-file: /home/tsaarni/work/devenvs/etcd/certs/etcd-key.pem
   trusted-ca-file: /home/tsaarni/work/devenvs/etcd/certs/ca.pem
 
-tls-min-version: TLS13
-tls-max-version: TLS13
+tls-min-version: TLS1.2
+tls-max-version: TLS1.3
+
+#cipher-suites:
+#- TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+#- TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+#- TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+#- TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256

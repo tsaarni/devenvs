@@ -5,6 +5,8 @@ XC_OSARCH=linux/amd64 make
 
 
 
+# dev
+bin/vault server -dev
 
 
 
@@ -31,6 +33,12 @@ http -v POST http://127.0.0.1:8200/v1/sys/seal X-Vault-Token:PASTE_ROOT_TOKEN_HE
 
 rm -rf /tmp/vault-test/
 
+
+
+# with tls
+mkdir -p certs
+certyaml -d certs/ configs/certs.yaml
+bin/vault server -config=$HOME/work/devenvs/vault/configs/vault-config-with-tls.hcl
 
 
 

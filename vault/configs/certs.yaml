@@ -1,0 +1,7 @@
+subject: cn=ca
+---
+subject: cn=vault
+issuer: cn=ca
+sans:
+- DNS:localhost
+
