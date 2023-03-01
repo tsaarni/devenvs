@@ -62,3 +62,6 @@ bin/etcd --data-dir /tmp/etcd-datadir --listen-peer-urls https://localhost:2380 
 
 sslyze localhost:2379
 sslyze localhost:2380
+
+
+openssl s_client -connect localhost:2379 -tls1_2 -cert certs/client.pem -key certs/client-key.pem

@@ -106,7 +106,7 @@ http -v GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/users Au
 
 ##################################
 #
-# Authorizatin code flow
+# Authorization code flow
 #
 
 Add http://localhost:8000 to the "Valid Redirection URIs" field in "security-admin-console" client
@@ -136,8 +136,3 @@ http -v --form post http://keycloak.127-0-0-121.nip.io/auth/realms/master/protoc
 
 # Use Keycloak's whoami endpoint to get user permissions
 http -v http://keycloak.127-0-0-121.nip.io/auth/admin/master/console/whoami Authorization:"bearer $TOKEN"
-
-
-
-
-

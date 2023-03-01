@@ -1,0 +1,39 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver
+spec:
+  routes:
+  - conditions:
+    - prefix: /
+    ipDenyPolicy:
+    - cidr: 127.19.0.1/32
+      source: peer
+    services:
+    - name: echoserver
+      port: 80
+  - conditions:
+    - prefix: /subpage
+    ipAllowPolicy:
+    - cidr: 88.88.1.100/32
+      source: remote
+    services:
+    - name: echoserver
+      port: 80
+  virtualhost:
+    fqdn: echoserver.127-0-0-101.nip.io
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver-blocked
+spec:
+  routes:
+  - services:
+    - name: echoserver
+      port: 80
+    ipDenyPolicy:
+    - cidr: 127.19.0.1/32
+      source: peer
+  virtualhost:
+    fqdn: blocked.127-0-0-101.nip.io

@@ -61,8 +61,9 @@ $ sudo curl --silent --unix-socket /proc/$(pidof envoy)/root/admin/admin.sock ht
  "total_physical_bytes": "21089194"
 }
 
+How these envoy metrics map to tcmalloc metrics and how are they documented?
+https://github.com/envoyproxy/envoy/blob/ff5b0a0325818463965ac1fc5abacf8d592a8dcd/source/common/memory/stats.cc#L14-L43
 https://github.com/envoyproxy/envoy/blob/43cd7847892892a0be3f01e2c7e8189bfb0a6321/source/server/admin/server_info_handler.cc#L48-L53
-How these map to tcmalloc metrics and how are they documented?
 
 The tcmalloc metrics are documented here
 https://github.com/google/tcmalloc/blob/e091b551403f42417cb374110467a2f0ad661dc2/tcmalloc/malloc_extension.h#L225-L267

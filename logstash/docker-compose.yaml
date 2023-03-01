@@ -12,7 +12,7 @@ services:
     ports:
       - "12345:12345"
     volumes:
-      - ./logstash-destination-beats.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./configs/logstash-destination-beats.conf:/usr/share/logstash/pipeline/logstash.conf:ro
       - ./certs:/certs:ro
 
   rsyslog:

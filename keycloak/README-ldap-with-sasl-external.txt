@@ -199,6 +199,10 @@ mvn install -f testsuite/integration-arquillian/pom.xml -Dkeycloak.logging.level
 mvn install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.**
 mvn install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.admin.UserFederationLdapConnectionTest
 
+# model tests
+cd testsuite/model
+mvn clean install -Plegacy-jpa-federation+ldap -Dtest=org.keycloak.testsuite.model.UserModelTest#testAddDirtyRemoveFederationUser -Dkeycloak.logging.level=debug
+
 
 
 # run with quarkus

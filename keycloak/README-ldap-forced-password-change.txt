@@ -1,13 +1,21 @@
 
-
-export WORKDIR=/home/tsaarni/work/devenvs/keycloak
-
+# create certs
+rm -rf certs
+mkdir -p certs
 certyaml --destination certs configs/certs.yaml
+
+rm -f certs/truststore.p12
+keytool -importcert -storetype PKCS12 -keystore certs/truststore.p12 -storepass secret -noprompt -alias ca -file certs/ca.pem
+
+rm -f certs/admin-keystore.p12
+openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/ldap-admin.pem -inkey certs/ldap-admin-key.pem -out admin-keystore.p12
+
+
 docker-compose rm -f
 docker-compose up openldap ldap-client
 
 
-sudo nsenter -n -t $(pidof slapd) wireshark -f "port 389 or port 636" -Y ldap -k -o tls.keylog_file:$WORKDIR/output/wireshark-keys.log
+sudo nsenter -n -t $(pidof slapd) wireshark -f "port 389 or port 636" -Y ldap -k -o tls.keylog_file:$HOME/work/devenvs/keycloak/output/wireshark-keys.log
 
 
 sshpass -p user ssh user@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "echo Hello world!"
@@ -21,16 +29,24 @@ mvn clean install -DskipTestsuite -DskipExamples -DskipTests
 
 rm -rf target/kc/data/h2/keycloakdb*
 
-# run "Import realm" under debugger
-# run "Debug Quarkus" under debugger
+
+# run "Import realm" under vscode debugger
+# run "Debug Quarkus" under vscode debugger
 
 
+# or alternatively run
+mvn -f testsuite/utils/pom.xml exec:java -Pkeycloak-server -Djavax.net.ssl.trustStore=$HOME/work/devenvs/keycloak/certs/truststore.p12 -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.javax.net.ssl.trustStoreType="PKCS12" -Djavax.net.ssl.keyStore=$HOME/work/devenvs/keycloak/certs/admin-keystore.p12 -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.javax.net.ssl.keyStoreType="PKCS12" -Dresources -Dkeycloak.migration.action=import -Dkeycloak.migration.provider=dir -Dkeycloak.migration.dir=$HOME/work/devenvs/keycloak/migrations/ldap-federation-simple/
+#
 
 http://localhost:8080/
 http://localhost:8080/realms/master/account/
 
+http://localhost:8081/auth
+http://localhost:8081/auth/realms/master/account/#/
 
 
+
+http --form POST http://localhost:8081/auth/realms/master/protocol/openid-connect/token username=mustchange password=mustchange grant_type=password client_id=account-console
 
 ###
 #

@@ -25,8 +25,11 @@ OpenSSL::PKey::read(File.read("/home/tsaarni/work/devenvs/logstash/certs/server-
 
 
 
+openssl req -x509 -nodes -days 3650 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -subj "/CN=www.example.com" -keyout certs/key.pem -out certs/cert.pem
+openssl req -x509 -nodes -days 3650 -newkey ec -pkeyopt ec_paramgen_curve:secp384r1 -subj "/CN=www.example.com" -keyout certs/key.pem -out certs/cert.pem
+openssl req -x509 -nodes -days 3650 -newkey ec -pkeyopt ec_paramgen_curve:secp521r1 -subj "/CN=www.example.com" -keyout certs/key.pem -out certs/cert.pem
 
-
+OpenSSL::PKey::read(File.read("/home/tsaarni/work/devenvs/logstash/certs/key.pem"))
 
 
 # unittest
@@ -62,6 +65,5 @@ key.verify(digest, sig, data)
 
 
 # convert PKCS#8 to encrypted
-openssl pkcs8 -in private_key_pkcs8.pem -topk8 -out private_key_pkcs8_enc.pem 
+openssl pkcs8 -in private_key_pkcs8.pem -topk8 -out private_key_pkcs8_enc.pem
 openssl pkcs8 -in private_key_pkcs8.pem -topk8 -out private_key_pkcs8_enc.pem -v1 PBE-MD5-DES  # PBES1
-

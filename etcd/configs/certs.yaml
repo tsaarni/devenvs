@@ -6,3 +6,6 @@ sans:
   - DNS:etcd0
   - DNS:etcd1
   - DNS:etcd2
+---
+subject: cn=client
+issuer: cn=ca

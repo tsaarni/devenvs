@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-protected
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: echoserver-protected
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: echoserver-protected
+    spec:
+      containers:
+      - name: echoserver
+        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20201006-42d00bd
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - name: http-api
+          containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-protected
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  selector:
+    app.kubernetes.io/name: echoserver-protected
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver-protected
+spec:
+  virtualhost:
+    fqdn: protected.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+      clientValidation:
+        caSecret: client-root-ca-1
+  routes:
+    - services:
+        - name: echoserver-protected
+          port: 80
+
+# http --cert=certs/client-1.pem --cert-key=certs/client-1-key.pem --verify=certs/external-root-ca.pem https://protected.127-0-0-101.nip.io

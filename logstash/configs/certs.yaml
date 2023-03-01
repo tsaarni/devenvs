@@ -2,7 +2,7 @@ subject: cn=client-ca
 key_type: RSA
 ---
 subject: cn=server-ca
-key_type: RSA
+key_type: EC
 ---
 issuer: cn=client-ca
 subject: cn=client
@@ -22,7 +22,7 @@ subject: cn=server
 sans:
 - DNS:logstash-destination
 - DNS:localhost
-key_type: RSA
+key_type: EC
 ---
 issuer: cn=server-ca
 subject: cn=server-revoked

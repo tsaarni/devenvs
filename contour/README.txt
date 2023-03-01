@@ -1,22 +1,11 @@
 
-export WORKDIR=~/work/devenvs/contour
-###export KUBEBUILDER_ASSETS=~/work/contour-devenv/kubebuilder/bin
-
-curl -L -o kubebuilder-bin https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)
-chmod +x kubebuilder-bin
-mv kubebuilder-bin ~/go/bin/kubebuilder
-curl -sSLo envtest-bins.tar.gz "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.19.2-$(go env GOOS)-$(go env GOARCH).tar.gz"
-rm -rf kubebuilder
-tar zxf envtest-bins.tar.gz
-
-
 # start new cluster
 kind delete cluster --name contour
-kind create cluster --config $WORKDIR/configs/kind-cluster-config.yaml --name contour
+kind create cluster --config ~/work/devenvs/contour/configs/kind-cluster-config.yaml --name contour
 
 
 mkdir -p .vscode
-cp ~/work/devencs/contour/configs/contour-vscode-launch.json .vscode/launch.json
+cp ~/work/devenvs/contour/configs/contour-vscode-launch.json .vscode/launch.json
 
 
 ##############################################################################
@@ -145,7 +134,7 @@ kubectl create secret tls echoserver-cert --cert=certs/echoserver.pem --key=cert
 kubectl create secret generic internal-root-ca --from-file=ca.crt=certs/internal-root-ca.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret tls ingress --cert=certs/ingress.pem --key=certs/ingress-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret tls client --cert=certs/client-1.pem --key=certs/client-1-key.pem --dry-run=client -o yaml | kubectl apply -f -
-kubectl create secret generic client-root-ca-1 --from-file=cacert.pem=certs/client-root-ca-1.pem --dry-run=client -o yaml | kubectl apply -f -
+kubectl create secret generic client-root-ca-1 --from-file=ca.crt=certs/client-root-ca-1.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n projectcontour create secret tls envoy-client-cert --cert=certs/envoy.pem --key=certs/envoy-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n projectcontour create secret tls fallback-cert --cert=certs/fallback.pem --key=certs/fallback-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n projectcontour create secret generic metrics-cert --from-file=ca.pem=certs/metrics-client-root-ca.pem --from-file=tls.crt=certs/metrics.pem --from-file=tls.key=certs/metrics-key.pem --dry-run=client -o yaml | kubectl apply -f -

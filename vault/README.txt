@@ -1,9 +1,6 @@
 
 
-# build (only for amd64)
-XC_OSARCH=linux/amd64 make
-
-
+make
 
 # dev
 bin/vault server -dev

@@ -35,11 +35,12 @@ echo 'gem "logstash-output-syslog", :path => "/home/tsaarni/work/logstash-output
 
 bin/logstash-plugin install --no-verify
 bin/logstash-plugin install --local --no-verify logstash-output-syslog
-
+#  or the default version
+#    bin/logstash-plugin install logstash-output-syslog
 
 cp -a /home/tsaarni/work/logstash-output-syslog/lib/logstash/outputs/syslog.rb /home/tsaarni/work/logstash/vendor/bundle/jruby/2.6.0/gems/logstash-output-syslog-3.0.5/lib/logstash/outputs/syslog.rb
 
-bin/logstash -f /home/tsaarni/work/devenvs/logstash/logstash-source-syslog.conf --log.level debug
+bin/logstash -f /home/tsaarni/work/devenvs/logstash/configs/logstash-source-syslog.conf --log.level debug
 
 
 

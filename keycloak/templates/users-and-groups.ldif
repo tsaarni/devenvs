@@ -36,11 +36,11 @@ homeDirectory: /home/
 sn: adminsurename
 givenName: admingivenname
 
-dn: cn=user,ou=users,o=example
+dn: cn=aáé,ou=users,o=example
 objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
-uid: user
+uid: aáé
 cn: user
 uidNumber: 1002
 gidNumber: 1001
