@@ -1,25 +1,52 @@
 
 
-
-export WORKDIR=~/work/contour-devenv
-
 # copy vscode settings
 mkdir .vscode
-cp $WORKDIR/configs/launch.json .vscode/
+cp ~/work/devenvs/envoy/configs/launch.json .vscode/
 
 
 # Toolchain instructions from here
-https://github.com/envoyproxy/envoy/blob/master/bazel/README.md
+# bazel/README.md
+# https://github.com/envoyproxy/envoy/blob/master/bazel/README.md
 
-# compile with clang (not gcc)
-echo "build --config=clang" >> user.bazelrc
+# compile with clang (not gcc) and libc++ (not libstdc++)
+echo "build --config=libc++" > user.bazelrc
 echo "--local_ram_resources=10000" >> user.bazelrc
 
-# install and setup clang
-#   https://github.com/llvm/llvm-project/releases
-wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
-sudo tar xf clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz -C/usr/local/
-bazel/setup_clang.sh /usr/local/clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04/
+wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+sudo tar xf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz -C/usr/local/
+
+bazel/setup_clang.sh /usr/local/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04
+
+# NEW RELEASE VERSIONS DO NOT WORK
+# install and setup clang  https://apt.llvm.org/
+#sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+#sudo ln -s /usr/bin/llvm-config-15 /usr/local/bin/llvm-config
+#sudo ln -s /usr/bin/clang-15 /usr/local/bin/clang
+#sudo ln -s /usr/bin/clang++-15 /usr/local/bin/clang++
+#sudo ln -s /usr/bin/clang-cpp-15 /usr/local/bin/clang-cpp
+#bazel/setup_clang.sh /usr/local/
+
+# check list from bazel/README.md
+sudo apt-get install \
+   autoconf \
+   automake \
+   cmake \
+   curl \
+   libtool \
+   make \
+   ninja-build \
+   patch \
+   python3-pip \
+   unzip \
+   virtualenv
+
+
+# error:
+# ./bootstrap0: error while loading shared libraries: libc++.so.1: cannot open shared object file: No such file or directory
+# then install also
+libc++1-14
+
 
 # setup git hooks
 ./support/bootstrap
@@ -70,8 +97,8 @@ docker build -f $WORKDIR/docker/envoy/Dockerfile $WORKDIR/docker/envoy -t envoy:
 kind load docker-image envoy:latest --name contour  # upload image to kind cluster
 
 
-
-
+# remove bazel cache
+sudo rm -rf ~/.cache/bazel/
 
 # updating docs
 export ENVOY_SRCDIR=$PWD
@@ -267,9 +294,3 @@ git add api/ generated_api_shadow/
 
 docs/build.sh
 xdg-open generated/docs/index.html
-
-
-
-
-
-

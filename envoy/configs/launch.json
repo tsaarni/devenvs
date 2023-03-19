@@ -1,0 +1,70 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(gdb) Attach to local process",
+      "type": "cppdbg",
+      "request": "attach",
+      "program": "${workspaceFolder}/bazel-bin/source/exe/envoy-static",
+      "processId": "${command:pickMyProcess}",
+      "MIMode": "gdb",
+      "setupCommands": [
+          {
+              "description": "Enable pretty-printing for gdb",
+              "text": "-enable-pretty-printing",
+              "ignoreFailures": true
+          }
+      ]
+    },
+    {
+      "name": "(gdb) Attach to remote process",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bazel-bin/source/exe/envoy-static",
+      "MIMode": "gdb",
+      "cwd": "${workspaceFolder}",
+      "miDebuggerServerAddress": "localhost:9999",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "(lldb) Launch",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/bazel-bin/source/exe/envoy-static",
+      "args": [
+        "-c",
+        "/home/tsaarni/work/contour-devenv/configs/envoy-static-virtualhost.yaml"
+      ],
+      "cwd": "${workspaceFolder}",
+    },
+    {
+      "name": "(gdb) Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bazel-bin/source/exe/envoy-static",
+      "args": [
+        "-c",
+        "/home/tsaarni/work/contour-devenv/configs/envoy-static-virtualhost.yaml"
+      ],
+      "cwd": "${workspaceFolder}",
+    },
+    {
+      "name": "gdb //source/exe:envoy-static",
+      "request": "launch",
+      "arguments": "-c envoy.yaml",
+      "type": "gdb",
+      "target": "/build/.cache/bazel/_bazel_vscode/2d35de14639eaad1ac7060a4dd7e3351/execroot/envoy/bazel-out/k8-dbg/bin/source/exe/envoy-static",
+      "debugger_args": [
+        "--directory=/build/envoy-compdb/_bazel_vscode/2d35de14639eaad1ac7060a4dd7e3351/execroot/envoy"
+      ],
+      "cwd": "${workspaceFolder}",
+      "valuesFormatting": "disabled"
+    }
+  ]
+}
