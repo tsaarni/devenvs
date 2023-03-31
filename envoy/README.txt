@@ -1,7 +1,7 @@
 
 
 # copy vscode settings
-mkdir .vscode
+mkdir -p .vscode
 cp ~/work/devenvs/envoy/configs/launch.json .vscode/
 
 # setup git hooks
@@ -12,7 +12,7 @@ bazel/setup_clang.sh /usr/local/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04
 
 # compile with clang (not gcc) and libc++ (not libstdc++)
 echo "build --config=libc++" > user.bazelrc
-echo "--local_ram_resources=10000" >> user.bazelrc
+echo "--local_ram_resources=20000" >> user.bazelrc
 
 # generate compile_commands.json
 tools/vscode/refresh_compdb.sh

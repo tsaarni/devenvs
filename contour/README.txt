@@ -6,6 +6,7 @@ kind create cluster --config ~/work/devenvs/contour/configs/kind-cluster-config.
 
 mkdir -p .vscode
 cp ~/work/devenvs/contour/configs/contour-vscode-launch.json .vscode/launch.json
+cp ~/work/devenvs/contour/vscode-settings.json .vscode/settings.json
 
 
 ##############################################################################

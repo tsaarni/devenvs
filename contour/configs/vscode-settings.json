@@ -1,0 +1,6 @@
+// Enable e2e for gopls buildFlags so that we can open e2e tests
+{
+    "go.buildFlags": [
+        "-tags=e2e"
+    ]
+}

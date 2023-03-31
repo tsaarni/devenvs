@@ -54,7 +54,7 @@ http --form POST http://localhost:8081/auth/realms/master/protocol/openid-connec
 #
 
 # preparation
-mvn clean install -DskipTests
+    mvn clean install -DskipTests
 mvn clean install -DskipTests -pl util/embedded-ldap/
 
 # compile only changed code

@@ -1,10 +1,28 @@
 
+bazel build -c dbg //source/exe:envoy-static  # debug build
+tools/vscode/refresh_compdb.sh                # generate compile_commands.json for vscode
 
 
+# test by running envoy
 
-bazel build -c dbg //source/exe:envoy-static             # debug build
+mkdir -p certs
+certyaml -d certs configs/certs.yaml
 
-tools/vscode/refresh_compdb.sh
+python3 -m http.server --bind 127.0.0.1 8081   # test server
+
+rm /tmp/envoy-wireshark-keys.log
+bazel-bin/source/exe/envoy-static -c ~/work/devenvs/envoy/configs/envoy-signature-algorithms.yaml --log-level debug
+
+http --cert certs/client.pem --cert-key certs/client-key.pem --verify certs/server-ca.pem https://localhost:8443/
+
+# check the signature algorithms in the decrypted server hello
+wireshark -i lo -f "port 8443" -Y tls -o tls.keylog_file:/tmp/envoy-wireshark-keys.log -k
+
+
+# openssl and sslyze does not show the offered signature algorithms
+openssl s_client -cert certs/client.pem -key certs/client-key.pem -CAfile certs/server-ca.pem -connect localhost:8443
+sslyze localhost:8443
+
 
 
 # Changing API
@@ -18,6 +36,12 @@ git add api/ generated_api_shadow/
 
 
 
+# Generate documentation
+docs/build.sh
+xdg-open generated/docs/index.html
+
+
+# add changelog entry to: changelogs/current.yaml
 
 
 
@@ -29,10 +53,14 @@ git add api/ generated_api_shadow/
 # Testing
 #
 bazel test -c dbg //test/...
+bazel test -c dbg //test/extensions/transport_sockets/tls/...
 bazel test -c dbg //test/common/quic/... --test_output=streamed
 bazel test -c dbg //test/common/quic:envoy_quic_proof_source_test --test_output=streamed
 
 bazel test -c dbg //test/common/quic:envoy_quic_proof_source_test --test_output=streamed
+
+bazel test -c dbg //test/extensions/transport_sockets/tls:ssl_socket_test --test_arg="--gtest_filter=IpVersions/SslSocketTest.SetSignatureAlgorithms*" --test_output=streamed --cache_test_results=no
+
 
 
 # To run under debugger, create vscode launch.json entry for running
@@ -65,70 +93,3 @@ bazel test -c dbg //test/extensions/transport_sockets/tls:ssl_socket_test --test
 
 bazel test -c dbg //test/extensions/transport_sockets/tls:ssl_socket_test -gtest_filter=SignatureAlgorithms
 IpVersions/SslSocketTest.SignatureAlgorithms/IPv6_with_custom_cert_validation
-
-
-
-test/extensions/transport_sockets/tls/ssl_socket_test.cc:842: Failure
-Expected equality of these values:
-  1UL
-    Which is: 1
-  server_stats_store.counter(options.expectedServerStats()).value()
-    Which is: 0
-ssl.sigalgs.rsa_pss_rsae_sha256
-Stack trace:
-  0x215b29f: Envoy::Extensions::TransportSockets::Tls::(anonymous namespace)::testUtilV2()
-  0x2181769: Envoy::Extensions::TransportSockets::Tls::SslSocketTest_SignatureAlgorithms_Test::TestBody()
-  0x56bf38b: testing::internal::HandleSehExceptionsInMethodIfSupported<>()
-  0x56af5fa: testing::internal::HandleExceptionsInMethodIfSupported<>()
-  0x569b2b3: testing::Test::Run()
-  0x569bc54: testing::TestInfo::Run()
-... Google Test internal frames ...
-
-test/extensions/transport_sockets/tls/ssl_socket_test.cc:847: Failure
-Expected equality of these values:
-  1UL
-    Which is: 1
-  client_stats_store.counter(options.expectedClientStats()).value()
-    Which is: 0
-Stack trace:
-  0x215b48b: Envoy::Extensions::TransportSockets::Tls::(anonymous namespace)::testUtilV2()
-  0x2181769: Envoy::Extensions::TransportSockets::Tls::SslSocketTest_SignatureAlgorithms_Test::TestBody()
-  0x56bf38b: testing::internal::HandleSehExceptionsInMethodIfSupported<>()
-  0x56af5fa: testing::internal::HandleExceptionsInMethodIfSupported<>()
-  0x569b2b3: testing::Test::Run()
-  0x569bc54: testing::TestInfo::Run()
-... Google Test internal frames ...
-
-test/extensions/transport_sockets/tls/ssl_socket_test.cc:842: Failure
-Expected equality of these values:
-  1UL
-    Which is: 1
-  server_stats_store.counter(options.expectedServerStats()).value()
-    Which is: 0
-ssl.sigalgs.rsa_pss_rsae_sha256
-Stack trace:
-  0x215b29f: Envoy::Extensions::TransportSockets::Tls::(anonymous namespace)::testUtilV2()
-  0x2181790: Envoy::Extensions::TransportSockets::Tls::SslSocketTest_SignatureAlgorithms_Test::TestBody()
-  0x56bf38b: testing::internal::HandleSehExceptionsInMethodIfSupported<>()
-  0x56af5fa: testing::internal::HandleExceptionsInMethodIfSupported<>()
-  0x569b2b3: testing::Test::Run()
-  0x569bc54: testing::TestInfo::Run()
-... Google Test internal frames ...
-
-test/extensions/transport_sockets/tls/ssl_socket_test.cc:847: Failure
-Expected equality of these values:
-  1UL
-    Which is: 1
-  client_stats_store.counter(options.expectedClientStats()).value()
-    Which is: 0
-Stack trace:
-  0x215b48b: Envoy::Extensions::TransportSockets::Tls::(anonymous namespace)::testUtilV2()
-  0x2181790: Envoy::Extensions::TransportSockets::Tls::SslSocketTest_SignatureAlgorithms_Test::TestBody()
-  0x56bf38b: testing::internal::HandleSehExceptionsInMethodIfSupported<>()
-  0x56af5fa: testing::internal::HandleExceptionsInMethodIfSupported<>()
-  0x569b2b3: testing::Test::Run()
-  0x569bc54: testing::TestInfo::Run()
-... Google Test internal frames ...
-
-[external/com_google_absl/absl/flags/internal/flag.cc : 115] RAW: Restore saved value of envoy_reloadable_features_tls_async_cert_validation to: true
-[  FAILED  ] IpVersions/SslSocketTest.SignatureAlgorithms/IPv6_with_custom_cert_validation, where GetParam() = (4-byte object <01-00 00-00>, true) (476 ms)
