@@ -1,0 +1,52 @@
+
+# recompile
+mvn -Pdistribution -DskipTests clean install
+
+# run test
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.cookies.CookieTest -Dkeycloak.logging.level=debug
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.cookies.CookieTest#testNoDuplicationsWhenExpiringCookies -Dkeycloak.logging.level=debug
+
+# run the server
+mvn -f testsuite/utils/pom.xml exec:java -Pkeycloak-server
+
+
+1. login to admin console http://localhost:8081/auth
+2. create user "joe"
+3. open incognito window and login as "joe" into account console
+   http://localhost:8081/auth/realms/master/protocol/openid-connect/auth?client_id=account-console&redirect_uri=http%3A%2F%2Flocalhost%3A8081%2Fauth%2Frealms%2Fmaster%2Faccount%2F%3Freferrer%3Dsecurity-admin-console%26referrer_uri%3Dhttp%253A%252F%252Flocalhost%253A8081%252Fauth%252Fadmin%252Fmaster%252Fconsole%252F%2523%252Fmaster%252Fusers%252Fcea3889f-2f9e-426c-847b-9285b31660c0%252Fcredentials%23%2F&state=800d4ffc-acb7-4481-b1f6-4c9b9d1a0986&response_mode=fragment&response_type=code&scope=openid&nonce=e9238389-1f6e-47c9-84ee-9c261a52e5fe&code_challenge=kQM4uIJiySo8JX0mnklmcmiPCe8rikM4gZx9Kg__UGE&code_challenge_method=S256
+4. in admin console, go to "Sessions" and click select "Sign Out" for user Joe
+5. in account console, click any link and observe Set-Cookie headers being duplicate
+
+
+
+
+
+
+
+Set-Cookie: KEYCLOAK_IDENTITY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master/; HttpOnly
+Set-Cookie: KEYCLOAK_IDENTITY_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master/; HttpOnly
+Set-Cookie: KEYCLOAK_SESSION=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master/
+Set-Cookie: KEYCLOAK_SESSION_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master/
+Set-Cookie: KEYCLOAK_IDENTITY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master; HttpOnly
+Set-Cookie: KEYCLOAK_IDENTITY_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master; HttpOnly
+Set-Cookie: KEYCLOAK_SESSION=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master
+Set-Cookie: KEYCLOAK_SESSION_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master
+Set-Cookie: KEYCLOAK_IDENTITY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master; HttpOnly
+Set-Cookie: KEYCLOAK_IDENTITY_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master; HttpOnly
+Set-Cookie: KEYCLOAK_SESSION=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master
+Set-Cookie: KEYCLOAK_SESSION_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master
+Set-Cookie: AUTH_SESSION_ID=1593dacd-2138-4d6b-932b-8b1d2fa5ed56; Version=1; Path=/auth/realms/master/; SameSite=None; Secure; HttpOnly
+Set-Cookie: AUTH_SESSION_ID_LEGACY=1593dacd-2138-4d6b-932b-8b1d2fa5ed56; Version=1; Path=/auth/realms/master/; HttpOnly
+Set-Cookie: KC_RESTART=eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI0MWQ4OGNlZS0yNDIxLTQ3MzctOGQ1Yi0wODM0MjJkOWVjNjAifQ.eyJjaWQiOiJhY2NvdW50LWNvbnNvbGUiLCJwdHkiOiJvcGVuaWQtY29ubmVjdCIsInJ1cmkiOiJodHRwOi8vbG9jYWxob3N0OjgwODEvYXV0aC9yZWFsbXMvbWFzdGVyL2FjY291bnQvP3JlZmVycmVyPXNlY3VyaXR5LWFkbWluLWNvbnNvbGUmcmVmZXJyZXJfdXJpPWh0dHAlM0ElMkYlMkZsb2NhbGhvc3QlM0E4MDgxJTJGYXV0aCUyRmFkbWluJTJGbWFzdGVyJTJGY29uc29sZSUyRiUyMyUyRm1hc3RlciUyRnVzZXJzJTJGY2VhMzg4OWYtMmY5ZS00MjZjLTg0N2ItOTI4NWIzMTY2MGMwJTJGY3JlZGVudGlhbHMjL3BlcnNvbmFsLWluZm8iLCJhY3QiOiJBVVRIRU5USUNBVEUiLCJub3RlcyI6eyJzY29wZSI6Im9wZW5pZCIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MS9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJyZXNwb25zZV90eXBlIjoiY29kZSIsImNvZGVfY2hhbGxlbmdlX21ldGhvZCI6IlMyNTYiLCJyZWRpcmVjdF91cmkiOiJodHRwOi8vbG9jYWxob3N0OjgwODEvYXV0aC9yZWFsbXMvbWFzdGVyL2FjY291bnQvP3JlZmVycmVyPXNlY3VyaXR5LWFkbWluLWNvbnNvbGUmcmVmZXJyZXJfdXJpPWh0dHAlM0ElMkYlMkZsb2NhbGhvc3QlM0E4MDgxJTJGYXV0aCUyRmFkbWluJTJGbWFzdGVyJTJGY29uc29sZSUyRiUyMyUyRm1hc3RlciUyRnVzZXJzJTJGY2VhMzg4OWYtMmY5ZS00MjZjLTg0N2ItOTI4NWIzMTY2MGMwJTJGY3JlZGVudGlhbHMjL3BlcnNvbmFsLWluZm8iLCJzdGF0ZSI6IjYwYzU3ZDg4LWVjNmQtNDNiZS1iZTU3LWMzNzdlYjU4NThkZCIsIm5vbmNlIjoiNzA5N2ZmYjEtODc1MC00NWNiLThjNzYtZDc0ZjU1YWNmMWQ5IiwiY29kZV9jaGFsbGVuZ2UiOiJyeldlX0RPZUxtTnVBTGNVUjZwNHRFVTQ2T2hrV3M0RFdjdDFreWU0MEVjIiwicmVzcG9uc2VfbW9kZSI6ImZyYWdtZW50In19.xnLiPbJNOLPrHiUCEFM4E6n1Z6YZ_WgxsWA4hO5H5KI; Version=1; Path=/auth/realms/master/; HttpOnly
+Set-Cookie: KEYCLOAK_IDENTITY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master/; HttpOnly
+Set-Cookie: KEYCLOAK_IDENTITY_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master/; HttpOnly
+Set-Cookie: KEYCLOAK_SESSION=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master/
+Set-Cookie: KEYCLOAK_SESSION_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master/
+Set-Cookie: KEYCLOAK_IDENTITY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master; HttpOnly
+Set-Cookie: KEYCLOAK_IDENTITY_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master; HttpOnly
+Set-Cookie: KEYCLOAK_SESSION=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master
+Set-Cookie: KEYCLOAK_SESSION_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master
+Set-Cookie: KEYCLOAK_IDENTITY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master; HttpOnly
+Set-Cookie: KEYCLOAK_IDENTITY_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master; HttpOnly
+Set-Cookie: KEYCLOAK_SESSION=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master
+Set-Cookie: KEYCLOAK_SESSION_LEGACY=; Version=1; Comment=Expiring cookie; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Max-Age=0; Path=/auth/realms/master

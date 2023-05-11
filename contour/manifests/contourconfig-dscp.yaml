@@ -1,0 +1,11 @@
+apiVersion: projectcontour.io/v1alpha1
+kind: ContourConfiguration
+metadata:
+  name: contour
+  namespace: projectcontour
+spec:
+  envoy:
+   listener:
+    socketOptions:
+     tos: 64
+     trafficClass: 64

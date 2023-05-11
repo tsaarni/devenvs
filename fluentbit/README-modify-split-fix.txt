@@ -44,6 +44,8 @@ bin/flb-rt-out_td
 make flb-rt-filter_modify
 bin/flb-rt-filter_modify operation_with_whitespace
 
+bin/flb-it-utils test_flb_utils_split_quoted
+
 
 
 

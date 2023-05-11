@@ -15,17 +15,17 @@ cd go/src
 ./all.bash      # compile (you can press ctrl+c when testing begins)
 
 
+PATH=$PWD/../bin/:$PATH go test -v ./crypto/tls/ -run ^TestResumption
+
+
+
 # run only tls tests
 PATH=$PWD/../bin/:$PATH go tool dist test -rebuild -run crypto/tls
 
 
 
 # run test app
-cd tls-resumption
-certyaml
-
-~/work/go/bin/go run server/server.go
-~/work/go/bin/go run client/client.go
+go run reproduce-tls-resumption-failure.go
 
 
 

@@ -6,21 +6,26 @@
 
 # create secrets
 
-for i in {1..100}; do
-  cat <<EOF | kubectl create -f -
+data=$(head -c 1MB /dev/urandom | base64 -w 0)
+rm -f helm-secrets.yaml
+for i in {1..1000}; do
+  cat <<EOF >> helm-secrets.yaml
 apiVersion: v1
 kind: Secret
 type: helm.sh/release.v1
 metadata:
   name: my-helm-secret-$i
 data:
-  release: $(head -c 1MB /dev/urandom | base64 -w 0)
+  release: $data
+---
 EOF
 done
 
+kubectl create -f helm-secrets.yaml
 
 
-for i in {1..100}; do
+
+for i in {1..1000}; do
   kubectl delete secret my-helm-secret-$i
 done
 

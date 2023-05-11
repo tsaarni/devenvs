@@ -13,7 +13,7 @@ cp ~/work/jruby-openssl/lib/jopenssl.jar ./vendor/jruby/lib/ruby/stdlib/jopenssl
 
 # install to logstash jruby environment
 gem install --no-document /home/tsaarni/work/jruby-openssl/pkg/jruby-openssl-0.14.1.cr2-SNAPSHOT.gem
-
+gem install --no-document --install-dir vendor/bundle/jruby/2.6.0/ ~/work/jruby-openssl/pkg/jruby-openssl-0.14.*
 
 
 # test

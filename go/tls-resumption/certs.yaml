@@ -1,9 +1,0 @@
-subject: cn=ca
----
-issuer: cn=ca
-subject: cn=server
-sans:
-  - DNS:localhost
----
-issuer: cn=ca
-subject: cn=client

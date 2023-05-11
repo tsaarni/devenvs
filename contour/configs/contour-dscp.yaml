@@ -1,0 +1,4 @@
+listener:
+  socket-options:
+   tos: 64
+   traffic-class: 64
