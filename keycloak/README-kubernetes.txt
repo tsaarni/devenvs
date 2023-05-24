@@ -8,15 +8,28 @@ kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
 kubectl apply -f manifests/postgresql.yaml
 kubectl apply -f manifests/keycloak-15.yaml
 kubectl apply -f manifests/keycloak-18.yaml
+kubectl apply -f manifests/keycloak-19.yaml
+kubectl apply -f manifests/keycloak-20.yaml
+kubectl apply -f manifests/keycloak-21.yaml
 
 
+http://keycloak.127-0-0-121.nip.io/
 http://keycloak.127-0-0-121.nip.io/auth/
+http://keycloak.127-0-0-121.nip.io/realms/master/account
 
 
+
+mkdir -p certs
+certyaml -d certs configs/certs.yaml
 
 kubectl create secret tls keycloak-external --cert=certs/keycloak-server.pem --key=certs/keycloak-server-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret tls keycloak-internal --cert=certs/keycloak-internal.pem --key=certs/keycloak-internal-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic internal-ca --from-file=ca.crt=certs/internal-ca.pem --dry-run=client -o yaml | kubectl apply -f -
+
+
+
+# logs
+kubectl logs statefulset/keycloak
 
 
 # openldap
@@ -141,3 +154,14 @@ TOKEN=$(http --form POST http://keycloak.127-0-0-121.nip.io/auth/realms/master/p
 
 http -v GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/users Authorization:"bearer $TOKEN"
 http -v POST http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/users Authorization:"bearer $TOKEN" username=foo
+
+
+
+
+
+### Login page remains empty
+
+check that logs say "Strict HTTPS: false"
+
+
+2023-05-24 09:10:15,121 INFO  [org.keycloak.quarkus.runtime.hostname.DefaultHostnameProvider] (main) Hostname settings: Base URL: <unset>, Hostname: <request>, Strict HTTPS: false, Path: <request>, Strict BackChannel: false, Admin URL: <unset>, Admin: <request>, Port: -1, Proxied: true

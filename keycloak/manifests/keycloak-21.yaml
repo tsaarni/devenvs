@@ -71,7 +71,7 @@ spec:
           ## Releases
           ## https://www.keycloak.org/downloads-archive.html
           ## https://quay.io/repository/keycloak/keycloak?tab=tags
-          image: quay.io/keycloak/keycloak:19.0.3
+          image: quay.io/keycloak/keycloak:21.1.1
           #imagePullPolicy: Never
           command:
             - /opt/keycloak/bin/kc.sh
@@ -90,8 +90,10 @@ spec:
               value: "keycloak"
             - name: KC_DB_PASSWORD
               value: "keycloak"
-            - name: KC_HOSTNAME
-              value: "keycloak.127-0-0-121.nip.io"
+            #- name: KC_HOSTNAME
+            #  value: "keycloak.127-0-0-121.nip.io"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
             ## https://github.com/keycloak/keycloak/pull/11823
             ## https://github.com/keycloak/keycloak/discussions/11856
             ## https://github.com/keycloak/keycloak/pull/11872
@@ -131,6 +133,7 @@ spec:
             httpGet:
               path: /health/ready
               port: 8080
+
 
           ports:
             - name: http
