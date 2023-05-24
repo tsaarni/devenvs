@@ -1,4 +1,9 @@
 
+https://github.com/keycloak/keycloak/issues/17192
+https://github.com/keycloak/keycloak/pull/17265
+
+
+
 # recompile
 mvn -Pdistribution -DskipTests clean install
 

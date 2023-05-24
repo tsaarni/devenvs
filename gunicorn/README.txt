@@ -1,19 +1,33 @@
 
+
+cd ~/work/devenvs/gunicorn
 python3 -m venv venv
 . venv/bin/activate
 
+mkdir -p certs
+certyaml -d certs
 
-pip install -r requires.txt
+
+cd ~/work/gunicorn
+
+pip install -r requirements_test.txt
+pip install -r requirements_dev.txt
 
 python setup.py install
+python setup.py test
 
-cd myapp
-gunicorn --worker-class=sync --workers=4 --certfile=server.pem --keyfile=server-key.pem myapp:app
 
-http --verify=ca.pem https://localhost:8000
+cd ~/work/devenvs/gunicorn
+. venv/bin/activate
+gunicorn --worker-class=sync --workers=4 --certfile=certs/server.pem --keyfile=certs/server-key.pem myapp:app
 
-gunicorn --worker-class=sync --workers=4 --certfile=server.pem --keyfile=server-key.pem --ca-certs=ca.pem --cert-reqs 2 myapp:app
-http --verify=ca.pem --cert=client.pem --cert-key=client-key.pem  https://localhost:8000
+http --verify=certs/ca.pem https://localhost:8000
+
+gunicorn --worker-class=sync --workers=4 --certfile=certs/server.pem --keyfile=certs/server-key.pem --ca-certs=certs/ca.pem --cert-reqs 2 myapp:app
+http --verify=certs/ca.pem --cert=certs/client.pem --cert-key=certs/client-key.pem  https://localhost:8000
+
+
+gunicorn --worker-class=sync --workers=4 --certfile=certs/server.pem --keyfile=certs/server-key.pem --config configs/gunicorn-mintls-conf.py myapp:app
 
 
 sslyze localhost:8000
@@ -39,8 +53,7 @@ s.get("https://localhost:8000", verify="ca.pem")
 # regenerate .rst docs
 #   note: it will overwrite some defaults, edit them back manually
 make -C docs html
-
-
+xdg-open docs/build/html/index.html
 
 summary for timeout behavior
 
@@ -51,7 +64,7 @@ sync
     - client connects with HTTPS but does not proceed with TLS handshake
 
   - connection is closed immediately when
-    - client sends single HTTP request with keep-alive 
+    - client sends single HTTP request with keep-alive
 
 gthread
 
@@ -76,5 +89,3 @@ eventlet and gevent
     - client connects but does not send HTTP request
     - client sends single HTTP request with keep-alive and never sends further requests
     - client connects with HTTPS but does not proceed with TLS handshake
-
-

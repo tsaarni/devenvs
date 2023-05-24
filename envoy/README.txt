@@ -80,10 +80,12 @@ gdb --args bazel-bin/source/envoy-static ...
 ## Build and run Envoy test suite within container image, utilizing [Bazel remote cache](https://github.com/buchgr/bazel-remote)
 
 # start bazel cache in one terminal and then build with --remote_http_cache
-docker run -v $HOME/.cache/bazel-remote-cache:/data -p 28080:8080 buchgr/bazel-remote-cache
+rm -rf ~/.cache/bazel-remote-cache/ && mkdir -p ~/.cache/bazel-remote-cache/
+docker run -v $HOME/.cache/bazel-remote-cache:/data -u $(id -u):$(id -g) -p 28080:8080 quay.io/bazel-remote/bazel-remote --max_size 5
 
 # build release and test
 ci/run_envoy_docker.sh "BAZEL_BUILD_EXTRA_OPTIONS='--remote_http_cache=http://127.0.0.1:28080' ./ci/do_ci.sh bazel.release"
+ci/run_envoy_docker.sh "BAZEL_BUILD_EXTRA_OPTIONS='--remote_http_cache=http://127.0.0.1:28080' ./ci/do_ci.sh bazel.debug.server_only"
 
 # create container
 ci/docker_build.sh
