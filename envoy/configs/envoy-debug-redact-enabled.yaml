@@ -55,4 +55,4 @@ layered_runtime:
   layers:
   - name: mylayer
     static_layer:
-      envoy.reloadable_features.debug_redact_sensitive: false
+      envoy.reloadable_features.debug_include_sensitive_data: false

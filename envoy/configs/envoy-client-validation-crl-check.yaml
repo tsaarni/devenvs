@@ -5,6 +5,9 @@ admin:
       protocol: TCP
       address: 127.0.0.1
       port_value: 9901
+node:
+  id: mynode
+  cluster: mycluster
 static_resources:
   clusters:
   - name: mycluster
@@ -35,7 +38,7 @@ static_resources:
             - name: fileaccesslog
               typed_config:
                 "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
-                path: /tmp/envoy-access-log.txt
+                path: /dev/stdout
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
@@ -56,24 +59,23 @@ static_resources:
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
           common_tls_context:
-            tls_params:
-              signature_algorithms:
-              - rsa_pss_rsae_sha256
-              - ecdsa_secp256r1_sha256
-            tls_certificates:
-              certificate_chain:
-                filename: "/home/tsaarni/work/devenvs/envoy/certs/envoy.pem"
-              private_key:
-                filename: "/home/tsaarni/work/devenvs/envoy/certs/envoy-key.pem"
-            validation_context:
-              trusted_ca:
-                filename: "/home/tsaarni/work/devenvs/envoy/certs/client-sub-ca.pem"
-            key_log:
-              path: "/tmp/envoy-wireshark-keys.log"
-#          require_client_certificate: true
-layered_runtime:
-  layers:
-  - name: mylayer
-    static_layer:
-      #envoy.reloadable_features.enable_intermediate_ca: true
-      envoy.reloadable_features.enable_intermediate_ca: false
+            tls_certificate_sds_secret_configs:
+              name: tls_certificate_secret
+              sds_config:
+                path_config_source:
+                  path: /home/tsaarni/work/devenvs/envoy/configs/envoy-sds-auth-secret-tls-certificate.yaml
+            validation_context_sds_secret_config:
+              name: validation_context_secret
+              sds_config:
+                path_config_source:
+                  path: /home/tsaarni/work/devenvs/envoy/configs/envoy-sds-auth-secret-validation-context.yaml
+          require_client_certificate: true
+
+
+#              trust_chain_verification: VERIFY_TRUST_CHAIN
+#              crl:
+#                filename: /home/tsaarni/work/devenvs/envoy/certs/rootCA.crl
+
+            # https://www.envoyproxy.io/docs/envoy/v1.26.1/api-v3/extensions/transport_sockets/tls/v3/common.proto#envoy-v3-api-msg-extensions-transport-sockets-tls-v3-tlscertificate
+
+            # https://www.envoyproxy.io/docs/envoy/v1.26.1/api-v3/extensions/transport_sockets/tls/v3/common.proto#envoy-v3-api-msg-extensions-transport-sockets-tls-v3-certificatevalidationcontext

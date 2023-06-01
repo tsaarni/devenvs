@@ -6,8 +6,8 @@ bazel build -c dbg //source/exe:envoy-static
 
 # test envoy
 python3 -m http.server --bind 127.0.0.1 8081
+bazel-bin/source/exe/envoy-static -c ~/work/devenvs/envoy/configs/envoy-debug-redact-enabled.yaml --log-level debug
 bazel-bin/source/exe/envoy-static -c ~/work/devenvs/envoy/configs/envoy-static-virtualhost.yaml --log-level debug
-bazel-bin/source/exe/envoy-static -c ~/work/devenvs/envoy/configs/envoy-debug-redact-disabled.yaml --log-level debug
 
 http http://127.0.0.1:8080/
 http "http://127.0.0.1:8080/foo?secret" "Cookie:sessionid=secret;another=secret"

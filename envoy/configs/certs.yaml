@@ -12,4 +12,12 @@ issuer: cn=client-ca
 ca: true
 ---
 subject: cn=client
+issuer: cn=client-ca
+revoked: false
+---
+subject: cn=revoked-client
+issuer: cn=client-ca
+revoked: true
+---
+subject: cn=client-under-subca
 issuer: cn=client-sub-ca

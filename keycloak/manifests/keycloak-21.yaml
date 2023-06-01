@@ -117,6 +117,8 @@ spec:
             #  value: /run/secrets/certs/tls.key
             #- name: KC_HOSTNAME_ADMIN_URL
             #  value: http://keycloak.127-0-0-121.nip.io/
+
+            # https://www.keycloak.org/server/caching
             - name: KC_CACHE_STACK
               value: "kubernetes"
             - name: JAVA_OPTS_APPEND

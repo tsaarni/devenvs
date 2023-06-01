@@ -14,8 +14,11 @@ kubectl apply -f manifests/keycloak-21.yaml
 
 
 http://keycloak.127-0-0-121.nip.io/
+https://keycloak.127-0-0-121.nip.io/
+
 http://keycloak.127-0-0-121.nip.io/auth/
-http://keycloak.127-0-0-121.nip.io/realms/master/account
+
+https://keycloak.127-0-0-121.nip.io/realms/master/account
 
 
 
@@ -110,6 +113,8 @@ distribution/server-dist/target/keycloak-*.tar.gz
 sudo nsenter --target $(pidof slapd) --net wireshark -f  "port 389" -k
 sudo nsenter --target $(pgrep -f org.jboss.as.standalone | sed -n 1p) --net wireshark -k
 sudo nsenter --target $(pgrep -f org.jboss.as.standalone | sed -n 2p) --net wireshark -k
+
+sudo nsenter --target $(pgrep -f quarkus) --net wireshark -f "port 8080" -Y http -k
 
 
 kubectl get secret keycloakcert -o jsonpath="{..ca\.crt}" | base64 -d > ca.crt

@@ -105,3 +105,52 @@ cp c_cpp_properties.json $ENVOY_SRC/.vscode/
 
 # generate compile_commands.json
 ./tools/gen_compilation_database.py
+
+
+### Running unit tests
+
+Construct the name according to example: /[test directory]:[test target]
+
+For example, following definition in test/common/secret/BUILD
+
+      envoy_cc_test(
+         name = "sds_api_test",
+
+
+Would mean that the test can be run with following command:
+
+bazel test -c dbg //test/common/secret:sds_api_test --test_output=streamed
+
+
+Use --test_arg to pass arguments to the test binary.
+For example, to run only one test case:
+
+bazel test -c dbg //test/common/secret:sds_api_test --test_output=streamed --test_arg="--gtest_filter=CertificateValidationContextSdsRotationApiTestParams/CertificateValidationContextSdsRotationApiTest*"
+
+
+To avoid caching test results, use --cache_test_results=no
+
+--cache_test_results=no
+
+
+
+### Envoy release builds
+
+
+docker run --volume $HOME/work/devenvs/envoy:/home/tsaarni/work/devenvs/envoy:ro --network host --user $(id -u):$(id -g) --rm envoyproxy/envoy:v1.24-latest --log-level debug -c ~/work/devenvs/envoy/configs/envoy-client-validation-crl-check.yaml
+
+docker run --volume $HOME/work/devenvs/envoy:/home/tsaarni/work/devenvs/envoy:ro --network host --user $(id -u):$(id -g) --rm envoyproxy/envoy:v1.25-latest --log-level debug -c ~/work/devenvs/envoy/configs/envoy-client-validation-crl-check.yaml
+
+docker run --volume $HOME/work/devenvs/envoy:/home/tsaarni/work/devenvs/envoy:ro --network host --user $(id -u):$(id -g) --rm envoyproxy/envoy:v1.26-latest --log-level debug -c ~/work/devenvs/envoy/configs/envoy-client-validation-crl-check.yaml
+
+
+#### Dev container
+
+# compile
+bazel build -c dbg //source/exe:envoy-static && cp -a bazel-bin/source/exe/envoy-static .
+
+# compilation database
+tools/gen_compilation_database.py    # reload vscode window afterwards
+
+# fix format
+./tools/code_format/check_format.py fix
