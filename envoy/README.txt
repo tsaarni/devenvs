@@ -154,3 +154,10 @@ tools/gen_compilation_database.py    # reload vscode window afterwards
 
 # fix format
 ./tools/code_format/check_format.py fix
+
+
+### Document changes
+
+./docs/build.sh
+
+xdg-open ./generated/docs/index.html

@@ -17,7 +17,7 @@ bazel-bin/source/exe/envoy-static --log-level debug -c ~/work/devenvs/envoy/conf
 # generate certs and two CRLS: one with client cert revoked, one with client cert not revoked
 mkdir -p certs
 rm certs/*
-(cd generate-certs-and-crl; go run main.go)
+(cd app/generate-certs-and-crl; go run main.go)
 
 # not revoked
 cp certs/crl-client-not-revoked.pem certs/crl.pem
