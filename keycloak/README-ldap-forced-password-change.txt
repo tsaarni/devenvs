@@ -29,14 +29,22 @@ mvn clean install -DskipTestsuite -DskipExamples -DskipTests
 
 rm -rf target/kc/data/h2/keycloakdb*
 
+mkdir -p .vscode
+cp ~/work/devenvs/keycloak/configs/launch.json .vscode/launch.json
 
-# run "Import realm" under vscode debugger
 # run "Debug Quarkus" under vscode debugger
 
 
 # or alternatively run
 mvn -f testsuite/utils/pom.xml exec:java -Pkeycloak-server -Djavax.net.ssl.trustStore=$HOME/work/devenvs/keycloak/certs/truststore.p12 -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.javax.net.ssl.trustStoreType="PKCS12" -Djavax.net.ssl.keyStore=$HOME/work/devenvs/keycloak/certs/admin-keystore.p12 -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.javax.net.ssl.keyStoreType="PKCS12" -Dresources -Dkeycloak.migration.action=import -Dkeycloak.migration.provider=dir -Dkeycloak.migration.dir=$HOME/work/devenvs/keycloak/migrations/ldap-federation-simple/
-#
+
+
+# create ldap simple auth provider
+apps/create-components.py rest-requests/create-ldap-simple-auth-provider.json
+
+
+
+# l: mustchange  p: mustchange
 
 http://localhost:8080/
 http://localhost:8080/realms/master/account/
