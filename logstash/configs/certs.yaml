@@ -19,15 +19,18 @@ revoked: true
 ---
 issuer: cn=server-ca
 subject: cn=server
-key_type: EC
+key_type: RSA
 sans:
 - DNS:logstash-destination
 - DNS:localhost
 ---
 issuer: cn=server-ca
 subject: cn=server-revoked
-key_type: RSA
+key_type: EC
 revoked: true
+sans:
+- DNS:logstash-destination
+- DNS:localhost
 ---
 issuer: cn=server-ca
 subject: cn=rsyslog

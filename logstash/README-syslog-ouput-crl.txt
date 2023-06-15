@@ -18,8 +18,6 @@ export LOGSTASH_PATH=$HOME/work/logstash
 
 
 
-
-
 bin/logstash-plugin install logstash-input-stdin
 bin/logstash-plugin install logstash-codec-json
 bin/logstash-plugin install logstash-codec-json_lines
@@ -40,7 +38,7 @@ rake plugin:install-default
 
 bin/logstash-plugin install --local ~/work/logstash-output-syslog/logstash-output-syslog-3.0.5.gem
 
-# First remove duplicate line from Gemfile 
+# First remove duplicate line from Gemfile
 #    gem "logstash-output-syslog"
 # and then add
 #    gem "logstash-output-syslog", :path => "/home/tsaarni/work/logstash-output-syslog"
@@ -116,4 +114,3 @@ https://github.com/logstash-plugins/logstash-output-syslog/pull/55
 
 
 rm -rf /home/tsaarni/work/logstash/vendor/jruby/lib/ruby/gems/shared/gems/minitest-5.11.3/
-

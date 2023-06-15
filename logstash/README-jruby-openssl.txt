@@ -67,3 +67,21 @@ key.verify(digest, sig, data)
 # convert PKCS#8 to encrypted
 openssl pkcs8 -in private_key_pkcs8.pem -topk8 -out private_key_pkcs8_enc.pem
 openssl pkcs8 -in private_key_pkcs8.pem -topk8 -out private_key_pkcs8_enc.pem -v1 PBE-MD5-DES  # PBES1
+
+
+
+
+
+
+### build failure
+
+[INFO] BUILD FAILURE
+
+[ERROR] Plugin org.codehaus.mojo:build-helper-maven-plugin:1.9 or one of its dependencies could not be resolved: Failed to read artifact descriptor for org.codehaus.mojo:build-helper-maven-plugin:jar:1.9: 1 problem was encountered while building the effective model
+[ERROR] [FATAL] Non-parseable POM /home/tsaarni/.m2/repository/org/codehaus/mojo/build-helper-maven-plugin/1.9/build-helper-maven-plugin-1.9.pom: UTF-8 BOM plus xml decl of ISO-8859-1 is incompatible (position: START_DOCUMENT seen <?xml version="1.0" encoding="ISO-8859-1"... @1:42)  @ line 1, column 42
+
+
+# WORKAROUND
+# change to old maven:
+
+sdk use maven 3.8.7

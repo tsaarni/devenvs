@@ -1,7 +1,7 @@
 # releases
 # https://www.docker.elastic.co/r/logstash/logstash-oss
 
-FROM docker.elastic.co/logstash/logstash-oss:8.4.1
+FROM docker.elastic.co/logstash/logstash-oss:8.8.1
 
 
 # (optional if any)
