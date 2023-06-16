@@ -13,8 +13,6 @@ kubeadmConfigPatches:
         # with clients such as httpie without having to override HTTP header
         # "Host: host1.external.com:31390" with "Host: host1.external.com"
         service-node-port-range: 80-32767
-featureGates:
-  EphemeralContainers: true
 nodes:
 - role: control-plane
   extraPortMappings:

@@ -316,14 +316,17 @@ kubectl -n projectcontour port-forward $(kubectl -n projectcontour get pod -lapp
 http --verify=certs/internal-root-ca.pem --cert=certs/metrics-client-1.pem --cert-key=certs/metrics-client-1-key.pem https://localhost:8003/stats
 
 
-make setup-kind-cluster
+make setup-kind-cluster load-contour-image-kind
 make run-e2e
 
 export CONTOUR_E2E_LOCAL_HOST=$(ifconfig | grep inet | grep -v '::' | grep -v 127.0.0.1 | head -n1 | awk '{print $2}')
 USE_CONTOUR_CONFIGURATION_CRD=true ginkgo -tags=e2e -mod=readonly -skip-package=upgrade -r -v ./test/e2e/
 
-ginkgo -tags=e2e -mod=readonly -r -v ./test/e2e/infra/
-ginkgo -tags=e2e -mod=readonly --fail-fast --until-it-fails -r -v ./test/e2e/infra/
+go run github.com/onsi/ginkgo/v2/ginkgo -tags=e2e -mod=readonly -r -v ./test/e2e/infra/
+go run github.com/onsi/ginkgo/v2/ginkgo -tags=e2e -mod=readonly --fail-fast --until-it-fails -r -v ./test/e2e/infra/
+go run github.com/onsi/ginkgo/v2/ginkgo -tags=e2e -mod=readonly -r -v --focus="CRL can be rotated" ./test/e2e/httpproxy/
+
+
 
 make cleanup-kind
 

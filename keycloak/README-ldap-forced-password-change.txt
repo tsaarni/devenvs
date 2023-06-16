@@ -1,4 +1,20 @@
 
+
+https://github.com/keycloak/keycloak/issues/14523
+https://github.com/keycloak/keycloak/pull/15253
+
+https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-11
+https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-11#section-9.1
+
+   *  bindResponse.resultCode = success (0),
+      passwordPolicyResponse.error = changeAfterReset (2): The user is
+      binding for the first time after the password administrator set
+      the password.  In this scenario, the client SHOULD prompt the user
+      to change his password immediately.
+
+
+
+
 # create certs
 rm -rf certs
 mkdir -p certs
@@ -27,6 +43,9 @@ sshpass -p mustchange ssh mustchange@localhost -p 2222 -o UserKnownHostsFile=/de
 
 mvn clean install -DskipTestsuite -DskipExamples -DskipTests
 
+
+
+# Start with clean database
 rm -rf target/kc/data/h2/keycloakdb*
 
 mkdir -p .vscode
@@ -53,8 +72,14 @@ http://localhost:8081/auth
 http://localhost:8081/auth/realms/master/account/#/
 
 
+# Automated script that logs in to check if password change is required
+python3 -m venv .venv
+source .venv/bin/activate
+pip install selenium webdrivermanager
+webdrivermanager chrome
 
-http --form POST http://localhost:8081/auth/realms/master/protocol/openid-connect/token username=mustchange password=mustchange grant_type=password client_id=account-console
+apps/login-with-forced-password-change.py
+
 
 ###
 #
@@ -86,3 +111,17 @@ wireshark -i lo -d tcp.port==10389,ldap -f "port 10389" -Y ldap.bindResponse_ele
 # and add new column with field
 #   tls.record.version
 # to see which bind requests were sent over TLS and which not
+
+
+
+
+
+
+###
+[keycloak-dev] Support for password-only sync in user federation
+https://lists.jboss.org/pipermail/keycloak-dev/2018-September/011258.html
+
+
+
+### TODO
+check how MSAD avoid "recursing" when adding required action i.e. writing it back to LDAP

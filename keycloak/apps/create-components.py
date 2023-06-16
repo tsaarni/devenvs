@@ -1,7 +1,16 @@
 #!/bin/env python3
+#
+# Takes a list of JSON files containing REST requests to create components in Keycloak.
+#
+# Usage: create-components.py --server <server> --user <user> --password <password> <rest-request-file>...
+#
+# Example:
+#   create-components.py rest-requests/create-ldap-simple-auth-provider.json
+#
 
 import getopt
 import logging
+import os
 import sys
 
 import requests
@@ -9,8 +18,7 @@ import requests
 # Default values
 user = "admin"
 password = "admin"
-server = "http://localhost:8080"
-
+server = os.getenv("KEYCLOAK_SERVER_URL", "http://localhost:8080")
 
 # enable info logging
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +34,9 @@ except getopt.GetoptError as err:
 
 for opt, arg in opts:
     if opt == "--help":
-        print(f"Usage: {sys.argv[0]} --server <server> --user <user> --password <password> <rest-request-file>...")
+        print(
+            f"Usage: {sys.argv[0]} --server <server> --user <user> --password <password> <rest-request-file>..."
+        )
         sys.exit(0)
     if opt == "--server":
         server = arg
@@ -61,17 +71,23 @@ for f in request_files:
         data = fd.read()
         res = requests.post(
             f"{server}/admin/realms/master/components",
-            headers={"Authorization": f"Bearer {token}",
-                     "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
             data=data,
         )
         res.raise_for_status()
         if res.status_code == 201:
-            res = requests.get(f"{res.headers['Location']}",
-                                 headers={"Authorization": f"Bearer {token}"})
+            res = requests.get(
+                f"{res.headers['Location']}",
+                headers={"Authorization": f"Bearer {token}"},
+            )
             res.raise_for_status()
             json = res.json()
-            logging.info(f"Successfully created component: providerType={json['providerType']} id={json['id']}, name={json['name']}")
+            logging.info(
+                f"Successfully created: providerType={json['providerType']} id={json['id']}, name={json['name']}"
+            )
         else:
             logging.error(f"Error {res.status_code}")
             logging.error(res.text)
