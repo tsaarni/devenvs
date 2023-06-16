@@ -35,7 +35,7 @@ spec:
           - "/bin/sh"
         args:
           - "-c"
-          - "apk add --update-cache py3-pip httpie openssl netcat-openbsd bind-tools py3-jwt && sleep 99999999"
+          - "apk add --update-cache py3-pip httpie openssl netcat-openbsd bind-tools py3-jwt && /bin/sleep 99999999"
         ports:
           - containerPort: 8200
         env:

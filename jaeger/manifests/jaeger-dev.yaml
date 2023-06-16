@@ -12,7 +12,7 @@ spec:
     command: ["/bin/sh"]
     args:
     - -c
-    - "apk add --update-cache httpie openssl inotify-tools && sleep 99999999"
+    - "apk add --update-cache httpie openssl inotify-tools && /bin/sleep 99999999"
 
     env:
     - name: SPAN_STORAGE_TYPE

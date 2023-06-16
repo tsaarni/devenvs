@@ -31,7 +31,7 @@ spec:
       command: ["/bin/sh"]
       args:
         - "-c"
-        - "go install github.com/go-delve/delve/cmd/dlv@latest && sleep 99999999"
+        - "go install github.com/go-delve/delve/cmd/dlv@latest && /bin/sleep 99999999"
   serviceAccountName: tokenreview
 ---
 apiVersion: v1
@@ -62,7 +62,7 @@ spec:
       command: ["/bin/sh"]
       args:
         - "-c"
-        - "apk add --update-cache py3-pip httpie openssl netcat-openbsd py3-jwt && sleep 99999999"
+        - "apk add --update-cache py3-pip httpie openssl netcat-openbsd py3-jwt && /bin/sleep 99999999"
       volumeMounts:
         - name: projected
           mountPath: "/projected"
