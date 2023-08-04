@@ -23,6 +23,7 @@ key_type: RSA
 sans:
 - DNS:logstash-destination
 - DNS:localhost
+- DNS:rsyslog.127-0-0-1.nip.io
 ---
 issuer: cn=server-ca
 subject: cn=server-revoked
@@ -36,5 +37,6 @@ issuer: cn=server-ca
 subject: cn=rsyslog
 sans:
 - DNS:localhost
+- DNS:rsyslog.127-0-0-1.nip.io
 revoked: false
 key_type: EC

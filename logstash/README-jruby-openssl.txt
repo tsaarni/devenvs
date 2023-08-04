@@ -8,8 +8,8 @@ mvn clean package -Dmaven.test.skip=true
 cp -a ~/work/jruby-openssl-test/src/main/java/org/jruby/ext/openssl/ src/main/java/org/jruby/ext/
 
 # copy to logstash
-cp ~/work/jruby-openssl/lib/jopenssl.jar ./vendor/jruby/lib/ruby/stdlib/jopenssl.jar
-
+##cp ~/work/jruby-openssl/lib/jopenssl.jar ./vendor/jruby/lib/ruby/stdlib/jopenssl.jar
+cp ~/work/jruby-openssl/lib/jopenssl.jar ./vendor/bundle/jruby/3.1.0/gems/jruby-openssl-0.14.2-java/lib/jopenssl.jar
 
 # install to logstash jruby environment
 gem install --no-document /home/tsaarni/work/jruby-openssl/pkg/jruby-openssl-0.14.1.cr2-SNAPSHOT.gem
@@ -84,4 +84,4 @@ openssl pkcs8 -in private_key_pkcs8.pem -topk8 -out private_key_pkcs8_enc.pem -v
 # WORKAROUND
 # change to old maven:
 
-sdk use maven 3.8.7
+sdk use maven 3.8.7    # changes only in this terminal
