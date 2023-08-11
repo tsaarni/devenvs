@@ -1,0 +1,40 @@
+version: "3"
+
+services:
+
+  envoy:
+    image: envoyproxy/envoy:v1.27-latest
+
+    # HTTP
+    #command: --log-level info --config-path /input/configs/envoy-tls13-failed-auth-retry-http-connection-manager.yaml
+
+    # TCP Proxy
+    command: --log-level info --config-path /input/configs/envoy-tls13-failed-auth-retry-tcp-proxy.yaml
+
+    volumes:
+      - .:/input:ro
+    user: "1000:1000"
+    ports:
+      - "8080:8080"
+
+  echoserver1:
+    image: quay.io/tsaarni/echoserver:demo
+    environment:
+      - TLS_SERVER_CERT=/input/certs/upstream-server.pem
+      - TLS_SERVER_PRIVKEY=/input/certs/upstream-server-key.pem
+      - TLS_CLIENT_CACERTS=/input/certs/server-ca.pem
+      - POD_NAME=echoserver1
+    volumes:
+      - .:/input:ro
+    user: "1000:1000"
+
+  echoserver2:
+    image: quay.io/tsaarni/echoserver:demo
+    environment:
+      - TLS_SERVER_CERT=/input/certs/upstream-server.pem
+      - TLS_SERVER_PRIVKEY=/input/certs/upstream-server-key.pem
+      - TLS_CLIENT_CACERTS=/input/certs/server-ca.pem
+      - POD_NAME=echoserver2
+    volumes:
+      - .:/input:ro
+    user: "1000:1000"

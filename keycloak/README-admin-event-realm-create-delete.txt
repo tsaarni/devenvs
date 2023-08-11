@@ -4,6 +4,14 @@ https://github.com/keycloak/keycloak/issues/10733
 https://github.com/keycloak/keycloak/pull/10831
 
 
+add following to envs
+"KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL": "info",
+
+or on command line 
+--spi-events-listener-jboss-logging-success-level=info
+
+
+
 mvn -Pdistribution -DskipTests clean install
 mvn clean install -DskipTests -pl services       # compile only services after a change
 

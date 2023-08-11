@@ -5,7 +5,7 @@ subject: cn=client-ca
 subject: cn=envoy
 issuer: cn=server-ca
 sans:
-  - DNS:localhost
+- DNS:localhost
 ---
 subject: cn=client-sub-ca
 issuer: cn=client-ca
@@ -21,3 +21,11 @@ revoked: true
 ---
 subject: cn=client-under-subca
 issuer: cn=client-sub-ca
+---
+subject: cn=upstream-server
+issuer: cn=server-ca
+sans:
+- DNS:localhost
+---
+subject: cn=untrusted
+ca: false

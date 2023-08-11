@@ -115,3 +115,9 @@ key_usages:
 - CertSign
 - KeyEncipherment
 - DigitalSignature
+---
+subject: cn=shell
+issuer: cn=internal-root-ca
+sans:
+- DNS:shell
+

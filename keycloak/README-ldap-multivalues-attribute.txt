@@ -1,5 +1,16 @@
 
+https://github.com/keycloak/keycloak/issues/22091
 
+mvn clean install -DskipTests
+
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPProvidersFullNameMapperTest -Dkeycloak.logging.level=debug
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPProvidersFullNameMapperTest#testMultiValuedAttributes -Dkeycloak.logging.level=debug
+
+
+
+
+#############################
+# OLD OLD OLD
 
 Cannot add multi valued user attribute when using LDAP federation
 https://issues.redhat.com/browse/KEYCLOAK-16575

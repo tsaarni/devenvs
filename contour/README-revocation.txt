@@ -18,7 +18,7 @@ kubectl get httpproxy echoserver-protected -o yaml
 
 http --ssl tls1.2 --verify=certs/external-root-ca.pem --cert=certs/client-1.pem --cert-key=certs/client-1-key.pem https://protected.127-0-0-101.nip.io # successful
 http --ssl tls1.2 --verify=certs/external-root-ca.pem --cert=certs/revoked-client-1.pem --cert-key=certs/revoked-client-1-key.pem https://protected.127-0-0-101.nip.io # revoked
-http --ssl tls1.2 -verify=certs/external-root-ca.pem --cert=certs/client-2.pem --cert-key=certs/client-2-key.pem https://protected.127-0-0-101.nip.io # untrusted
+http --ssl tls1.2 --verify=certs/external-root-ca.pem --cert=certs/client-2.pem --cert-key=certs/client-2-key.pem https://protected.127-0-0-101.nip.io # untrusted
 
 
 wireshark -i lo -f "port 443" -k

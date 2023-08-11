@@ -9,6 +9,37 @@ cp ~/work/devenvs/contour/configs/contour-vscode-launch.json .vscode/launch.json
 cp ~/work/devenvs/contour/configs/vscode-settings.json .vscode/settings.json
 
 
+
+
+#####################################################################################
+#
+# Run contour directly from source directory
+#
+
+kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
+# or
+kubectl apply -f examples/contour
+
+# create endpoints that directs traffic to host, to execute controllers directly from source code without deploying
+sed "s/REPLACE_ADDRESS_HERE/$(docker network inspect kind | jq -r '.[0].IPAM.Config[0].Gateway')/" manifests/contour-endpoints-dev.yaml | kubectl apply -f -
+
+
+
+kubectl -n projectcontour scale deployment --replicas=0 contour
+kubectl -n projectcontour rollout restart daemonset envoy
+
+
+
+
+
+kubectl -n projectcontour get secret contourcert -o jsonpath='{..ca\.crt}' | base64 -d > ca.crt
+kubectl -n projectcontour get secret contourcert -o jsonpath='{..tls\.crt}' | base64 -d > tls.crt
+kubectl -n projectcontour get secret contourcert -o jsonpath='{..tls\.key}' | base64 -d > tls.key
+
+go run github.com/projectcontour/contour/cmd/contour serve --xds-address=0.0.0.0 --xds-port=8001 --envoy-service-http-port=8080 --envoy-service-https-port=8443 --contour-cafile=ca.crt --contour-cert-file=tls.crt --contour-key-file=tls.key
+
+
+
 ##############################################################################
 #
 # Running a container
@@ -103,27 +134,10 @@ http http://localhost:9001/config_dump| jq '.configs[].dynamic_route_configs'
 
 
 
-#####################################################################################
-#
-# Run contour directly from source directory
-#
-
-kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
-kubectl apply -f examples/contour
-
-# create endpoints that directs traffic to host, to execute controllers directly from source code without deploying
-sed "s/REPLACE_ADDRESS_HERE/$(docker network inspect kind | jq -r '.[0].IPAM.Config[0].Gateway')/" manifests/contour-endpoints-dev.yaml | kubectl apply -f -
-
-cat manifests/contour-endpoints-dev.yaml
 
 
 
-kubectl -n projectcontour scale deployment --replicas=0 contour
-kubectl -n projectcontour rollout restart daemonset envoy
 kubectl apply -f manifests/echoservers-tls.yaml
-
-
-
 
 
 # generate certificates
