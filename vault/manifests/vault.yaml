@@ -46,10 +46,15 @@ spec:
         volumeMounts:
           - mountPath: /config
             name: vault-config
+          - mountPath: /certs
+            name: certs
       volumes:
         - name: vault-config
           configMap:
             name: vault-config
+        - name: certs
+          secret:
+            secretName: vault-certs
       serviceAccountName: vault-auth
 ---
 apiVersion: v1
@@ -63,9 +68,12 @@ data:
       tls_disable = 1
     }
     storage "etcd" {
-      address  = "http://etcd:2379"
+      address  = "https://etcd:2379"
       etcd_api = "v3"
       sync = "false"
+      tls_ca_file = "/certs/ca.pem"
+      tls_cert_file = "/certs/client.pem"
+      tls_key_file = "/certs/client-key.pem"
     }
     disable_mlock = "true"
   config-etcd-ha.hcl: |
@@ -74,11 +82,14 @@ data:
       tls_disable = 1
     }
     storage "etcd" {
-      address  = "http://etcd:2379"
+      address  = "https://etcd:2379"
       etcd_api = "v3"
       ha_enabled = "true"
       sync = "false"
       #request_timeout = "10s"
+      tls_ca_file = "/certs/ca.pem"
+      tls_cert_file = "/certs/etcd.pem"
+      tls_key_file = "/certs/etcd-key.pem"
     }
     disable_mlock = "true"
 ---

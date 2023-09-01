@@ -1,3 +1,4 @@
+# issue
 
 https://github.com/hashicorp/vault/issues/21521
 
@@ -74,46 +75,3 @@ echo '{"Value":"AAAAAQKQP5FoB6CDgUN6SDe1LE2mFhCfSvT7Z7FEdv9iRQ2V2PETY4RCqfp+JU7U
 jq -r .Value < /tmp/vault-test/core/_keyring | base64 -d | xxd -g1 > dump.hex
 # insert fault by modifying dump.hex in editor and write it back to file store
 echo "{\"Value\":\"$(xxd -r dump.hex | base64 -w0)\"}" > /tmp/vault-test/core/_keyring
-
-
-
-
-
-
-
-# issue
-
-
-On a couple of occasions, we have seen Vault fail to unseal with the error `Unseal failed, invalid key`.
-The issue is permanent and the only way to recover is to restore a working backup.
-
-The unseal keys seem to be correct because the error originates from decrypting the keyring, which becomes after the unseal key was already used to decrypt the storage root key successfully (`core/hsm/barrier-unseal-keys`)
-
-The callstack is below (the topmost is the most reason)
-
-```
-go/src/crypto/aes/aes_gcm.go:gcmAsm.Open()    # https://cs.opensource.google/go/go/+/refs/tags/go1.20.5:src/crypto/aes/aes_gcm.go;l=182
-vault/barrier_aes_gcm.go:AESGCMBarrier:decrypt()    # https://github.com/hashicorp/vault/blob/325233ea7dba833e987909b21af547d0933751e3/vault/barrier_aes_gcm.go#L1037
-vault/barrier_aes_gcm.go:AESGCMBarrier.Unseal()    # https://github.com/hashicorp/vault/blob/325233ea7dba833e987909b21af547d0933751e3/vault/barrier_aes_gcm.go#L453)
-```
-
-The error message from `gcmAsm.Open()` is `cipher: message authentication failed`.
-
-The data in the keyring `core/keyring` does not seem to be corrupted, since its length is the same as in the working backup and it begins with a valid header that Vault appends to encrypted values
-
-```yaml
-{"Value":"AAAAAQ....
-```
-
-We are using etcd as the storage backend.
-
-We have not been able to reproduce the issue on demand, but we have speculated with the following scenarios
-- Vault is initialized & unsealed, then the storage is restored from backup while Vault is still running. Vault overwrites the restored keyring with the current one, which is encrypted with a different key.
-- Storage root key is somehow corrupted in runtime memory (e.g. due to a bug), and when Vault periodically writes the keyring, it gets encrypted with the corrupted key.
-
-
-Questions:
-
-Have you seen this kind of issue before?
-Can you think of any theories on how this issue could happen?
-Do you have any suggestions on how to go about troubleshooting this kind of issue and avoid it in the future?

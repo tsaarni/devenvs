@@ -11,6 +11,7 @@ kubectl apply -f manifests/keycloak-18.yaml
 kubectl apply -f manifests/keycloak-19.yaml
 kubectl apply -f manifests/keycloak-20.yaml
 kubectl apply -f manifests/keycloak-21.yaml
+kubectl apply -f manifests/keycloak-22.yaml
 
 
 http://keycloak.127-0-0-121.nip.io/
@@ -48,6 +49,9 @@ data:
   ca.crt: $(cat certs/client-ca.pem | base64 -w 0)
 EOF
 
+kubectl apply -f manifests/openldap.yaml
+
+
 kubectl create configmap keycloak-config --dry-run -o yaml --from-file=configs/master-realm.json | kubectl apply -f -
 
 
@@ -55,7 +59,6 @@ docker build docker/keycloak/ -t localhost/keycloak:latest
 kind load docker-image --name keycloak localhost/keycloak:latest
 
 
-kubectl apply -f manifests
 
 https://keycloak.127-0-0-121.nip.io/auth/
 

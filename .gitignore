@@ -1,3 +1,6 @@
 *.swp
 *.so
 wireshark-keys.log
+*.jar
+core.*
+__pycache__

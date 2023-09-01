@@ -23,3 +23,7 @@ nodes:
   - containerPort: 443
     hostPort: 443
     listenAddress: "127.0.0.121"
+  extraMounts:
+   - hostPath: ./
+     containerPath: /host
+     readOnly: true

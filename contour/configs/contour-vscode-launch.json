@@ -18,6 +18,13 @@
                         "port": 8181,
                         "host": "127.0.0.1",
                         "apiVersion": 2
+                },
+                {
+                        "name": "Attach to Process",
+                        "type": "go",
+                        "request": "attach",
+                        "mode": "local",
+                        "processId": "${command:pickProcess}"
                 }
         ]
 }

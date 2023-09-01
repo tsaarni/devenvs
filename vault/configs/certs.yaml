@@ -4,4 +4,11 @@ subject: cn=vault
 issuer: cn=ca
 sans:
 - DNS:localhost
-
+---
+subject: cn=etcd
+issuer: cn=ca
+sans:
+  - DNS:etcd
+---
+subject: cn=client
+issuer: cn=ca

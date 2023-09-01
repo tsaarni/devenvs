@@ -30,7 +30,11 @@ spec:
       containers:
         - name: postgresql
           image: docker.io/postgres:12-alpine
-
+          args:
+            - "-c"
+            - "log_statement=all"
+            - "-c"
+            - "log_destination=stderr"
           env:
             - name: POSTGRES_USER
               value: "keycloak"
@@ -56,3 +60,132 @@ spec:
         resources:
           requests:
             storage: "1Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin
+spec:
+  selector:
+    matchLabels:
+      app: pgadmin
+  template:
+    metadata:
+      labels:
+        app: pgadmin
+    spec:
+      containers:
+      - name: myapp
+        # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
+        image: dpage/pgadmin4:7
+        ports:
+        - containerPort: 80
+        env:
+          - name: PGADMIN_DEFAULT_EMAIL
+            value: "admin@localhost.com"
+          - name: PGADMIN_DEFAULT_PASSWORD
+            value: "admin"
+          - name: PGADMIN_SERVER_JSON_FILE
+            value: "/config/servers.json"
+          - name: PGADMIN_CONFIG_SERVER_MODE
+            value: "False"
+          - name: PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED
+            value: "False"
+        volumeMounts:
+        - name: pgadmin-config
+          mountPath: /config
+      volumes:
+      - name: pgadmin-config
+        configMap:
+          name: pgadmin-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin
+spec:
+  selector:
+    app: pgadmin
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: pgadmin
+spec:
+  virtualhost:
+    fqdn: pgadmin.127-0-0-121.nip.io
+  routes:
+    - services:
+        - name: pgadmin
+          port: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgadmin-config
+data:
+  servers.json: |
+    {
+      "Servers": {
+        "1": {
+          "Name": "Keycloak",
+          "Group": "Servers",
+          "Username": "keycloak",
+          "Host": "postgres",
+          "Port": 5432,
+          "MaintenanceDB": "postgres",
+          "PassFile": "/config/pgpassfile"
+        }
+      }
+    }
+  pgpassfile: |
+    postgres:*:*:keycloak:keycloak
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgweb
+spec:
+  selector:
+    matchLabels:
+      app: pgweb
+  template:
+    metadata:
+      labels:
+        app: pgweb
+    spec:
+      containers:
+      - name: pgweb
+        # https://hub.docker.com/r/sosedoff/pgweb/tags
+        image: sosedoff/pgweb:0.14.1
+        ports:
+        - containerPort: 8081
+        env:
+          - name: PGWEB_DATABASE_URL
+            value: postgres://keycloak:keycloak@postgres:5432/keycloak?sslmode=disable
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgweb
+spec:
+  selector:
+    app: pgweb
+  ports:
+  - port: 80
+    targetPort: 8081
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: pgweb
+spec:
+  virtualhost:
+    fqdn: pgweb.127-0-0-121.nip.io
+  routes:
+    - services:
+        - name: pgweb
+          port: 80

@@ -60,6 +60,7 @@ mvn -f testsuite/utils/pom.xml exec:java -Pkeycloak-server -Djavax.net.ssl.trust
 
 # create ldap simple auth provider
 apps/create-components.py rest-requests/create-ldap-simple-auth-provider.json
+apps/create-components.py --server=https://keycloak.127-0-0-121.nip.io/ rest-requests/create-ldap-simple-auth-provider.json
 
 
 
@@ -87,7 +88,7 @@ apps/login-with-forced-password-change.py
 #
 
 # preparation
-    mvn clean install -DskipTests
+mvn clean install -DskipTests
 mvn clean install -DskipTests -pl util/embedded-ldap/
 
 # compile only changed code
@@ -125,3 +126,10 @@ https://lists.jboss.org/pipermail/keycloak-dev/2018-September/011258.html
 
 ### TODO
 check how MSAD avoid "recursing" when adding required action i.e. writing it back to LDAP
+
+
+
+
+
+###
+apps/create-components.py rest-requests/create-ldap-simple-auth-provider.json

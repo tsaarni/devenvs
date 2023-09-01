@@ -59,6 +59,7 @@ res = requests.post(
         "grant_type": "password",
         "client_id": "admin-cli",
     },
+    verify=False,
 )
 res.raise_for_status()
 
@@ -76,12 +77,14 @@ for f in request_files:
                 "Content-Type": "application/json",
             },
             data=data,
+            verify=False,
         )
         res.raise_for_status()
         if res.status_code == 201:
             res = requests.get(
                 f"{res.headers['Location']}",
                 headers={"Authorization": f"Bearer {token}"},
+                verify=False,
             )
             res.raise_for_status()
             json = res.json()

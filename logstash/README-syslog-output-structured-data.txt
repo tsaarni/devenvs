@@ -75,6 +75,8 @@ WORKAROUND:  To run the tests successfully, apply the change from this PR first
 
 https://github.com/logstash-plugins/logstash-output-syslog/pull/55
 
+
+patch -p1 <<EOF
 diff --git a/lib/logstash/outputs/syslog.rb b/lib/logstash/outputs/syslog.rb
 index 55197d9..add50c0 100644
 --- a/lib/logstash/outputs/syslog.rb
@@ -88,3 +90,6 @@ index 55197d9..add50c0 100644
        if @codec.config["format"].nil?
          @codec = LogStash::Codecs::Plain.new({"format" => @message})
        end
+EOF
+
+
