@@ -12,3 +12,16 @@ spec:
       args:
         - "-c"
         - "apk add --update-cache py3-pip py3-websockets httpie openssl netcat-openbsd && /bin/sleep 99999999"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shell
+spec:
+  selector:
+    app: shell
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+

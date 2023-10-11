@@ -18,6 +18,7 @@ func main() {
 		Subject: "cn=envoy",
 		SubjectAltNames: []string{
 			"DNS:localhost",
+			"DNS:protected.127-0-0-135.nip.io",
 		},
 	}
 
@@ -26,10 +27,10 @@ func main() {
 		Subject: "cn=client",
 	}
 
-	serverCA.WritePEM("../../certs/server-ca.pem", "../certs/server-ca-key.pem")
-	clientCA.WritePEM("../../certs/client-ca.pem", "../certs/client-ca-key.pem")
-	envoy.WritePEM("../../certs/envoy.pem", "../certs/envoy-key.pem")
-	client.WritePEM("../../certs/client.pem", "../certs/client-key.pem")
+	serverCA.WritePEM("../../certs/server-ca.pem", "../../certs/server-ca-key.pem")
+	clientCA.WritePEM("../../certs/client-ca.pem", "../../certs/client-ca-key.pem")
+	envoy.WritePEM("../../certs/envoy.pem", "../../certs/envoy-key.pem")
+	client.WritePEM("../../certs/client.pem", "../../certs/client-key.pem")
 
 	crlClientNotRevoked := certyaml.CRL{
 		Issuer:  &clientCA,

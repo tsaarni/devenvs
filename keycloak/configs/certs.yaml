@@ -42,7 +42,7 @@ issuer: cn=ca
 sans:
 - DNS:localhost
 - DNS:keycloak.127-0-0-1.nip.io
-- DNS:keycloak.127-0-0-121.nip.io/
+- DNS:keycloak.127-0-0-121.nip.io
 ---
 subject: cn=internal-ca
 ---
@@ -50,3 +50,11 @@ subject: cn=keycloak-internal
 issuer: cn=internal-ca
 sans:
 - DNS:keycloak
+- DNS:keycloak.127-0-0-121.nip.io
+---
+subject: cn=federated
+issuer: cn=internal-ca
+---
+subject: cn=federated-revoked
+issuer: cn=internal-ca
+revoked: true

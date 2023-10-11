@@ -16,11 +16,9 @@ kubectl apply -f manifests/keycloak-22.yaml
 
 http://keycloak.127-0-0-121.nip.io/
 https://keycloak.127-0-0-121.nip.io/
-
-http://keycloak.127-0-0-121.nip.io/auth/
-
 https://keycloak.127-0-0-121.nip.io/realms/master/account
 
+http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/
 
 
 mkdir -p certs
