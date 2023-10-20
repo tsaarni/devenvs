@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: shell
+  labels:
+    app: shell
+spec:
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - server
+        topologyKey: "kubernetes.io/hostname"
+  containers:
+    - name: shell
+      image: alpine:latest
+      command: ["/bin/sh"]
+      args:
+        - "-c"
+        - "apk add --update-cache py3-pip py3-websockets httpie openssl netcat-openbsd && /bin/sleep 99999999"

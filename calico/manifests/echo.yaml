@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+spec:
+  selector:
+    matchLabels:
+      app: server
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      containers:
+      - name: server
+        image: quay.io/tsaarni/echo:latest
+        #image: localhost/echo:latest
+        #imagePullPolicy: Never
+        command:
+        - "/app/echo"
+        args:
+        - "--catch-sigterm"
+        - "server"
+        ports:
+        - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+spec:
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - server
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: client
+        image: quay.io/tsaarni/echo:latest
+        #image: localhost/echo:latest
+        #imagePullPolicy: Never
+        command:
+        - "/app/echo"
+        args:
+        - "client"
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server
+spec:
+  selector:
+    app: server
+  ports:
+  - port: 8000
+    targetPort: 8000

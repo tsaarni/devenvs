@@ -1,0 +1,16 @@
+diff --git a/felix/routetable/route_table.go b/felix/routetable/route_table.go
+index be5f5f1a5..5361c8570 100644
+--- a/felix/routetable/route_table.go
++++ b/felix/routetable/route_table.go
+@@ -1137,8 +1137,9 @@ func (r *RouteTable) startConntrackDeletion(ipAddr ip.Addr) {
+        r.pendingConntrackCleanups[ipAddr] = done
+        go func() {
+                defer close(done)
+-               r.conntrack.RemoveConntrackFlows(r.ipVersion, ipAddr.AsNetIP())
+-               log.WithField("ip", ipAddr).Debug("Deleted conntrack entries")
++               //r.conntrack.RemoveConntrackFlows(r.ipVersion, ipAddr.AsNetIP())
++               //log.WithField("ip", ipAddr).Debug("Deleted conntrack entries")
++               log.WithField("ip", ipAddr).Debug("SKIPPED Deleted conntrack entries")
+        }()
+ }
+

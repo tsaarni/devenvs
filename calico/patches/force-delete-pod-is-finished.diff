@@ -1,0 +1,15 @@
+diff --git a/libcalico-go/lib/backend/k8s/conversion/conversion.go b/libcalico-go/lib/backend/k8s/conversion/conversion.go
+index 4f30f6687..5581254a3 100644
+--- a/libcalico-go/lib/backend/k8s/conversion/conversion.go
++++ b/libcalico-go/lib/backend/k8s/conversion/conversion.go
+@@ -176,6 +176,10 @@ func IsFinished(pod *kapiv1.Pod) bool {
+                        return true
+                }
+        }
++       if pod.DeletionTimestamp != nil && pod.DeletionGracePeriodSeconds != nil && *pod.DeletionGracePeriodSeconds == 0 {
++               log.Debug("Pod is being deleted and has no grace period.")
++               return true
++       }
+        switch pod.Status.Phase {
+        case kapiv1.PodFailed, kapiv1.PodSucceeded, podCompleted:
+                log.Debug("Pod phase is failed/succeeded/completed.")
