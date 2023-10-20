@@ -21,3 +21,10 @@ services:
       - "6514-6515:6514-6515"
     volumes:
       - ./certs:/certs:ro
+
+  http:
+    build: docker/http
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./certs:/certs:ro

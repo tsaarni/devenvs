@@ -24,6 +24,7 @@ sans:
 - DNS:logstash-destination
 - DNS:localhost
 - DNS:rsyslog.127-0-0-1.nip.io
+- DNS:httpserver.127-0-0-1.nip.io
 ---
 issuer: cn=server-ca
 subject: cn=server-revoked
