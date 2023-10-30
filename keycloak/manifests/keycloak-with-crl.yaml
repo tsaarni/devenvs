@@ -1,0 +1,191 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: keycloak
+spec:
+  virtualhost:
+    fqdn: keycloak.127-0-0-121.nip.io
+    tls:
+      secretName: keycloak-external
+  routes:
+    - services:
+        - name: keycloak
+          port: 8080
+      # Allow also HTTP to make REST API use easier for dev use
+      permitInsecure: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8443
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keycloak
+spec:
+  selector:
+    matchLabels:
+      app: keycloak
+  replicas: 1
+  serviceName: keycloak-headless
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      initContainers:
+        - name: wait-for-postgresql
+          image: alpine:3
+          command:
+            - sh
+            - -c
+            - |
+              until printf "." && nc -z -w 2 postgres 5432; do
+                  sleep 2;
+              done;
+
+              echo 'PostgreSQL OK ✓'
+      containers:
+        - name: keycloak
+
+          ## Releases
+          ## https://www.keycloak.org/downloads-archive.html
+          ## https://quay.io/repository/keycloak/keycloak?tab=tags
+          image: quay.io/keycloak/keycloak:22.0.1
+          #imagePullPolicy: Never
+          command:
+            - /opt/keycloak/bin/kc.sh
+            - start
+            - --log-level=INFO,org.nordix:DEBUG,org.apache.http:DEBUG
+            - --https-certificate-file=/run/secrets/server-certs/tls.crt
+            - --https-certificate-key-file=/run/secrets/server-certs/tls.key
+            - --spi-connections-http-client-provider=nordix
+            - --spi-connections-http-client-nordix-crl-file=/run/secrets/client-certs/crl.pem
+            - --spi-truststore-file-file=/run/secrets/client-certs/truststore.p12
+            - --spi-truststore-file-password=secret
+            - --spi-truststore-file-type=pkcs12
+
+          ## Options
+          ## https://www.keycloak.org/server/configuration
+          ## https://www.keycloak.org/server/containers
+          ## https://www.keycloak.org/server/all-config
+          env:
+            - name: KC_DB
+              value: "postgres"
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://postgres/keycloak"
+            - name: KC_DB_USERNAME
+              value: "keycloak"
+            - name: KC_DB_PASSWORD
+              value: "keycloak"
+            #- name: KC_HOSTNAME
+            #  value: "keycloak.127-0-0-121.nip.io"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            ## https://github.com/keycloak/keycloak/pull/11823
+            ## https://github.com/keycloak/keycloak/discussions/11856
+            ## https://github.com/keycloak/keycloak/pull/11872
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            ## hostname-strict-https is "hidden" config option
+            ##  - true by default for production mode
+            ##  - false by default for dev mode
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "false"
+            - name: KC_PROXY
+              value: edge
+              #value: reencrypt
+            - name: KEYCLOAK_ADMIN
+              value: "admin"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "admin"
+            #- name: KC_HTTPS_CERTIFICATE_FILE
+            #  value: /run/secrets/certs/tls.crt
+            #- name: KC_HTTPS_CERTIFICATE_KEY_FILE
+            #  value: /run/secrets/certs/tls.key
+            #- name: KC_HOSTNAME_ADMIN_URL
+            #  value: http://keycloak.127-0-0-121.nip.io/
+
+            # https://www.keycloak.org/server/caching
+            - name: KC_CACHE_STACK
+              value: "kubernetes"
+            - name: JAVA_OPTS_APPEND
+              value: "-Djgroups.dns.query=keycloak-headless"
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+
+          volumeMounts:
+            - mountPath: /run/secrets/client-certs/
+              name: client-certs
+              readOnly: true
+            - mountPath: /run/secrets/server-certs/
+              name: server-certs
+              readOnly: true
+            - mountPath: /opt/keycloak/providers
+              name: providers
+              readOnly: true
+
+      volumes:
+        - name: client-certs
+          secret:
+            secretName: keycloak-client-certs
+        - name: server-certs
+          secret:
+            secretName: keycloak-server-certs
+        - name: providers
+          hostPath:
+            path: /host/providers
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: idp
+spec:
+  selector:
+    app: keycloak
+  ports:
+  - name: https
+    port: 443
+    targetPort: 8443
+  - name: http
+    port: 80
+    targetPort: 8080

@@ -1,4 +1,7 @@
 *.p12
+*.pem
 output
 certs
 .venv
+.vscode
+target

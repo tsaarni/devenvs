@@ -15,7 +15,7 @@ import time
 import sys
 import pprint
 
-t = jwt.decode(sys.stdin.read().rstrip(), verify=False)
+t = jwt.decode(sys.stdin.read().rstrip(), verify=False, options={'verify_signature': False})
 pprint.pprint(t)
 
 if t.get('iat') is not None:
