@@ -1,0 +1,30 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Uncomment this to add jndi.properties to classpath
+    runtimeOnly files('./config')
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+        //languageVersion = JavaLanguageVersion.of(8)
+
+        // Try setting system property on command line (note: this has no effect)
+        //applicationDefaultJvmArgs = ["-Djava.naming.referral=follow"]
+    }
+}
+
+application {
+    mainClass = 'ldapclient.App'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

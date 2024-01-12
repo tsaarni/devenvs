@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Keycloak",
+      "Group": "Servers",
+      "Username": "keycloak",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "PassFile": "/configs/pgadmin-passfile"
+    }
+  }
+}

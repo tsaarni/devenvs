@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run authserver",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "cwd": "${workspaceRoot}",
+      "program": "main.go",
+      "args": [
+        "oidc",
+        "--config=contour-authserver-config.yaml",
+        "--tls-ca-path=/home/tsaarni/work/devenvs/contour/certs/external-root-ca.pem",
+        "--tls-cert-path=/home/tsaarni/work/devenvs/contour/certs/contour-authserver.pem",
+        "--tls-key-path=/home/tsaarni/work/devenvs/contour/certs/contour-authserver-key.pem"
+      ]
+    },
+  ]
+}

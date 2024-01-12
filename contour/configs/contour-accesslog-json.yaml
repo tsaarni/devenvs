@@ -1,0 +1,27 @@
+# kubectl -n projectcontour create configmap contour --from-file=contour.yaml=configs/contour-accesslog-json.yaml --dry-run=client -o yaml | kubectl apply -f -
+# kubectl -n projectcontour delete pod -l app=contour --force
+accesslog-format: json
+json-fields:
+#  - "@timestamp"
+  - "timestamp=%START_TIME(%Y-%m-%dT%H:%M:%S.%3f%:z)%"
+  - "authority"
+  - "bytes_received"
+  - "bytes_sent"
+  - "customer_id=%REQ(X-CUSTOMER-ID)%"
+  - "downstream_local_address"
+  - "downstream_remote_address"
+  - "duration"
+  - "method"
+  - "path"
+  - "protocol"
+  - "request_id"
+  - "requested_server_name"
+  - "response_code"
+  - "response_flags"
+  - "uber_trace_id"
+  - "upstream_cluster"
+  - "upstream_host"
+  - "upstream_local_address"
+  - "upstream_service_time"
+  - "user_agent"
+  - "x_forwarded_for"
