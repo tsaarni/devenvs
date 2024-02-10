@@ -44,6 +44,15 @@ sans:
 - DNS:keycloak.127-0-0-1.nip.io
 - DNS:keycloak.127-0-0-121.nip.io
 ---
+subject: cn=keycloak-server-expired
+issuer: cn=ca
+sans:
+- DNS:localhost
+- DNS:keycloak.127-0-0-1.nip.io
+- DNS:keycloak.127-0-0-121.nip.io
+not_before: 2023-10-01T09:00:00Z
+not_after: 2023-10-29T09:00:00Z
+---
 subject: cn=internal-ca
 ---
 subject: cn=keycloak-internal

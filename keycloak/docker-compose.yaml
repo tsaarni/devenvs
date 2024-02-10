@@ -5,10 +5,11 @@
 #     docker-compose up
 #
 # Cleanup
+#     docker-compose down -v
 #     docker-compose rm -f -v
 #
 
-version: "3"
+version: "3.8"
 services:
   # OLC configuration for the server is in templates/*
   openldap:
@@ -45,11 +46,14 @@ services:
   # Connect to postgresql CLI
   #
   # docker exec -it keycloak-postgres-1 psql --username=keycloak
-  #   \dt                         # show tables
-  #   select * from user_entity;  # show users
+  #   \dt                     # show tables
+  #   select * from pg_user;  # show users
   postgres:
     image: docker.io/postgres:14-alpine
-    command: -c config_file=/configs/postgres.conf
+    # uncomment for TLS config
+    #command: -c config_file=/configs/postgres.conf
+    # uncomment to see all queries
+    #command: -c log_statement=all -c log_destination=stderr
     ports:
       - "5432:5432"
     environment:
@@ -62,6 +66,21 @@ services:
     depends_on:
       postgres-init:
        condition: service_completed_successfully
+
+  pgadmin:
+    # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
+    image: dpage/pgadmin4:8
+    user: root
+    ports:
+      - "8081:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@localhost.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_SERVER_JSON_FILE=/configs/pgadmin-servers.json
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    volumes:
+      - ./configs:/configs:ro
 
 volumes:
   postgres-certs:

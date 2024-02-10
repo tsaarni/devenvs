@@ -1,9 +1,56 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        {
+            "type": "java",
+            "name": "Debug Quarkus",
+            "request": "launch",
+            "mainClass": "org.keycloak.quarkus._private.IDELauncher",
+            "projectName": "keycloak-quarkus-server-app",
+
+            // Configure JVM options:
+            //"vmArgs": "-Dfoo=bar
+
+            // All configuration options:
+            // - https://www.keycloak.org/server/all-config
+            "env": {
+                "KEYCLOAK_ADMIN": "admin",
+                "KEYCLOAK_ADMIN_PASSWORD": "admin",
+
+                //"KC_LOG_LEVEL": "debug",
+
+                "KC_HOSTNAME": "keycloak.127.0.0.1.nip.io",
+
+                "KC_DB": "postgres",
+                "KC_DB_URL": "jdbc:postgresql://localhost:5432/keycloak",
+                "KC_DB_USERNAME": "keycloak",
+                "KC_DB_PASSWORD": "keycloak",
+
+                // "KC_SPI_TRUSTSTORE_FILE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/truststore.p12",
+                // "KC_SPI_TRUSTSTORE_FILE_PASSWORD": "secret",
+                // "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client.pem",
+                // "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client-key.pem",
+                // "KC_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
+                // "KC_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
+                // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
+                // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
+            },
+        },
+        {
+            "type": "java",
+            "name": "Import realm",
+            "request": "launch",
+            "mainClass": "org.keycloak.quarkus._private.IDELauncher",
+            "projectName": "keycloak-quarkus-server-app",
+            "args": "import --dir /home/tsaarni/work/devenvs/keycloak/migrations/ldap-federation-simple/",
+        },
+        {
+            "type": "java",
+            "name": "Debug (Attach 5005 Quarkus port)",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005
+        },
         {
             "type": "java",
             "name": "Debug (Attach 8000)",
@@ -25,42 +72,5 @@
             "projectName": "keycloak-testsuite-utils",
             "vmArgs": "-Dkeycloak.migration.action=import -Dkeycloak.migration.provider=dir -Dkeycloak.migration.dir=/home/tsaarni/work/keycloak-devenv/migrations/ldap-federation/ -Djavax.net.ssl.trustStore=/home/tsaarni/work/keycloak-devenv/truststore.p12 -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.javax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.keyStore=/home/tsaarni/work/keycloak-devenv/admin-keystore.p12 -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.javax.net.ssl.keyStoreType=PKCS12 -Dresources -Dkeycloak.logging.level=debug"
         },
-        {
-            "type": "java",
-            "name": "Debug Quarkus",
-            "request": "launch",
-            "mainClass": "org.keycloak.quarkus._private.IDELauncher",
-            "projectName": "keycloak-quarkus-server-app",
-            //"args": "start-dev --log-level=debug",
-            //"args": "start-dev --db=postgres --hostname=localhost:8080 --db-url=jdbc:postgresql://localhost:5432/keycloak --db-username=keycloak --db-password=keycloak",
-            //"args": "start-dev --hostname localhost:8080 --db-username keycloak --db-password keycloak",
-            "env": {
-                "KEYCLOAK_ADMIN": "admin",
-                "KEYCLOAK_ADMIN_PASSWORD": "admin",
-                // "KC_SPI_TRUSTSTORE_FILE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/truststore.p12",
-                // "KC_SPI_TRUSTSTORE_FILE_PASSWORD": "secret",
-                // "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client.pem",
-                // "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client-key.pem",
-                // "KC_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
-                // "KC_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
-                // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
-                // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
-            },
-            //      "KC_DB": "postgres",
-            // // //     "KC_DB_URL": "jdbc:postgresql://localhost:5432/keycloak",
-            //       "KC_DB_USERNAME": "keycloak",
-            //       "KC_DB_PASSWORD": "keycloak",
-            //       "KC_HOSTNAME": "localhost:8080",
-            // }
-        },
-        {
-            "type": "java",
-            "name": "Import realm",
-            "request": "launch",
-            "mainClass": "org.keycloak.quarkus._private.IDELauncher",
-            "projectName": "keycloak-quarkus-server-app",
-            "args": "import --dir /home/tsaarni/work/devenvs/keycloak/migrations/ldap-federation-simple/",
-        }
-
     ]
 }

@@ -71,7 +71,7 @@ spec:
           ## Releases
           ## https://www.keycloak.org/downloads-archive.html
           ## https://quay.io/repository/keycloak/keycloak?tab=tags
-          image: quay.io/keycloak/keycloak:22.0.1
+          image: quay.io/keycloak/keycloak:22.0.5
           #imagePullPolicy: Never
           command:
             - /opt/keycloak/bin/kc.sh
@@ -115,14 +115,19 @@ spec:
             #  value: /run/secrets/certs/tls.crt
             #- name: KC_HTTPS_CERTIFICATE_KEY_FILE
             #  value: /run/secrets/certs/tls.key
+
             #- name: KC_HOSTNAME_ADMIN_URL
             #  value: http://keycloak.127-0-0-121.nip.io/
 
             # https://www.keycloak.org/server/caching
             - name: KC_CACHE_STACK
               value: "kubernetes"
+            #- name: JAVA_OPTS_APPEND
+            #  value: "-Djgroups.dns.query=keycloak-headless"
             - name: JAVA_OPTS_APPEND
-              value: "-Djgroups.dns.query=keycloak-headless"
+#              value: "-Djgroups.dns.query=keycloak-headless -javaagent:/opt/keycloak/providers/extract-tls-secrets-4.1.0-SNAPSHOT.jar=/tmp/wireshark-keys.log"
+              value: "-Djgroups.dns.query=keycloak-headless -javaagent:/opt/keycloak/providers/extract-tls-secrets-4.1.0-SNAPSHOT.jar=/tmp/wireshark-keys.log"
+
             - name: KC_HEALTH_ENABLED
               value: "true"
 
@@ -149,6 +154,9 @@ spec:
             - mountPath: /run/secrets/certs/
               name: certs
               readOnly: true
+            - mountPath: /run/secrets/trusted/
+              name: trusted
+              readOnly: true
             - mountPath: /opt/keycloak/providers
               name: providers
               readOnly: true
@@ -158,6 +166,10 @@ spec:
           secret:
             optional: true
             secretName: keycloak-internal
+        - name: trusted
+          secret:
+            optional: true
+            secretName: external-ca
         - name: providers
           hostPath:
             path: /host/providers

@@ -28,40 +28,27 @@ objectClass: posixAccount
 objectClass: shadowAccount
 uid: ldap-admin
 cn: ldap-admin
-uidNumber: 1001
-gidNumber: 1001
+uidNumber: 10001
+gidNumber: 10001
 userPassword: {CRYPT}$(mkpasswd -m sha-512 ldap-admin)
 loginShell: /bin/bash
 homeDirectory: /home/
 sn: adminsurename
 givenName: admingivenname
 
-dn: cn=aáé,ou=users,o=example
+dn: cn=joe,ou=users,o=example
 objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
-uid: aáé
-cn: user
-uidNumber: 1002
-gidNumber: 1001
-userPassword: {CRYPT}$(mkpasswd -m sha-512 user)
+uid: joe
+cn: joe
+uidNumber: 10002
+gidNumber: 10001
 loginShell: /bin/bash
 homeDirectory: /home/
-sn: usersurename
-givenName: usergivenname
-
-dn: cn=ldap-client,ou=users,o=example
-objectClass: inetOrgPerson
-objectClass: posixAccount
-objectClass: shadowAccount
-uid: ldap-client
-cn: ldap-client
-uidNumber: 1003
-gidNumber: 1001
-loginShell: /bin/bash
-homeDirectory: /home/
-sn: clientsurename
-givenName: clientgivenname
+userPassword: {CRYPT}$(mkpasswd -m sha-512 joe)
+sn: Average
+givenName: Joe
 
 dn: cn=mustchange,ou=users,o=example
 objectClass: inetOrgPerson
@@ -70,8 +57,8 @@ objectClass: shadowAccount
 objectClass: pwdPolicy
 uid: mustchange
 cn: mustchange
-uidNumber: 1004
-gidNumber: 1001
+uidNumber: 10004
+gidNumber: 10001
 userPassword: {CRYPT}$(mkpasswd -m sha-512 mustchange)
 loginShell: /bin/bash
 homeDirectory: /home/
@@ -79,7 +66,9 @@ sn: usersurename
 givenName: usergivenname
 pwdReset: TRUE
 pwdAttribute: userPassword
-
+shadowLastChange: 1
+shadowMin: 1
+shadowMax: 1
 
 #
 # Groups
@@ -89,9 +78,16 @@ dn: cn=admins,ou=groups,o=example
 objectClass: posixGroup
 objectclass: groupofNames
 cn: admins
-gidNumber: 1001
+gidNumber: 10000
 member: cn=ldap-admin,ou=users,o=example
 
+dn: cn=users,ou=groups,o=example
+objectClass: posixGroup
+objectclass: groupofNames
+cn: users
+gidNumber: 10001
+memberUid: joe
+member: cn=joe,ou=users,o=example
 
 #
 # Password policies
@@ -114,13 +110,3 @@ pwdMustChange: TRUE
 #pwdAllowUserChange: TRUE
 #pwdSafeModify: FALSE
 pwdAttribute: userPassword
-
-
-#
-# Test referral
-#
-dn: ou=nonexisting,o=example
-objectClass: referral
-objectClass: extensibleObject
-ou: nonexisting
-ref: ldap://localhost/ou=users,o=example

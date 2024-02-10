@@ -78,3 +78,8 @@ kubectl create secret generic envoy-crl --from-file=client-ca-crl.pem=certs/crl-
 
 # make unsuccessful request with revoked client cert
 http --verify certs/server-ca.pem --cert certs/client.pem --cert-key certs/client-key.pem https://protected.127-0-0-135.nip.io
+
+
+
+
+while true; do echo swap; cp certs/crl-client-not-revoked.pem certs/crl.pem ; mv certs/crl.pem certs/client-ca-crl.pem ; sleep 1; cp certs/crl-client-revoked.pem certs/crl.pem; mv certs/crl.pem certs/client-ca-crl.pem; sleep 1; done

@@ -71,7 +71,7 @@ spec:
           ## Releases
           ## https://www.keycloak.org/downloads-archive.html
           ## https://quay.io/repository/keycloak/keycloak?tab=tags
-          image: quay.io/keycloak/keycloak:22.0.5
+          image: quay.io/keycloak/keycloak:23.0.3
           #imagePullPolicy: Never
           command:
             - /opt/keycloak/bin/kc.sh

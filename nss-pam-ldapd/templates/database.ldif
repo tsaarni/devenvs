@@ -10,12 +10,6 @@ cn: config
 olcPidFile: /var/run/slapd/slapd.pid
 olcArgsFile: /var/run/slapd/slapd.args
 olcPasswordCryptSaltFormat: \$6\$%.86s
-olcTLSCACertificateFile: $CA_FILENAME
-olcTLSCertificateKeyFile: $KEY_FILENAME
-olcTLSCertificateFile: $CERT_FILENAME
-olcTLSVerifyClient: allow
-#olcTLSVerifyClient: demand
-olcReferral: ldap://openldap2
 
 
 #
@@ -26,7 +20,7 @@ dn: cn=module,cn=config
 objectClass: olcModuleList
 cn: module
 olcModulePath: /usr/lib/ldap
-olcModuleLoad: back_hdb
+olcModuleLoad: back_mdb
 olcModuleLoad: ppolicy
 
 
@@ -42,7 +36,6 @@ include: file:///etc/ldap/schema/core.ldif
 include: file:///etc/ldap/schema/cosine.ldif
 include: file:///etc/ldap/schema/inetorgperson.ldif
 include: file:///etc/ldap/schema/rfc2307bis.ldif
-include: file:///etc/ldap/schema/ppolicy.ldif
 
 
 #
@@ -71,26 +64,23 @@ olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
 # Backend database
 #
 
-dn: olcDatabase={1}hdb,cn=config
+dn: olcDatabase={1}mdb,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olcHdbConfig
-olcDatabase: hdb
+objectClass: olcMdbConfig
+olcDatabase: mdb
 olcSuffix: o=example
 olcDbDirectory: /data/db/
 olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
+olcAccess: to * by self read by * break
 olcAccess: to attrs=userPassword,shadowLastChange
-  by dn="cn=ldap-client,ou=users,o=example" read
   by self write
   by anonymous auth
   by * none
-olcAccess: to dn.base="" by * read
-olcAccess: to *
-  by dn="cn=ldap-client,ou=users,o=example" read
-  by * none
+olcAccess: to * by anonymous read by * break
 olcAccess: to * by * none
 
 
-dn: olcOverlay=ppolicy,olcDatabase={1}hdb,cn=config
+dn: olcOverlay=ppolicy,olcDatabase={1}mdb,cn=config
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
 olcOverlay: ppolicy

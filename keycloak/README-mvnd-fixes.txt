@@ -80,3 +80,17 @@ mvn dependency:tree -Dincludes=org.keycloak:keycloak-js-parent
 1073 error Remove the existing file and try again, or run npm
 1074 error with --force to overwrite files recklessly.
 1075 verbose exit -17
+
+
+
+
+
+
+
+[ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.14.2:pnpm (pnpm-install) on project keycloak-js-parent: Failed to run task: 'pnpm install --prefer-offline --frozen-lockfile --ignore-scripts' failed. org.apache.commons.exec.ExecuteException: Process exited with an error: 1 (Exit value: 1) -> [Help 1]
+
+...
+
+[ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.14.2:pnpm (pnpm-install) on project keycloak-js-admin-client: Failed to run task: 'pnpm install --prefer-offline --frozen-lockfile --ignore-scripts' failed. org.apache.commons.exec.ExecuteException: Process exited with an error: 1 (Exit value: 1) -> [Help 1]
+[ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.14.2:pnpm (pnpm-install) on project keycloak-account-ui: Failed to run task: 'pnpm install --prefer-offline --frozen-lockfile --ignore-scripts' failed. org.apache.commons.exec.ExecuteException: Process exited with an error: 1 (Exit value: 1) -> [Help 1]
+[ERROR] Failed to execute goal com.github.eirslett:frontend-maven-plugin:1.14.2:pnpm (pnpm-install) on project keycloak-admin-ui: Failed to run task: 'pnpm install --prefer-offline --frozen-lockfile --ignore-scripts' failed. org.apache.commons.exec.ExecuteException: Process exited with an error: 1 (Exit value: 1) -> [Help 1]

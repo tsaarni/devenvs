@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/tsaarni/certyaml"
 )
 
@@ -45,5 +47,8 @@ func main() {
 	}
 
 	crlClientNotRevoked.WritePEM("../../certs/crl-client-not-revoked.pem")
-	crlClientRevoked.WritePEM("../../certs/crl-client-revoked.pem")
+	err := crlClientRevoked.WritePEM("../../certs/crl-client-revoked.pem")
+	if err != nil {
+		fmt.Println(err)
+	}
 }

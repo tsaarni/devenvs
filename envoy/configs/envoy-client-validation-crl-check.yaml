@@ -1,5 +1,8 @@
 admin:
-  access_log_path: /dev/stdout
+  access_log:
+    - name: envoy.access_loggers.stdout
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
   address:
     socket_address:
       protocol: TCP
@@ -62,11 +65,13 @@ static_resources:
             tls_certificate_sds_secret_configs:
               name: tls_certificate_secret
               sds_config:
+                resource_api_version: V3
                 path_config_source:
                   path: /home/tsaarni/work/devenvs/envoy/configs/envoy-sds-auth-secret-tls-certificate.yaml
             validation_context_sds_secret_config:
               name: validation_context_secret
               sds_config:
+                resource_api_version: V3
                 path_config_source:
                   path: /home/tsaarni/work/devenvs/envoy/configs/envoy-sds-auth-secret-validation-context.yaml
           require_client_certificate: true

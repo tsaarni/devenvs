@@ -21,13 +21,15 @@ https://keycloak.127-0-0-121.nip.io/realms/master/account
 http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/
 
 
+rm -rf certs
 mkdir -p certs
 certyaml -d certs configs/certs.yaml
+keytool -importcert -storetype PKCS12 -keystore certs/truststore.p12 -storepass secret -noprompt -alias ca -file certs/ca.pem
 
 kubectl create secret tls keycloak-external --cert=certs/keycloak-server.pem --key=certs/keycloak-server-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret tls keycloak-internal --cert=certs/keycloak-internal.pem --key=certs/keycloak-internal-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic internal-ca --from-file=ca.crt=certs/internal-ca.pem --dry-run=client -o yaml | kubectl apply -f -
-
+kubectl create secret generic external-ca --from-file=certs/truststore.p12 --dry-run=client -o yaml | kubectl apply -f -
 
 
 # logs
@@ -150,17 +152,12 @@ http://localhost:8080/
 
 
 
-
-
-
-
-
+TOKEN=$(http --form POST http://keycloak.127-0-0-121.nip.io/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token)
 TOKEN=$(http --form POST http://keycloak.127-0-0-121.nip.io/auth/realms/master/protocol/openid-connect/token username=joe password=joe grant_type=password client_id=admin-cli | jq -r .access_token)
 
 
 http -v GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/users Authorization:"bearer $TOKEN"
 http -v POST http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/users Authorization:"bearer $TOKEN" username=foo
-
 
 
 
@@ -171,3 +168,16 @@ check that logs say "Strict HTTPS: false"
 
 
 2023-05-24 09:10:15,121 INFO  [org.keycloak.quarkus.runtime.hostname.DefaultHostnameProvider] (main) Hostname settings: Base URL: <unset>, Hostname: <request>, Strict HTTPS: false, Path: <request>, Strict BackChannel: false, Admin URL: <unset>, Admin: <request>, Port: -1, Proxied: true
+
+
+
+
+
+### Delete postgres volumes to start fresh
+
+
+kubectl scale statefulset keycloak --replicas 0
+kubectl scale statefulset postgres --replicas 0
+kubectl delete persistentvolumeclaims data-postgres-0
+kubectl scale statefulset postgres --replicas 1
+kubectl scale statefulset keycloak --replicas 1

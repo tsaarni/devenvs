@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: postgresql
-          image: docker.io/postgres:12-alpine
+          image: docker.io/postgres:14-alpine
           args:
             - "-c"
             - "log_statement=all"
@@ -77,7 +77,7 @@ spec:
       containers:
       - name: myapp
         # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
-        image: dpage/pgadmin4:7
+        image: dpage/pgadmin4:8.1
         ports:
         - containerPort: 80
         env:
@@ -91,6 +91,12 @@ spec:
             value: "False"
           - name: PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED
             value: "False"
+          - name: PGADMIN_CONFIG_WTF_CSRF_CHECK_DEFAULT
+            value: "False"
+          - name: PGADMIN_CONFIG_WTF_CSRF_ENABLED
+            value: "False"
+          - name: GUNICORN_ACCESS_LOGFILE
+            value: "/dev/null"
         volumeMounts:
         - name: pgadmin-config
           mountPath: /config
@@ -137,55 +143,11 @@ data:
           "Host": "postgres",
           "Port": 5432,
           "MaintenanceDB": "postgres",
-          "PassFile": "/config/pgpassfile"
+          "ConnectionParameters": {
+            "passfile": "/config/pgpassfile"
+          }
         }
       }
     }
   pgpassfile: |
     postgres:*:*:keycloak:keycloak
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: pgweb
-spec:
-  selector:
-    matchLabels:
-      app: pgweb
-  template:
-    metadata:
-      labels:
-        app: pgweb
-    spec:
-      containers:
-      - name: pgweb
-        # https://hub.docker.com/r/sosedoff/pgweb/tags
-        image: sosedoff/pgweb:0.14.1
-        ports:
-        - containerPort: 8081
-        env:
-          - name: PGWEB_DATABASE_URL
-            value: postgres://keycloak:keycloak@postgres:5432/keycloak?sslmode=disable
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: pgweb
-spec:
-  selector:
-    app: pgweb
-  ports:
-  - port: 80
-    targetPort: 8081
----
-apiVersion: projectcontour.io/v1
-kind: HTTPProxy
-metadata:
-  name: pgweb
-spec:
-  virtualhost:
-    fqdn: pgweb.127-0-0-121.nip.io
-  routes:
-    - services:
-        - name: pgweb
-          port: 80

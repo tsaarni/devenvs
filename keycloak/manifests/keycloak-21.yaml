@@ -46,7 +46,7 @@ spec:
   selector:
     matchLabels:
       app: keycloak
-  replicas: 2
+  replicas: 1
   serviceName: keycloak-headless
   template:
     metadata:

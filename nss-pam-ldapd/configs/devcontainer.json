@@ -1,0 +1,8 @@
+{
+    "name": "pam dev",
+    "containerUser": "vscode",
+    "dockerComposeFile": "/home/tsaarni/work/devenvs/nss-pam-ldapd/docker-compose.yaml",
+    "service": "vscode",
+    "workspaceFolder": "/workspace",
+    "forwardPorts": []
+}

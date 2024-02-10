@@ -1,0 +1,27 @@
+
+version: "3"
+services:
+  openldap:
+    build: docker/openldap
+    volumes:
+      - .:/input:ro
+
+  vscode:
+    build: docker/vscode
+    command: tini -- sleep infinity
+    ports:
+      - "2222:22"
+    depends_on:
+      - openldap
+    volumes:
+      - /home/tsaarni/work/nss-pam-ldapd:/workspace:cached
+
+
+  # Logs
+  #   docker exec -it nss-pam-ldapd-sshd-with-sssd-1 cat /var/log/sssd/sssd.log
+  sshd-with-sssd:
+    build: docker/sshd-with-sssd
+    ports:
+      - "2223:22"
+    depends_on:
+      - openldap
