@@ -31,8 +31,11 @@ RUN locale-gen en_US.UTF-8
 
 COPY files /
 
-RUN useradd -ms /bin/bash $USERNAME && \
+RUN groupadd --gid $USER_GID $USERNAME && \
+    useradd --create-home --shell /bin/bash --uid $USER_UID --gid $USER_GID $USERNAME && \
     echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
     chmod 0440 /etc/sudoers.d/$USERNAME
 
 USER $USERNAME
+
+CMD ["/usr/bin/tini", "--", "sleep", "infinity"]

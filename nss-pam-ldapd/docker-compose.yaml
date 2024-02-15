@@ -8,7 +8,6 @@ services:
 
   vscode:
     build: docker/vscode
-    command: tini -- sleep infinity
     ports:
       - "2222:22"
     depends_on:
@@ -17,7 +16,7 @@ services:
       - /home/tsaarni/work/nss-pam-ldapd:/workspace:cached
 
 
-  # Logs
+  # To see logs
   #   docker exec -it nss-pam-ldapd-sshd-with-sssd-1 cat /var/log/sssd/sssd.log
   sshd-with-sssd:
     build: docker/sshd-with-sssd

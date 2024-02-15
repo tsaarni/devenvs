@@ -1,15 +1,22 @@
 https://github.com/arthurdejong/nss-pam-ldapd/issues/63
 
 
-# Configure dev environment
+#
+# Setup
+#
+
+# 1. configure devcontainer
 cd ~/work/nss-pam-ldapd
 mkdir -p .devcontainer .vscode
 cp ~/work/devenvs/nss-pam-ldapd/configs/devcontainer.json .devcontainer
-cp ~/work/devenvs/nss-pam-ldapd/configs/launch.json .vscode
+
+
+# 2. Launch vscode. It will also automatically launch services from docker-compose.yml
+#   - openldap
+#   - sssd client (for comparison)
 
 
 
-# Launch vscode in devcontainer
 #
 # Build and install
 #
@@ -42,13 +49,22 @@ EOF'
 sudo /usr/sbin/nslcd -d
 
 
-# start another terminal and run sshd
+# start another terminal and run sshd in foreground
 sudo mkdir -p /run/sshd
 
+
+# Without keyboard-interactive authentication
+cat > sshd_config <<EOF
+KbdInteractiveAuthentication no
+UsePAM yes
+EOF
+
+# With keyboard-interactive authentication
 cat > sshd_config <<EOF
 KbdInteractiveAuthentication yes
 UsePAM yes
 EOF
+
 
 while true; do sudo /usr/sbin/sshd -D -d -f sshd_config; done
 
@@ -58,7 +74,7 @@ while true; do sudo /usr/sbin/sshd -D -d -f sshd_config; done
 sshpass -p joe ssh joe@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "echo Hello world!"
 
 # test password change
-sshpass -p mustchange ssh mustchange@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+ssh mustchange@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 
 
 
@@ -66,11 +82,19 @@ sshpass -p mustchange ssh mustchange@localhost -p 2222 -o UserKnownHostsFile=/de
 # Debugging
 #
 
-# Run nslcd under gdb
+# 1. Install vscode debugger extension and configure it
 code --install-extension ms-vscode.cpptools
+cp ~/work/devenvs/nss-pam-ldapd/configs/launch.json .vscode
+
+# 2. Hack: set some insecure permissions to allow nslcd to run as vscode user
 sudo chmod a+r /etc/nslcd.conf
 sudo chmod a+rw /var/run/nslcd/
 
+# 3. Launch debugger
+
+
+# 4. Hack: view syslog messages from PAM under sshd
+sudo socat -u UNIX-RECV:/dev/log STDOUT
 
 
 #### NOT WORKING for some reason
@@ -85,13 +109,15 @@ export SYSLOG_PATH=/dev/stdout
 
 
 
-#########
+
 #
-# Test LDAP connectivity
+# Debugging LDAP stuff
 #
 
 ldapwhoami -H ldap://openldap -D cn=joe,ou=users,o=example -w joe
 ldapsearch -H ldap://openldap -D cn=ldap-admin,ou=users,o=example -w ldap-admin -b ou=users,o=example
+
+
 
 docker logs nss-pam-ldapd-openldap-1 -f        # Monitor OpenLDAP logs
 docker-compose restart openldap                # Restart OpenLDAP
