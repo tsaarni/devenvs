@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+
+  envoy:
+    image: envoyproxy/envoy:v1.29-latest
+
+    command: --log-level info --config-path /input/configs/envoy-tls-with-mutual-auth.yaml
+
+    volumes:
+      - .:/input:ro
+    user: "1000:1000"
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+      - "9901:9901"
+
+  echoserver:
+    image: quay.io/tsaarni/echoserver:demo
+    environment:
+      - TLS_SERVER_CERT=/input/certs/upstream-server.pem
+      - TLS_SERVER_PRIVKEY=/input/certs/upstream-server-key.pem
+      - TLS_CLIENT_CACERTS=/input/certs/server-ca.pem
+      - POD_NAME=echoserver
+    volumes:
+      - .:/input:ro
+    user: "1000:1000"
+
+
+# success: http --verify certs/server-ca.pem --cert certs/client.pem --cert-key certs/client-key.pem https://localhost:8443
+# failure: http --verify certs/server-ca.pem --cert certs/expired-client.pem --cert-key certs/expired-client-key.pem https://localhost:8443
+# admin:   http://localhost:9901/
