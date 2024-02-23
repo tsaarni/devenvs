@@ -1,0 +1,8 @@
+{
+    "name": "dev",
+    "containerUser": "vscode",
+    "dockerComposeFile": "/home/tsaarni/work/devenvs/vault/docker-compose.yaml",
+    "service": "vscode",
+    "workspaceFolder": "/workspace",
+    "forwardPorts": []
+}

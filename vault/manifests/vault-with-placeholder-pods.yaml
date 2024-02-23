@@ -20,22 +20,22 @@ spec:
     matchLabels:
       app: vault
   serviceName: vault
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
         app: vault
     spec:
       containers:
-
       - name: vault
-        image: hashicorp/vault:1.14
-
+        image: alpine:latest
+        # Just install tools and run sleep, since this container is a placeholder
+        # to exec into and run vault & tools manually.
         command:
           - "/bin/sh"
         args:
           - "-c"
-          - "vault server -config=/config/config-etcd-no-tls.hcl"
+          - "apk add --update-cache py3-pip httpie openssl netcat-openbsd bind-tools py3-jwt && /bin/sleep 99999999"
         ports:
           - containerPort: 8200
         env:
@@ -48,41 +48,13 @@ spec:
             name: vault-config
           - mountPath: /certs
             name: certs
-
-      - name: configure
-        image: hashicorp/vault:1.14
-        command:
-          - "/bin/sh"
-        args:
-          - "-x"
-          - "/config/initialize-vault.sh"
-        env:
-          - name: VAULT_ADDR
-            value: "http://localhost:8200"
-
-        volumeMounts:
-          - mountPath: /certs
-            name: certs
-          - mountPath: /unseal
-            name: vault-unseal
-          - mountPath: /config
-            name: vault-config
-
       volumes:
         - name: vault-config
           configMap:
             name: vault-config
-
         - name: certs
           secret:
             secretName: vault-certs
-            optional: true
-
-        # TODO: should be a persistent volume
-        - name: vault-unseal
-          emptyDir:
-            medium: Memory
-
       serviceAccountName: vault-auth
 ---
 apiVersion: v1
@@ -90,18 +62,6 @@ kind: ConfigMap
 metadata:
   name: vault-config
 data:
-  config-etcd-no-tls.hcl: |
-    listener "tcp" {
-      address     = "0.0.0.0:8200"
-      tls_disable = 1
-    }
-    storage "etcd" {
-      address  = "http://etcd:2379"
-      etcd_api = "v3"
-      sync = "false"
-    }
-    disable_mlock = "true"
-
   config-etcd.hcl: |
     listener "tcp" {
       address     = "0.0.0.0:8200"
@@ -116,7 +76,6 @@ data:
       tls_key_file = "/certs/client-key.pem"
     }
     disable_mlock = "true"
-
   config-etcd-ha.hcl: |
     listener "tcp" {
       address     = "0.0.0.0:8200"
@@ -133,30 +92,6 @@ data:
       tls_key_file = "/certs/etcd-key.pem"
     }
     disable_mlock = "true"
-
-  initialize-vault.sh: |
-    # check if jq is installed
-    if ! [ -x "$(command -v jq)" ]; then
-      apk add --update-cache jq
-    fi
-
-    # initialize vault if not already initialized
-    initialized=$(vault status -format=json | jq -r '.initialized')
-    if [ "$initialized" = "false" ]; then
-      vault operator init -key-shares=1 -key-threshold=1 -format=json > /unseal/init.json
-    fi
-
-    # unseal vault
-    vault operator unseal $(jq -r .unseal_keys_b64[0] /unseal/init.json)
-
-    # enable kubernetes auth method
-    export VAULT_TOKEN=$(jq -r .root_token /unseal/init.json)
-    vault auth enable kubernetes
-    vault write auth/kubernetes/config kubernetes_host=https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT
-    vault write auth/kubernetes/role/demo bound_service_account_names="*" bound_service_account_namespaces="*" ttl=1m
-
-    sleep 99999999
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

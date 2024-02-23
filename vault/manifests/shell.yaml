@@ -23,6 +23,9 @@ spec:
         - name: projected
           mountPath: "/projected"
           readOnly: true
+        - name: host
+          mountPath: "/host"
+          readOnly: true
   serviceAccountName: vault-client
   volumes:
     - name: projected
@@ -32,3 +35,7 @@ spec:
               expirationSeconds: 600
               path: token
               audience: https://my-own-audience
+    - name: host
+      hostPath:
+        path: /host
+        type: Directory

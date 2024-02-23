@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: etcd
 spec:
-#  clusterIP: None
+  clusterIP: None
   selector:
     app: etcd
   ports:
@@ -30,13 +30,14 @@ spec:
       - name: etcd
         # https://github.com/etcd-io/etcd/releases
         # NOTE: newer images do not have /bin/sh anymore so we cannot use env vars
-        image: gcr.io/etcd-development/etcd:v3.5.6
+        image: localhost/etcd:latest
+        imagePullPolicy: Never
         command:
           - "/bin/sh"
         args:
           - "-c"
-#          - "etcd --data-dir /etcd-data --name ${POD_NAME} --initial-advertise-peer-urls http://${POD_NAME}.etcd:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://${POD_NAME}.etcd:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster ${CLUSTER} --log-level=debug"
-          - "etcd --data-dir /etcd-data --name ${POD_NAME} --initial-advertise-peer-urls http://${POD_NAME}.etcd:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls https://${POD_NAME}.etcd:2379 --listen-client-urls https://0.0.0.0:2379 --initial-cluster ${CLUSTER} --log-level=debug --client-cert-auth --trusted-ca-file=/certs/ca.pem --cert-file=/certs/etcd.pem --key-file=/certs/etcd-key.pem"
+          - "etcd --data-dir /etcd-data --name ${POD_NAME} --initial-advertise-peer-urls http://${POD_NAME}.etcd:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://${POD_NAME}.etcd:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster ${CLUSTER} --log-level=debug"
+#          - "etcd --data-dir /etcd-data --name ${POD_NAME} --initial-advertise-peer-urls http://${POD_NAME}.etcd:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls https://${POD_NAME}.etcd:2379 --listen-client-urls https://0.0.0.0:2379 --initial-cluster ${CLUSTER} --log-level=debug --client-cert-auth --trusted-ca-file=/certs/ca.pem --cert-file=/certs/etcd.pem --key-file=/certs/etcd-key.pem"
         ports:
         - containerPort: 2379
         - containerPort: 2380
@@ -47,6 +48,8 @@ spec:
                 fieldPath: metadata.name
           - name: CLUSTER
             value: etcd-0=http://etcd-0.etcd:2380,etcd-1=http://etcd-1.etcd:2380,etcd-2=http://etcd-2.etcd:2380
+          #- name: ETCD_QUOTA_BACKEND_BYTES
+          #  value: "5000000"
         volumeMounts:
         - name: etcd
           mountPath: /etcd-data
@@ -56,6 +59,9 @@ spec:
         - name: certs
           secret:
             secretName: etcd-certs
+            optional: true
+
+  # kubectl delete pvc -l app=etcd
   volumeClaimTemplates:
   - metadata:
       name: etcd

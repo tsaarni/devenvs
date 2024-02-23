@@ -14,9 +14,9 @@ services:
     environment:
       - HOSTNAME=etcd0
       - CLUSTER=etcd0=http://etcd0:2380,etcd1=http://etcd1:2380,etcd2=http://etcd2:2380
-      - ETCD_QUOTA_BACKEND_BYTES=${ETCD_QUOTA_BACKEND_BYTES:-5000000}
+      - ETCD_QUOTA_BACKEND_BYTES=5000000
     volumes:
-      - ./tmp:/etcd-data
+      - etcd-data:/etcd-data
 
   etcd1:
     build: docker/etcd
@@ -29,9 +29,9 @@ services:
     environment:
       - HOSTNAME=etcd1
       - CLUSTER=etcd0=http://etcd0:2380,etcd1=http://etcd1:2380,etcd2=http://etcd2:2380
-      - ETCD_QUOTA_BACKEND_BYTES=${ETCD_QUOTA_BACKEND_BYTES:-5000000}
+      - ETCD_QUOTA_BACKEND_BYTES=5000000
     volumes:
-      - ./tmp:/etcd-data
+      - etcd-data:/etcd-data
 
   etcd2:
     build: docker/etcd
@@ -44,17 +44,20 @@ services:
     environment:
       - HOSTNAME=etcd2
       - CLUSTER=etcd0=http://etcd0:2380,etcd1=http://etcd1:2380,etcd2=http://etcd2:2380
-      - ETCD_QUOTA_BACKEND_BYTES=${ETCD_QUOTA_BACKEND_BYTES:-5000000}
+      - ETCD_QUOTA_BACKEND_BYTES=5000000
     volumes:
-      - ./tmp:/etcd-data
+      - etcd-data:/etcd-data
 
-  vscode:
-    build: docker/vscode
+  vault:
+    image: hashicorp/vault:1.14
+    command:
+      - /bin/sh
+      - -c
+      - vault server -config=/input/configs/vault-config-etcd.hcl
     ports:
       - 8200:8200
     volumes:
-      - ../../vault:/workspace:cached
-      - .:/home/vscode/work/devenvs/vault
+      - .:/input:ro
 
 
 volumes:

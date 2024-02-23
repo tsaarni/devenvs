@@ -23,9 +23,8 @@ kind delete cluster --name vault
 kind create cluster --config configs/kind-cluster-config-1h-token-expiry.yaml --name vault
 
 # Deploy empty placeholder pods for Vault
-kubectl apply -f manifests/vault.yaml
+kubectl apply -f manifests/vault-with-placeholder-pods.yaml
 kubectl apply -f manifests/shell.yaml
-
 
 
 # Patch Vault with local version of Kubernetes Auth Method
@@ -344,4 +343,3 @@ $ kubectl get secret my-service-account-token-chdd8 -o jsonpath={.data.token} | 
  'kubernetes.io/serviceaccount/service-account.uid': 'd5a74d52-9f1f-45d7-8240-3db9946fcd1b',
  'sub': 'system:serviceaccount:default:my-service-account'}
 ```
-
