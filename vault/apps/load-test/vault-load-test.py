@@ -14,7 +14,7 @@ logger = logging.getLogger("vault-load-test")
 
 class KubernetesLoginTester:
 
-    def __init__(self, vault_addr: str, concurrent_requests: int, max_failed_logins: int, role: str, token: str, ca_data: str|None) -> None:
+    def __init__(self, vault_addr, concurrent_requests, max_failed_logins, role, token, ca_data):
         self.url = urllib.parse.urlparse(vault_addr)
 
         # Number of concurrent login requests to make.
@@ -52,11 +52,12 @@ class KubernetesLoginTester:
 
 
     # Create tasks (num_workers) that will send requests concurrently.
-    async def start(self) -> None:
+    async def start(self):
         logger.info(f"Starting logins with {self.num_workers} workers towards {self.url.geturl()}")
 
         # Create task that will report the number of successful and failed logins periodically.
-        asyncio.create_task(self.status_reporter())
+        event_loop = asyncio.get_event_loop()
+        event_loop.create_task(self.status_reporter())
 
         self.start_time = time.time()
 
@@ -64,7 +65,7 @@ class KubernetesLoginTester:
         await asyncio.gather(*[self.worker(i) for i in range(self.num_workers)])
 
 
-    def print_stats(self) -> None:
+    def print_stats(self):
         end_time = time.time()
         elapsed_time = end_time - self.start_time
         logger.info(f"Test completed in {elapsed_time:.2f} seconds")
@@ -77,7 +78,7 @@ class KubernetesLoginTester:
             logger.info(f"Average time per failed login: {elapsed_time / self.failed_logins * 1000:.2f} ms")
 
     # Reporter function that prints the number of successful and failed logins periodically.
-    async def status_reporter(self) -> None:
+    async def status_reporter(self):
         logger.debug("Starting reporter")
         start_time = asyncio.get_event_loop().time()
         while True:
@@ -89,7 +90,7 @@ class KubernetesLoginTester:
 
 
     # Worker function that sends login requests to Vault until the number of failed logins reaches the maximum.
-    async def worker(self, worker_id: int) -> None:
+    async def worker(self, worker_id):
         ssl_context = None
         if self.url.scheme == "https" and self.ca_data is not None:
             ssl_context = ssl.create_default_context(cadata=self.ca_data)
@@ -107,7 +108,7 @@ class KubernetesLoginTester:
                         logger.debug(f"Worker {worker_id} reached maximum of {self.max_failed_logins} failed logins.")
                         break
 
-    async def login(self, ssl_context: ssl.SSLContext|None) -> bool:
+    async def login(self, ssl_context):
         logger.debug(f"Sending request to {self.url.geturl()}")
 
         sock = asyncio.open_connection(self.url.hostname, self.url.port, ssl=ssl_context)
@@ -122,7 +123,6 @@ class KubernetesLoginTester:
         logger.debug(response)
 
         writer.close()
-        await writer.wait_closed()
 
         if response.startswith("HTTP/1.1 200 OK"):
             return True
@@ -153,7 +153,8 @@ if __name__ == "__main__":
 
     tester = KubernetesLoginTester(args.vault_addr, args.concurrency, args.max_failures, args.role, service_account, ca_data)
     try:
-        asyncio.run(tester.start())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(tester.start())
     except KeyboardInterrupt:
         logger.info("Received KeyboardInterrupt, stopping test")
 
