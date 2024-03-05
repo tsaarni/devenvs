@@ -36,6 +36,9 @@ mvn dependency:tree -Pdistribution -Dincludes=jakarta.xml.bind:jakarta.xml.bind-
 
 *** Running unit tests
 
+mvn clean install -DskipTests
+(cd distribution; mvn clean install)
+
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.storage.UserStorageDirtyDeletionUnsyncedImportTest#testMembersWhenCachedUsersRemovedFromBackend -Dkeycloak.logging.level=debug
 
 

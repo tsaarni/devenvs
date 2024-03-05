@@ -19,6 +19,9 @@ kubectl apply -f manifests/keycloak-22.yaml
             - "log_statement=all"
 
 
+# Enable SQL logging.
+quarkus.hibernate-orm.log.sql=true   # property
+QUARKUS_HIBERNATE_ORM_LOG_SQL=true   # environment variable
 
 # Change access token expiration to 1 day
 TOKEN=$(http --form POST http://keycloak.127-0-0-121.nip.io/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token)
@@ -92,22 +95,6 @@ REALM_DATA = requests.get(
 
 num_requests = 1
 while True:
-num_requests = 1
-while True:
-    res = requests.put(
-        f"{URL}/admin/realms/master",
-        headers={'Authorization': f"bearer {TOKEN}"},
-        #json={'bruteForceProtected': True, 'defaultSignatureAlgorithm': 'ES384', 'browserFlow': 'browser2'}
-        #json={'bruteForceProtected': True, 'defaultSignatureAlgorithm': 'ES384'}
-        json={"sslRequired":"external"}
-        #json={'browserFlow': 'browser2'}
-    )
-    if res.status_code == 204:
-        print(f'Attempt {num_requests} successful')
-    else:
-        print(f'Error at attempt {num_requests}: {res.status_code} {res.reason}: {res.text}')
-    num_requests += 1
-
     res = requests.put(
         f"{URL}/admin/realms/master",
         headers={'Authorization': f"bearer {TOKEN}",
@@ -138,5 +125,4 @@ kubectl scale statefulset keycloak --replicas 1
 
 *** Unit tests
 
-# Failing test
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.storage.UserStorageDirtyDeletionUnsyncedImportTest#testMembersWhenCachedUsersRemovedFromBackend -Dkeycloak.logging.level=debug
