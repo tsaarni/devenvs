@@ -124,7 +124,7 @@ class KubernetesLoginTester:
 
         writer.close()
 
-        if response.startswith("HTTP/1.1 200 OK"):
+        if response.startswith("HTTP/1.1 2"):
             return True
         else:
             return False
