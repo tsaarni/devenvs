@@ -1,7 +1,18 @@
+# INSTRUCTIONS:
+#
+# 1. compile etcd :
+#    cd ~/work/etcd/
+#    make
+# 2. create the certs:
+#    rm -rf certs
+#    mkdir -p certs
+#    certyaml -d certs configs/certs.yaml
+# 3. run the docker-compose
+#
 services:
   etcd0:
     build:
-      # context is the source directory (relative to current working directory)
+      # context is the etcd source directory (relative to current working directory)
       # dockerfile is the path to the Dockerfile (relative to the context)
       context: ../../etcd
       dockerfile: ../devenvs/etcd/docker/etcd/Dockerfile

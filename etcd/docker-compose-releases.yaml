@@ -1,0 +1,96 @@
+# docker-compose -f docker-compose-releases.yaml down --volumes
+version: '3'
+services:
+  etcd0:
+    build: docker/etcd-alpine
+    command:
+      - /bin/sh
+      - -c
+      - |
+        etcd \
+        --data-dir /etcd-data/$$HOSTNAME \
+        --name $$HOSTNAME \
+        --initial-advertise-peer-urls https://$$HOSTNAME:2380 \
+        --listen-peer-urls https://0.0.0.0:2380 \
+        --advertise-client-urls https://$$HOSTNAME:2379 \
+        --listen-client-urls https://0.0.0.0:2379 \
+        --initial-cluster $$CLUSTER \
+        --peer-client-cert-auth \
+        --peer-trusted-ca-file=/certs/ca.pem \
+        --peer-cert-file=/certs/etcd.pem \
+        --peer-key-file=/certs/etcd-key.pem \
+        --client-cert-auth=true \
+        --trusted-ca-file=/certs/ca.pem \
+        --cert-file=/certs/etcd.pem \
+        --key-file=/certs/etcd-key.pem \
+        --log-level info
+    ports:
+      - 2379:2379
+    environment:
+      - HOSTNAME=etcd0
+      - CLUSTER=etcd0=https://etcd0:2380,
+      #- CLUSTER=etcd0=http://etcd0:2380,etcd1=http://etcd1:2380,etcd2=http://etcd2:2380
+    volumes:
+      #- etcd-data:/etcd-data
+      - ./tmp/:/etcd-data
+      - ./certs/:/certs:ro
+
+  etcd1:
+    build: docker/etcd-alpine
+    command:
+      - /bin/sh
+      - -c
+      - |
+        etcd \
+        --data-dir /etcd-data/$$HOSTNAME \
+        --name $$HOSTNAME \
+        --initial-advertise-peer-urls http://$$HOSTNAME:2380 \
+        --listen-peer-urls http://0.0.0.0:2380 \
+        --advertise-client-urls http://$$HOSTNAME:2379 \
+        --listen-client-urls http://0.0.0.0:2379 \
+        --initial-cluster $$CLUSTER \
+        --log-level debug
+    ports:
+      - 2379
+    environment:
+      - HOSTNAME=etcd1
+      - CLUSTER=etcd0=http://etcd0:2380,etcd1=http://etcd1:2380,etcd2=http://etcd2:2380
+    volumes:
+      - etcd-data:/etcd-data
+
+  etcd2:
+    build: docker/etcd-alpine
+    command:
+      - /bin/sh
+      - -c
+      - |
+        etcd \
+        --data-dir /etcd-data/$$HOSTNAME \
+        --name $$HOSTNAME \
+        --initial-advertise-peer-urls http://$$HOSTNAME:2380 \
+        --listen-peer-urls http://0.0.0.0:2380 \
+        --advertise-client-urls http://$$HOSTNAME:2379 \
+        --listen-client-urls http://0.0.0.0:2379 \
+        --initial-cluster $$CLUSTER \
+        --log-level debug
+    ports:
+      - 2379
+    environment:
+      - HOSTNAME=etcd2
+      - CLUSTER=etcd0=http://etcd0:2380,etcd1=http://etcd1:2380,etcd2=http://etcd2:2380
+    volumes:
+      - etcd-data:/etcd-data
+
+
+  etcd-client:
+    build: docker/etcd-alpine
+    command: sleep infinity
+    environment:
+      - ETCDCTL_API=3
+      - ETCDCTL_ENDPOINTS=https://etcd0:2379
+      #- ETCDCTL_ENDPOINTS=http://etcd0:2379,http://etcd1:2379,http://etcd2:2379
+    volumes:
+      - ./certs/:/certs:ro
+
+volumes:
+  etcd-data:

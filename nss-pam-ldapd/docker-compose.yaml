@@ -10,8 +10,6 @@ services:
     build: docker/vscode
     ports:
       - "2222:22"
-    depends_on:
-      - openldap
     volumes:
       - /home/tsaarni/work/nss-pam-ldapd:/workspace:cached
 
@@ -22,5 +20,3 @@ services:
     build: docker/sshd-with-sssd
     ports:
       - "2223:22"
-    depends_on:
-      - openldap

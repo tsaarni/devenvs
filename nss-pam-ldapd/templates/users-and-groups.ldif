@@ -45,7 +45,7 @@ cn: joe
 uidNumber: 10002
 gidNumber: 10001
 loginShell: /bin/bash
-homeDirectory: /home/
+homeDirectory: /home/joe
 userPassword: {CRYPT}$(mkpasswd -m sha-512 joe)
 sn: Average
 givenName: Joe
@@ -61,7 +61,7 @@ uidNumber: 10004
 gidNumber: 10001
 userPassword: {CRYPT}$(mkpasswd -m sha-512 mustchange)
 loginShell: /bin/bash
-homeDirectory: /home/
+homeDirectory: /home/mustchange
 sn: usersurename
 givenName: usergivenname
 pwdReset: TRUE

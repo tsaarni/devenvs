@@ -7,6 +7,13 @@ issuer: cn=server-ca
 sans:
 - DNS:localhost
 ---
+subject: cn=envoy-expired
+issuer: cn=server-ca
+sans:
+- DNS:localhost
+not_before: 2020-01-01T00:00:00Z
+not_after: 2020-01-02T00:00:00Z
+---
 subject: cn=client-sub-ca
 issuer: cn=client-ca
 ca: true

@@ -38,8 +38,8 @@ make test-e2e
 
 # build container
 (cd ~/work/etcd && make)
-docker-compose build
-docker-compose up
+docker-compose -f docker-compose-source.yaml build
+docker-compose -f docker-compose-source.yaml up
 
 
 # cleanup

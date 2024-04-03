@@ -187,3 +187,57 @@ cp ~/work/devenvs/vault/configs/devcontainer.json .devcontainer
 
 mkdir -p .vscode
 cp ~/work/devenvs/vault/configs/launch.json .vscode
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####
+
+diff --git a/physical/etcd/etcd3.go b/physical/etcd/etcd3.go
+index 8501a8b40f..00212dee21 100644
+--- a/physical/etcd/etcd3.go
++++ b/physical/etcd/etcd3.go
+@@ -186,6 +186,7 @@ func (c *EtcdBackend) Put(ctx context.Context, entry *physical.Entry) error {
+        ctx, cancel := context.WithTimeout(context.Background(), c.requestTimeout)
+        defer cancel()
+        _, err := c.etcd.Put(ctx, path.Join(c.path, entry.Key), string(entry.Value))
++       fmt.Printf("Put (res: %t): %s\n", err == nil, entry.Key)
+        return err
+ }
+
+@@ -198,6 +199,7 @@ func (c *EtcdBackend) Get(ctx context.Context, key string) (*physical.Entry, err
+        ctx, cancel := context.WithTimeout(context.Background(), c.requestTimeout)
+        defer cancel()
+        resp, err := c.etcd.Get(ctx, path.Join(c.path, key))
++       fmt.Printf("Get (res: %t): %s\n", err == nil, key)
+        if err != nil {
+                return nil, err
+        }
+@@ -223,6 +225,7 @@ func (c *EtcdBackend) Delete(ctx context.Context, key string) error {
+        ctx, cancel := context.WithTimeout(context.Background(), c.requestTimeout)
+        defer cancel()
+        _, err := c.etcd.Delete(ctx, path.Join(c.path, key))
++       fmt.Printf("Delete (res: %t): %s\n", err == nil, key)
+        if err != nil {
+                return err
+        }
+@@ -239,6 +242,7 @@ func (c *EtcdBackend) List(ctx context.Context, prefix string) ([]string, error)
+        defer cancel()
+        prefix = path.Join(c.path, prefix) + "/"
+        resp, err := c.etcd.Get(ctx, prefix, clientv3.WithPrefix(), clientv3.WithKeysOnly())
++       fmt.Printf("List prefix (res: %t): %s\n", err == nil, prefix)
+        if err != nil {
+                return nil, err
+        }
+~
+

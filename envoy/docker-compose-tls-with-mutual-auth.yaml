@@ -3,9 +3,10 @@ version: "3"
 services:
 
   envoy:
-    image: envoyproxy/envoy:v1.29-latest
+    image: envoyproxy/envoy:v1.28-latest
 
-    command: --log-level info --config-path /input/configs/envoy-tls-with-mutual-auth.yaml
+    command: --log-level debug --config-path /input/configs/envoy-tls-with-mutual-auth.yaml
+    #command: --config-path /input/configs/envoy-tls-with-mutual-auth.yaml
 
     volumes:
       - .:/input:ro

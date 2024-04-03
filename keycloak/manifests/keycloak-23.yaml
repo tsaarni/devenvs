@@ -115,6 +115,8 @@ spec:
             #  value: /run/secrets/certs/tls.crt
             #- name: KC_HTTPS_CERTIFICATE_KEY_FILE
             #  value: /run/secrets/certs/tls.key
+            #- name: KC_HTTPS_CIPHER_SUITES
+            #  value: TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 
             #- name: KC_HOSTNAME_ADMIN_URL
             #  value: http://keycloak.127-0-0-121.nip.io/

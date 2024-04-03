@@ -71,11 +71,11 @@ olcDatabase: mdb
 olcSuffix: o=example
 olcDbDirectory: /data/db/
 olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
-olcAccess: to * by self read by * break
 olcAccess: to attrs=userPassword,shadowLastChange
   by self write
   by anonymous auth
   by * none
+olcAccess: to * by self read by * break
 olcAccess: to * by anonymous read by * break
 olcAccess: to * by * none
 

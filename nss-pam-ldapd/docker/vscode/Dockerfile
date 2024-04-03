@@ -9,12 +9,14 @@ RUN apt-get update && \
     apt-get install --yes --no-install-recommends \
         autoconf \
         automake \
+        bear \
         bind9-host \
         build-essential \
         ca-certificates \
         cracklib-runtime \
         curl \
         gdb \
+        gettext \
         git \
         iputils-ping \
         ldap-utils \
@@ -23,6 +25,7 @@ RUN apt-get update && \
         libpam-dev \
         locales \
         openssh-server \
+        rsyslog \
         silversearcher-ag \
         sudo \
         tini \

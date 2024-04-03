@@ -5,11 +5,20 @@
             "name": "Launch nslcd",
             "type": "cppdbg",
             "request": "launch",
+            "console": "integratedTerminal",
             "program": "${workspaceFolder}/nslcd/nslcd",
             "cwd": "/workspace/",
             "args": [
                 "-d"
             ],
+        },
+        {
+            "name": "Attach to sshd",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "/usr/sbin/sshd",
+            "processId": "${command:pickProcess}",
+            "miDebuggerPath": "/usr/bin/sudo-gdb"
         }
     ]
 }

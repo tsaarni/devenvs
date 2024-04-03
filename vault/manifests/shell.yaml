@@ -12,7 +12,7 @@ metadata:
 spec:
   containers:
     - name: shell
-      image: alpine:latest
+      image: python:3.6-alpine
       command: ["/bin/sh"]
       args:
         - "-c"

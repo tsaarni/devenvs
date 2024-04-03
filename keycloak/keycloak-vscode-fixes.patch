@@ -1,0 +1,206 @@
+diff --git a/js/apps/account-ui/pom.xml b/js/apps/account-ui/pom.xml
+index dc7054436a..adc8451028 100644
+--- a/js/apps/account-ui/pom.xml
++++ b/js/apps/account-ui/pom.xml
+@@ -51,6 +51,7 @@
+                 <artifactId>maven-replacer-plugin</artifactId>
+                 <executions>
+                     <execution>
++                        <?m2e execute?>
+                         <phase>process-resources</phase>
+                         <goals>
+                             <goal>replace</goal>
+@@ -125,4 +126,4 @@
+             </plugin>
+         </plugins>
+     </build>
+-</project>
+\ No newline at end of file
++</project>
+diff --git a/js/apps/admin-ui/pom.xml b/js/apps/admin-ui/pom.xml
+index ddf6d0fc25..7bde05d14d 100644
+--- a/js/apps/admin-ui/pom.xml
++++ b/js/apps/admin-ui/pom.xml
+@@ -93,6 +93,7 @@
+                 <artifactId>maven-replacer-plugin</artifactId>
+                 <executions>
+                     <execution>
++                        <?m2e execute?>
+                         <phase>process-resources</phase>
+                         <goals>
+                             <goal>replace</goal>
+@@ -160,4 +161,4 @@
+             </plugin>
+         </plugins>
+     </build>
+-</project>
+\ No newline at end of file
++</project>
+diff --git a/pom.xml b/pom.xml
+index 6d63a1bf8e..1a17d74599 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -229,7 +229,6 @@
+         <!-- Frontend -->
+         <node.version>v18.18.2</node.version>
+         <pnpm.version>8.10.2</pnpm.version>
+-        <pnpm.args.install>install --prefer-offline --frozen-lockfile --ignore-scripts</pnpm.args.install>
+     </properties>
+ 
+     <url>http://keycloak.org</url>
+@@ -1905,23 +1904,6 @@
+                     <groupId>com.github.eirslett</groupId>
+                     <artifactId>frontend-maven-plugin</artifactId>
+                     <version>${frontend.plugin.version}</version>
+-                    <executions>
+-                        <execution>
+-                            <goals>
+-                                <goal>install-node-and-pnpm</goal>
+-                            </goals>
+-                        </execution>
+-                        <execution>
+-                            <id>pnpm-install</id>
+-                            <goals>
+-                                <goal>pnpm</goal>
+-                            </goals>
+-                            <configuration>
+-                                <arguments>${pnpm.args.install}</arguments>
+-                                <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+-                            </configuration>
+-                        </execution>
+-                    </executions>
+                     <configuration>
+                         <nodeVersion>${node.version}</nodeVersion>
+                         <pnpmVersion>${pnpm.version}</pnpmVersion>
+@@ -1948,8 +1930,37 @@
+                     <artifactId>asciidoctor-maven-plugin</artifactId>
+                     <version>${asciidoctor.plugin.version}</version>
+                 </plugin>
++
+             </plugins>
+         </pluginManagement>
++
++        <plugins>
++            <plugin>
++                <groupId>com.github.eirslett</groupId>
++                <artifactId>frontend-maven-plugin</artifactId>
++                <version>${frontend.plugin.version}</version>
++
++                <executions>
++                    <execution>
++                        <goals>
++                            <goal>install-node-and-pnpm</goal>
++                        </goals>
++                    </execution>
++                    <execution>
++                        <id>pnpm-install</id>
++                        <inherited>false</inherited>
++                        <goals>
++                            <goal>pnpm</goal>
++                        </goals>
++                        <configuration>
++                            <arguments>--recursive install --prefer-offline --frozen-lockfile --ignore-scripts</arguments>
++                            <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
++                        </configuration>
++                    </execution>
++                </executions>
++            </plugin>
++        </plugins>
++
+     </build>
+ 
+     <profiles>
+diff --git a/services/src/main/java/org/keycloak/services/resources/admin/info/ServerInfoAdminResource.java b/services/src/main/java/org/keycloak/services/resources/admin/info/ServerInfoAdminResource.java
+index 9b66c7f8be..528a07c445 100755
+--- a/services/src/main/java/org/keycloak/services/resources/admin/info/ServerInfoAdminResource.java
++++ b/services/src/main/java/org/keycloak/services/resources/admin/info/ServerInfoAdminResource.java
+@@ -113,7 +113,7 @@ public class ServerInfoAdminResource {
+                                 Collectors.toMap(
+                                         ClientSignatureVerifierProvider::isAsymmetricAlgorithm,
+                                         clientSignatureVerifier -> Collections.singletonList(clientSignatureVerifier.getAlgorithm()),
+-                                        (l1, l2) -> listCombiner(l1, l2)
++                                        (List<String>l1, List<String>l2) -> listCombiner(l1, l2)
+                                                 .stream()
+                                                 .sorted()
+                                                 .collect(Collectors.toList()),
+@@ -222,27 +222,27 @@ public class ServerInfoAdminResource {
+             }
+         }
+     }
+-    
++
+     private LinkedList<String> filterThemes(Theme.Type type, LinkedList<String> themeNames) {
+         LinkedList<String> filteredNames = new LinkedList<>(themeNames);
+-        
+-        boolean filterAccountV2 = (type == Theme.Type.ACCOUNT) && 
++
++        boolean filterAccountV2 = (type == Theme.Type.ACCOUNT) &&
+                 !Profile.isFeatureEnabled(Profile.Feature.ACCOUNT2);
+-        boolean filterAdminV2 = (type == Theme.Type.ADMIN) && 
++        boolean filterAdminV2 = (type == Theme.Type.ADMIN) &&
+                 !Profile.isFeatureEnabled(Profile.Feature.ADMIN2);
+-        
++
+         if (filterAccountV2 || filterAdminV2) {
+             filteredNames.remove("keycloak.v2");
+             filteredNames.remove("rh-sso.v2");
+         }
+ 
+-        boolean filterAccountV3 = (type == Theme.Type.ACCOUNT) && 
++        boolean filterAccountV3 = (type == Theme.Type.ACCOUNT) &&
+             !Profile.isFeatureEnabled(Profile.Feature.ACCOUNT3);
+ 
+         if (filterAccountV3) {
+             filteredNames.remove("keycloak.v3");
+         }
+-        
++
+         return filteredNames;
+     }
+ 
+diff --git a/themes/pom.xml b/themes/pom.xml
+index 410cf9938e..9f48f9130c 100755
+--- a/themes/pom.xml
++++ b/themes/pom.xml
+@@ -4,6 +4,7 @@
+         <artifactId>keycloak-parent</artifactId>
+         <groupId>org.keycloak</groupId>
+         <version>999.0.0-SNAPSHOT</version>
++        <relativePath>../pom.xml</relativePath>
+     </parent>
+     <modelVersion>4.0.0</modelVersion>
+ 
+@@ -12,6 +13,19 @@
+     <description />
+     <packaging>jar</packaging>
+ 
++    <dependencies>
++        <dependency>
++            <groupId>org.keycloak</groupId>
++            <artifactId>keycloak-admin-ui</artifactId>
++            <version>${project.version}</version>
++        </dependency>
++        <dependency>
++            <groupId>org.keycloak</groupId>
++            <artifactId>keycloak-account-ui</artifactId>
++            <version>${project.version}</version>
++        </dependency>
++    </dependencies>
++
+     <properties>
+         <dir.common>src/main/resources/theme/keycloak/common/resources</dir.common>
+         <dir.account2>src/main/resources/theme/keycloak.v2/account/src</dir.account2>
+@@ -132,10 +146,12 @@
+                                 </goals>
+                                 <configuration>
+                                     <arguments>run build</arguments>
+-                                    <workingDirectory>${dir.account2}</workingDirectory>
+                                 </configuration>
+                             </execution>
+                         </executions>
++                        <configuration>
++                            <workingDirectory>${dir.account2}</workingDirectory>
++                        </configuration>
+                     </plugin>
+                 </plugins>
+             </build>

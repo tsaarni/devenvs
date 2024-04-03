@@ -9,3 +9,35 @@ sans:
 ---
 subject: cn=client
 issuer: cn=ca
+---
+subject: cn=etcd
+issuer: cn=ca
+filename: expired-etcd
+not_before: 2024-01-01T09:00:00Z
+not_after: 2024-02-01T10:10:10Z
+sans:
+  - DNS:etcd0
+  - DNS:etcd1
+  - DNS:etcd2
+---
+subject: cn=client
+issuer: cn=ca
+filename: expired-client
+not_before: 2024-01-01T09:00:00Z
+not_after: 2024-02-01T10:10:10Z
+---
+subject: cn=untrusted-ca
+---
+subject: cn=untrusted-etcd
+issuer: cn=untrusted-ca
+sans:
+  - DNS:etcd0
+  - DNS:etcd1
+  - DNS:etcd2
+---
+subject: cn=client
+issuer: cn=untrusted-ca
+filename: untrusted-client
+---
+subject: cn=root
+issuer: cn=ca

@@ -1,4 +1,32 @@
 https://github.com/arthurdejong/nss-pam-ldapd/issues/63
+https://github.com/arthurdejong/nss-pam-ldapd/pull/64
+
+
+
+# SSSD forced password change
+# KbdInteractiveAuthentication no
+$ ssh mustchange@localhost -p 2223 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+mustchange@localhost's password:
+Password expired. Change your password now.
+Password expired. Change your password now.
+WARNING: Your password has expired.
+You must change your password now and login again!
+Current Password:
+New password:
+New password:
+Retype new password:
+
+
+# KbdInteractiveAuthentication yes
+
+$ ssh mustchange@localhost -p 2223 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+Warning: Permanently added '[localhost]:2223' (ED25519) to the list of known hosts.
+(mustchange@localhost) Password:
+(mustchange@localhost) Password expired. Change your password now.
+Current Password:
+(mustchange@localhost) New password:
+(mustchange@localhost) Retype new password:
+
 
 
 #
@@ -9,11 +37,13 @@ https://github.com/arthurdejong/nss-pam-ldapd/issues/63
 cd ~/work/nss-pam-ldapd
 mkdir -p .devcontainer .vscode
 cp ~/work/devenvs/nss-pam-ldapd/configs/devcontainer.json .devcontainer
+cp ~/work/devenvs/nss-pam-ldapd/configs/launch.json .vscode
+cp ~/work/devenvs/nss-pam-ldapd/configs/extensions.json .vscode
 
 
-# 2. Launch vscode. It will also automatically launch services from docker-compose.yml
+# 2. Launch vscode. It will also automatically build and launch services from docker-compose.yml
 #   - openldap
-#   - sssd client (for comparison)
+#   - sssd client (for comparison with nss-pam-ldapd)
 
 
 
@@ -22,27 +52,17 @@ cp ~/work/devenvs/nss-pam-ldapd/configs/devcontainer.json .devcontainer
 #
 
 ./autogen.sh
-
-# install module to /usr/lib/x86_64-linux-gnu/security/ which is the default location for pam modules in Ubuntu
 ./configure --prefix=/usr --with-pam-seclib-dir=/usr/lib/x86_64-linux-gnu/security/
+./configure --prefix=/usr --with-pam-seclib-dir=/usr/lib/x86_64-linux-gnu/security/ --enable-nls
+
 make
+bear -- make        # create compile_commands.json for vscode while compiling
+
 sudo make install
 
 
-#
-# Configure
-#
-
-# create config file for nslcd
-#   https://arthurdejong.org/nss-pam-ldapd/nslcd.conf.5
-#
-
-sudo bash -c 'cat > /etc/nslcd.conf <<EOF
-uri ldap://openldap
-base o=example
-pam_authc_search NONE
-EOF'
-
+# Finnish locale will be installed to
+#    /usr/share/locale/fi/LC_MESSAGES/nss-pam-ldapd.mo
 
 
 # run nslcd in foreground
@@ -52,22 +72,11 @@ sudo /usr/sbin/nslcd -d
 # start another terminal and run sshd in foreground
 sudo mkdir -p /run/sshd
 
+# kbd interactive: no
+while true; do sudo /usr/sbin/sshd -D -d -f /etc/ssh/sshd_config_kdb_interactive_no; done
 
-# Without keyboard-interactive authentication
-cat > sshd_config <<EOF
-KbdInteractiveAuthentication no
-UsePAM yes
-EOF
-
-# With keyboard-interactive authentication
-cat > sshd_config <<EOF
-KbdInteractiveAuthentication yes
-UsePAM yes
-EOF
-
-
-while true; do sudo /usr/sbin/sshd -D -d -f sshd_config; done
-
+# kbd interactive: yes
+while true; do sudo /usr/sbin/sshd -D -d -f /etc/ssh/sshd_config_kdb_interactive_yes; done
 
 
 # test successful login
@@ -78,23 +87,32 @@ ssh mustchange@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKe
 
 
 
+# change language by adding following to /etc/security/pam_env.conf
+#   LANGUAGE=fi
+#
+# NOTE!!! you might need to login twice to see the change take effect
+
+sudo chown vscode /etc/security/pam_env.conf
+code /etc/security/pam_env.conf
+
+
 #
 # Debugging
 #
 
-# 1. Install vscode debugger extension and configure it
-code --install-extension ms-vscode.cpptools
-cp ~/work/devenvs/nss-pam-ldapd/configs/launch.json .vscode
+# 1. Install vscode debugger extension
+#    via Extensions, seach for @recommended
+
 
 # 2. Hack: set some insecure permissions to allow nslcd to run as vscode user
-sudo chmod a+r /etc/nslcd.conf
+sudo chown vscode /etc/nslcd.conf
 sudo chmod a+rw /var/run/nslcd/
 
 # 3. Launch debugger
 
 
 # 4. Hack: view syslog messages from PAM under sshd
-sudo socat -u UNIX-RECV:/dev/log STDOUT
+sudo rsyslogd -n
 
 
 #### NOT WORKING for some reason
@@ -132,8 +150,7 @@ sudo nsenter --net -t $(pidof slapd) wireshark -k -i any -Y ldap
 #
 
 
-### OpenLDAP ACL permissions: had to allow anonymous search?
-
+### OpenLDAP ACL permissions: have to allow anonymous search to allow nslcd to work?
 
 
 ### Login fails with error
@@ -166,3 +183,20 @@ ls -l /tmp/foo
 # maybe add parameter ignore_first_pass which avoids setting
 #    pam_set_item(pamh, PAM_OLDAUTHTOK, ctx->oldpassword);
 # in pam/pam.c:pam_sm_authenticate()
+#
+# originally the function pam_get_authtok() seems to be OpenPAM extension where it did obey "try_first_pass"
+# - https://man.freebsd.org/cgi/man.cgi?query=pam_get_authtok&sektion=3&format=html
+# - https://git.des.dev/OpenPAM/OpenPAM/src/commit/d61017e61587a577237436025f2d25e04393d64f/lib/libpam/pam_get_authtok.c#L107-L116
+# The function has been implemented in Linux PAM since v1.1.0 which seems to be released in 2009
+# but it seems "try_first_pass" was never part of Linux PAM implementation.
+# Instead it behaves like "try_first_pass" was always given.
+
+
+# NLS
+https://www.guyrutenberg.com/2014/11/01/gettext-with-autotools-tutorial/
+https://thegreyblog.blogspot.com/2017/11/making-gettext-optional-during-build-of.html
+https://www.gnu.org/software/gettext/FAQ.html
+
+
+# reference wrapper
+/usr/share/gettext/gettext.h
