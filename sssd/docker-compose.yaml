@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  sssd:
+    build: docker/sssd
+    ports:
+      - "2222:22"
+    user: "900:900"
+
+  openldap:
+    build: docker/openldap
+    volumes:
+      - .:/input:ro
