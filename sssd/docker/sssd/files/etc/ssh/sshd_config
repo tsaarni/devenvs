@@ -1,2 +1,4 @@
 UsePAM yes
 LogLevel DEBUG
+#KbdInteractiveAuthentication yes
+KbdInteractiveAuthentication no

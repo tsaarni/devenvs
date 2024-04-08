@@ -5,8 +5,21 @@ services:
     ports:
       - "2222:22"
     user: "900:900"
+    volumes:
+      - shared_volume:/usr/local/
 
   openldap:
     build: docker/openldap
     volumes:
       - .:/input:ro
+
+  vscode:
+    build: docker/vscode
+    volumes:
+      - .:/workspace:cached
+      - /home/tsaarni/work/openssh-portable:/workspace/source/openssh:cached
+      - /home/tsaarni/work/sssd:/workspace/source/sssd:cached
+      - shared_volume:/usr/local/
+
+volumes:
+  shared_volume:

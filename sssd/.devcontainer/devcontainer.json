@@ -1,0 +1,16 @@
+{
+    "name": "vscode",
+    "containerUser": "vscode",
+    "dockerComposeFile": "/home/tsaarni/work/devenvs/sssd/docker-compose.yaml",
+    "service": "vscode",
+    "workspaceFolder": "/workspace",
+    "forwardPorts": [],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "llvm-vs-code-extensions.vscode-clangd",
+                "ms-vscode.cpptools",
+            ]
+        }
+    }
+}

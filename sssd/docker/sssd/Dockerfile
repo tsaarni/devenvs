@@ -227,6 +227,13 @@ RUN cd /source/nss-fake && \
     make && \
     make install
 
+RUN cd /source/pam-userenv && \
+    make && \
+    make install
+
+RUN cd /source/getlogin-fake && \
+    make
+
 RUN chown sssd:sssd /etc/sssd/sssd.conf && \
     chmod 600 /etc/sssd/sssd.conf && \
     chown sssd:sssd /run/sssd && \
@@ -235,6 +242,7 @@ RUN chown sssd:sssd /etc/sssd/sssd.conf && \
     chmod 700 /run/sssd /var/run/nscd/ && \
     mkdir -p /run/sshd && \
     touch /run/sshd.pid && \
-    chown -R sssd:sssd /run/sshd.pid /run/sshd /etc/ssh/
+    chown -R sssd:sssd /run/sshd.pid /run/sshd /etc/ssh/ && \
+    chmod u-s /usr/bin/passwd
 
 CMD ["dumb-init", "--", "/docker-entrypoint.sh"]

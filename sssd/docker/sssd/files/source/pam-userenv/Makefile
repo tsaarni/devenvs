@@ -1,15 +1,15 @@
 CC = gcc
-TARGET = libnss_fake.so.2
-INSTALL_DIR = /usr/lib/x86_64-linux-gnu/
-CFLAGS = -Wall -Werror
-LDFLAGS = -fPIC -shared -Wl,-soname,$(TARGET)
+TARGET = pam_userenv.so
+INSTALL_DIR = /usr/lib/x86_64-linux-gnu/security/
+CFLAGS = -Wall -Werror -Wextra
+LDFLAGS = -fPIC -shared
 
 all: $(TARGET)
 
 clean:
 	rm -f $(TARGET)
 
-$(TARGET): fake.c
+$(TARGET): userenv.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $<
 
 install: $(TARGET)
