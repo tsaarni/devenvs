@@ -158,6 +158,6 @@ tools/gen_compilation_database.py    # reload vscode window afterwards
 
 ### Document changes
 
-./docs/build.sh
+ci/do_ci.sh docs
 
 xdg-open ./generated/docs/index.html

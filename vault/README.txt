@@ -4,13 +4,15 @@
 # build & debug
 #
 
+make tools
+
 make
 
 # build debug version
 make GCFLAGS="all=-N -l"
 
-mkdir -p .vscode
-cp ~/work/devenvs/vault/configs/launch.json .vscode/
+mkdir -p .devcontainer .vscode
+cp ~/work/devenvs/vault/configs/devcontainer.json ~/work/devenvs/vault/configs/launch.json .vscode/
 
 
 # run dev mode (in-memory database)

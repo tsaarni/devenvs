@@ -1,3 +1,5 @@
+# to remove persisted data
+#  sudo rm -rf tmp/etcd*
 version: "3"
 services:
   etcd0:
@@ -8,7 +10,8 @@ services:
     command:
       - /bin/sh
       - -c
-      - etcd --data-dir /etcd-data/etcd0 --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://$$HOSTNAME:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster $$CLUSTER --log-level debug
+      - etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://$$HOSTNAME:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster $$CLUSTER --log-level debug
+      #- etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls https://$$HOSTNAME:2379 --listen-client-urls https://0.0.0.0:2379 --initial-cluster $$CLUSTER --log-level debug --cert-file=/input/certs/etcd.pem --key-file=/input/certs/etcd-key.pem --trusted-ca-file=/input/certs/ca.pem --client-cert-auth --tls-min-version=TLS1.3
     ports:
       - 2379
     environment:
@@ -17,13 +20,15 @@ services:
       - ETCD_QUOTA_BACKEND_BYTES=${ETCD_QUOTA_BACKEND_BYTES:-5000000}
     volumes:
       - ./tmp:/etcd-data
+      - ./:/input:ro
 
   etcd1:
     build: docker/etcd
     command:
       - /bin/sh
       - -c
-      - etcd --data-dir /etcd-data/etcd1 --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://$$HOSTNAME:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster $$CLUSTER --log-level debug
+      - etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://$$HOSTNAME:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster $$CLUSTER --log-level debug
+      #- etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls https://$$HOSTNAME:2379 --listen-client-urls https://0.0.0.0:2379 --initial-cluster $$CLUSTER --log-level debug --cert-file=/input/certs/etcd.pem --key-file=/input/certs/etcd-key.pem --trusted-ca-file=/input/certs/ca.pem --client-cert-auth --tls-min-version=TLS1.3
     ports:
       - 2379
     environment:
@@ -32,13 +37,15 @@ services:
       - ETCD_QUOTA_BACKEND_BYTES=${ETCD_QUOTA_BACKEND_BYTES:-5000000}
     volumes:
       - ./tmp:/etcd-data
+      - ./:/input:ro
 
   etcd2:
     build: docker/etcd
     command:
       - /bin/sh
       - -c
-      - etcd --data-dir /etcd-data/etcd2 --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://$$HOSTNAME:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster $$CLUSTER --log-level debug
+      - etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls http://$$HOSTNAME:2379 --listen-client-urls http://0.0.0.0:2379 --initial-cluster $$CLUSTER --log-level debug
+      #- etcd --data-dir /etcd-data/$$HOSTNAME --name $$HOSTNAME --initial-advertise-peer-urls http://$$HOSTNAME:2380 --listen-peer-urls http://0.0.0.0:2380 --advertise-client-urls https://$$HOSTNAME:2379 --listen-client-urls https://0.0.0.0:2379 --initial-cluster $$CLUSTER --log-level debug --cert-file=/input/certs/etcd.pem --key-file=/input/certs/etcd-key.pem --trusted-ca-file=/input/certs/ca.pem --client-cert-auth --tls-min-version=TLS1.3
     ports:
       - 2379
     environment:
@@ -47,6 +54,7 @@ services:
       - ETCD_QUOTA_BACKEND_BYTES=${ETCD_QUOTA_BACKEND_BYTES:-5000000}
     volumes:
       - ./tmp:/etcd-data
+      - ./:/input:ro
 
   vscode:
     build: docker/vscode
