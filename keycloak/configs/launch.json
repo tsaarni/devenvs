@@ -3,7 +3,7 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Debug Quarkus",
+            "name": "Debug Quarkus (IDELauncher)",
             "request": "launch",
             "mainClass": "org.keycloak.quarkus._private.IDELauncher",
             "projectName": "keycloak-quarkus-server-app",
@@ -34,6 +34,24 @@
                 // "KC_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
                 // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
                 // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
+            },
+        },
+        {
+            "type": "java",
+            "name": "Debug Quarkus (keycloak-junit5)",
+            "request": "launch",
+            "mainClass": "org.keycloak.Keycloak",
+            "projectName": "keycloak-junit5",
+
+            "args": "start-dev --verbose",
+
+            // All configuration options:
+            // - https://www.keycloak.org/server/all-config
+            "env": {
+                "KEYCLOAK_ADMIN": "admin",
+                "KEYCLOAK_ADMIN_PASSWORD": "admin",
+
+                "KC_HOSTNAME": "keycloak.127.0.0.1.nip.io",
             },
         },
         {

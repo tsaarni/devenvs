@@ -1,5 +1,15 @@
 
 
+Parallel builds stopped working
+https://github.com/keycloak/keycloak/issues/24571
+
+
+
+My suggestion to run pnpm install recursively on top level
+https://github.com/keycloak/keycloak/pull/24537#discussion_r1389486794
+
+
+
 --git a/pom.xml b/pom.xml
 index 6d63a1bf8e..fcfe301744 100644
 --- a/pom.xml
@@ -323,4 +333,160 @@ maven.multiModuleProjectDirectory
 
 https://issues.apache.org/jira/browse/MNG-6589
 https://youtrack.jetbrains.com/issue/IDEA-190202
+
+
+
+
+*** Plugin execution not covered by lifecycle configuration
+
+
+
+                 <executions>
+                     <execution>
++                        <?m2e ignore?>
+                         <id>echo-output</id>
+                     </execution>
+                 </executions>
+
+
+
+
+*** No mojo definitions were found
+
+
+
+Failed to execute mojo org.apache.maven.plugins:maven-plugin-plugin:3.11.0:descriptor {execution: generate-descriptor} (org.apache.maven.plugins:maven-plugin-plugin:3.11.0:descriptor:generate-descriptor:process-classes)
+
+org.eclipse.core.runtime.CoreException: Failed to execute mojo org.apache.maven.plugins:maven-plugin-plugin:3.11.0:descriptor {execution: generate-descriptor}
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.executeMojo(MavenExecutionContext.java:404)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.lambda$2(MavenExecutionContext.java:355)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.executeBare(MavenExecutionContext.java:458)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.execute(MavenExecutionContext.java:339)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.execute(MavenExecutionContext.java:354)
+	at org.eclipse.m2e.core.project.configurator.MojoExecutionBuildParticipant.build(MojoExecutionBuildParticipant.java:57)
+	at org.eclipse.m2e.core.internal.builder.MavenBuilderImpl.lambda$2(MavenBuilderImpl.java:159)
+	at java.base/java.util.LinkedHashMap.forEach(Unknown Source)
+	at org.eclipse.m2e.core.internal.builder.MavenBuilderImpl.build(MavenBuilderImpl.java:139)
+	at org.eclipse.m2e.core.internal.builder.MavenBuilder$1.method(MavenBuilder.java:164)
+	at org.eclipse.m2e.core.internal.builder.MavenBuilder$1.method(MavenBuilder.java:1)
+	at org.eclipse.m2e.core.internal.builder.MavenBuilder$BuildMethod.lambda$1(MavenBuilder.java:109)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.executeBare(MavenExecutionContext.java:458)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.execute(MavenExecutionContext.java:292)
+	at org.eclipse.m2e.core.internal.builder.MavenBuilder$BuildMethod.lambda$0(MavenBuilder.java:100)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.executeBare(MavenExecutionContext.java:458)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.execute(MavenExecutionContext.java:339)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.execute(MavenExecutionContext.java:278)
+	at org.eclipse.m2e.core.internal.builder.MavenBuilder$BuildMethod.execute(MavenBuilder.java:83)
+	at org.eclipse.m2e.core.internal.builder.MavenBuilder.build(MavenBuilder.java:192)
+	at org.eclipse.core.internal.events.BuildManager$2.run(BuildManager.java:1077)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:47)
+	at org.eclipse.core.internal.events.BuildManager.basicBuild(BuildManager.java:296)
+	at org.eclipse.core.internal.events.BuildManager.basicBuild(BuildManager.java:352)
+	at org.eclipse.core.internal.events.BuildManager$1.run(BuildManager.java:441)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:47)
+	at org.eclipse.core.internal.events.BuildManager.basicBuild(BuildManager.java:444)
+	at org.eclipse.core.internal.events.BuildManager.basicBuildLoop(BuildManager.java:555)
+	at org.eclipse.core.internal.events.BuildManager.basicBuildLoop(BuildManager.java:503)
+	at org.eclipse.core.internal.events.BuildManager.build(BuildManager.java:585)
+	at org.eclipse.core.internal.resources.Workspace.buildInternal(Workspace.java:594)
+	at org.eclipse.core.internal.resources.Workspace.build(Workspace.java:483)
+	at org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler.buildWorkspace(BuildWorkspaceHandler.java:65)
+	at org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer.lambda$28(JDTLanguageServer.java:1001)
+	at org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer.lambda$61(JDTLanguageServer.java:1236)
+	at java.base/java.util.concurrent.CompletableFuture$UniApply.tryFire(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.exec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool.scan(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(Unknown Source)
+Caused by: org.apache.maven.plugin.MojoExecutionException: Error extracting plugin descriptor: 'No mojo definitions were found for plugin: org.keycloak:keycloak-distribution-licenses-maven-plugin.'
+	at org.apache.maven.plugin.plugin.DescriptorGeneratorMojo.generate(DescriptorGeneratorMojo.java:368)
+	at org.apache.maven.plugin.plugin.AbstractGeneratorMojo.execute(AbstractGeneratorMojo.java:90)
+	at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo(DefaultBuildPluginManager.java:126)
+	at org.eclipse.m2e.core.internal.embedder.MavenExecutionContext.executeMojo(MavenExecutionContext.java:402)
+	... 41 more
+Caused by: org.apache.maven.plugin.descriptor.InvalidPluginDescriptorException: No mojo definitions were found for plugin: org.keycloak:keycloak-distribution-licenses-maven-plugin.
+	at org.apache.maven.tools.plugin.scanner.DefaultMojoScanner.populatePluginDescriptor(DefaultMojoScanner.java:136)
+	at org.apache.maven.plugin.plugin.DescriptorGeneratorMojo.generate(DescriptorGeneratorMojo.java:355)
+	... 44 more
+
+
+
+
+diff --git a/distribution/maven-plugins/pom.xml b/distribution/maven-plugins/pom.xml
+index fe9b7db2e3..f73c9f468e 100644
+--- a/distribution/maven-plugins/pom.xml
++++ b/distribution/maven-plugins/pom.xml
+@@ -83,6 +83,9 @@
+                 <plugin>
+                     <groupId>org.apache.maven.plugins</groupId>
+                     <artifactId>maven-plugin-plugin</artifactId>
++                    <configuration>
++                        <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
++                    </configuration>
+                     <executions>
+                         <execution>
+                             <id>generate-descriptor</id>
+
+
+
+
+
+
+
+
+
+
+diff --git a/js/apps/account-ui/pom.xml b/js/apps/account-ui/pom.xml
+index fe932ccc64..57aeea5536 100644
+--- a/js/apps/account-ui/pom.xml
++++ b/js/apps/account-ui/pom.xml
+@@ -71,6 +71,7 @@
+                 <artifactId>frontend-maven-plugin</artifactId>
+                 <executions>
+                     <execution>
++                        <?m2e ignore?>
+                         <id>lib-build</id>
+                         <goals>
+                             <goal>pnpm</goal>
+@@ -83,6 +84,7 @@
+                         </configuration>
+                     </execution>
+                     <execution>
++                        <?m2e ignore?>
+                         <id>pack</id>
+                         <phase>package</phase>
+                         <goals>
+@@ -99,6 +101,7 @@
+                 <artifactId>maven-replacer-plugin</artifactId>
+                 <executions>
+                     <execution>
++                        <?m2e ignore?>
+                         <phase>process-resources</phase>
+                         <goals>
+                             <goal>replace</goal>
+@@ -198,4 +201,4 @@
+             </plugin>
+         </plugins>
+     </build>
+-</project>
+\ No newline at end of file
++</project>
+diff --git a/js/apps/admin-ui/pom.xml b/js/apps/admin-ui/pom.xml
+index 2ea545c7a6..442a318b7a 100644
+--- a/js/apps/admin-ui/pom.xml
++++ b/js/apps/admin-ui/pom.xml
+@@ -75,6 +75,7 @@
+                 <artifactId>maven-replacer-plugin</artifactId>
+                 <executions>
+                     <execution>
++                        <?m2e ignore?>
+                         <phase>process-resources</phase>
+                         <goals>
+                             <goal>replace</goal>
+
+
+
+
 

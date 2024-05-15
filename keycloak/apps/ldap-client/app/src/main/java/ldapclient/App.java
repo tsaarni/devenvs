@@ -1,36 +1,36 @@
 package ldapclient;
 
-import java.util.Hashtable;
-
-import javax.naming.Context;
-import javax.naming.NamingEnumeration;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 public class App {
+
     public static void main(String[] args) throws Exception {
+
+        // Parse subcommand arguments
+        if (args.length < 1) {
+            System.out.println("Usage: ldap-client <subcommand> [args]");
+            System.exit(1);
+        }
 
         System.out.println("Java version: " + System.getProperty("java.version") + "\n");
 
-        Hashtable<String, String> env = new Hashtable<>();
+        String[] subargs = java.util.Arrays.copyOfRange(args, 1, args.length);
 
-        env.put(Context.SECURITY_AUTHENTICATION, "simple");
-        env.put(Context.SECURITY_PRINCIPAL,"cn=ldap-admin,ou=users,o=example");
-        env.put(Context.SECURITY_CREDENTIALS, "ldap-admin");
-        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        env.put(Context.PROVIDER_URL, "ldap://localhost/ou=users,ou=nonexisting,o=example");
+        switch (args[0]) {
+            case "referral":
+                Referral.main(subargs);
+                break;
 
-        // Enable referral following on application level
-        //env.put(Context.REFERRAL, "follow");
+            case "starttls":
+                StartTLS.main(subargs);
+                break;
 
-        DirContext ctx = new InitialDirContext(env);
-        NamingEnumeration enm = ctx.list("");
+            case "reconnect":
+                Reconnect.main(subargs);
+                break;
 
-        while (enm.hasMore()) {
-            System.out.println(enm.next());
+            default:
+                System.out.println("Unknown subcommand: " + args[0]);
+                System.exit(1);
         }
 
-        enm.close();
-        ctx.close();
     }
 }

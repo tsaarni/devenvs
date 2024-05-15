@@ -18,6 +18,9 @@ java {
 
         // Try setting system property on command line (note: this has no effect)
         //applicationDefaultJvmArgs = ["-Djava.naming.referral=follow"]
+
+        // Set truststore and password
+        applicationDefaultJvmArgs = ["-Djavax.net.ssl.trustStore=/home/tsaarni/work/devenvs/keycloak/certs/truststore.p12", "-Djavax.net.ssl.trustStorePassword=secret"]
     }
 }
 

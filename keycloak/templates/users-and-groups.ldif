@@ -80,6 +80,21 @@ givenName: usergivenname
 pwdReset: TRUE
 pwdAttribute: userPassword
 
+dn: cn=expired,ou=users,o=example
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: expired
+cn: expired
+uidNumber: 1005
+gidNumber: 1001
+userPassword: {CRYPT}$(mkpasswd -m sha-512 expired)
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: usersurename
+givenName: usergivenname
+pwdPolicySubentry: cn=expires-fast,ou=ppolicy,o=example
+pwdChangedTime: 20240510162449Z
 
 #
 # Groups
@@ -98,12 +113,14 @@ member: cn=ldap-admin,ou=users,o=example
 #
 dn: cn=default,ou=ppolicy,o=example
 objectClass: pwdPolicy
+objectClass: pwdPolicyChecker
 objectClass: device
 cn: default
 #pwdMaxAge: 2592000
+#pwdMinAge: 0
 #pwdExpireWarning: 3600
 #pwdInHistory: 0
-#pwdCheckQuality: 0
+pwdCheckQuality: 2
 pwdMaxFailure: 3
 #pwdLockout: TRUE
 #pwdLockoutDuration: 0
@@ -114,7 +131,15 @@ pwdMustChange: TRUE
 #pwdAllowUserChange: TRUE
 #pwdSafeModify: FALSE
 pwdAttribute: userPassword
+pwdCheckModule: check-password.so
 
+dn: cn=expires-fast,ou=ppolicy,o=example
+objectClass: pwdPolicy
+objectClass: pwdPolicyChecker
+objectClass: device
+cn: expires-fast
+pwdMaxAge: 1
+pwdAttribute: userPassword
 
 #
 # Test referral
