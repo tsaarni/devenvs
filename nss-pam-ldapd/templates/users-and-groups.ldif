@@ -70,6 +70,22 @@ shadowLastChange: 1
 shadowMin: 1
 shadowMax: 1
 
+dn: cn=expired,ou=users,o=example
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: expired
+cn: expired
+uidNumber: 1005
+gidNumber: 1001
+userPassword: {CRYPT}$(mkpasswd -m sha-512 expired)
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: usersurename
+givenName: usergivenname
+pwdPolicySubentry: cn=expires-fast,ou=ppolicy,o=example
+pwdChangedTime: 20240510162449Z
+
 #
 # Groups
 #
@@ -110,3 +126,12 @@ pwdMustChange: TRUE
 #pwdAllowUserChange: TRUE
 #pwdSafeModify: FALSE
 pwdAttribute: userPassword
+
+dn: cn=expires-fast,ou=ppolicy,o=example
+objectClass: pwdPolicy
+objectClass: pwdPolicyChecker
+objectClass: device
+cn: expires-fast
+pwdMaxAge: 1
+pwdAttribute: userPassword
+pwdGraceAuthNLimit: 5

@@ -27,7 +27,7 @@ dn: cn=module,cn=config
 objectClass: olcModuleList
 cn: module
 olcModulePath: /usr/lib/ldap
-olcModuleLoad: back_hdb
+olcModuleLoad: back_mdb
 olcModuleLoad: ppolicy
 
 
@@ -71,10 +71,10 @@ olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
 # Backend database
 #
 
-dn: olcDatabase=hdb,cn=config
+dn: olcDatabase=mdb,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olcHdbConfig
-olcDatabase: hdb
+objectClass: olcMdbConfig
+olcDatabase: mdb
 olcSuffix: o=example
 olcDbDirectory: /data/db/
 olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
@@ -88,3 +88,9 @@ olcAccess: to *
   by dn="cn=ldap-client,ou=users,o=example" read
   by * none
 olcAccess: to * by * none
+
+dn: olcOverlay=ppolicy,olcDatabase={1}mdb,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcPPolicyConfig
+olcOverlay: ppolicy
+olcPPolicyDefault: cn=default,ou=ppolicy,o=example

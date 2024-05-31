@@ -210,7 +210,6 @@ RUN mkdir -p /source/sssd && \
         --enable-nsslibdir=/usr/lib/x86_64-linux-gnu/ \
         --with-systemdunitdir=/lib/systemd/system \
         --without-python2-bindings \
-        --with-smb-idmap-interface-version=6 \
     && \
     make install && \
     rm /usr/lib/x86_64-linux-gnu/ldb/modules/ldb/memberof.la

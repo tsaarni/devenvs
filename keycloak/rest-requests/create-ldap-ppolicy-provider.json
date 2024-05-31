@@ -58,7 +58,7 @@
             ""
         ],
         "startTls": [
-            "false"
+            "true"
         ],
         "syncRegistrations": [
             "true"

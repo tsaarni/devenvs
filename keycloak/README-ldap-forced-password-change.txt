@@ -61,6 +61,7 @@ mvn -f testsuite/utils/pom.xml exec:java -Pkeycloak-server -Djavax.net.ssl.trust
 # create ldap simple auth provider
 apps/create-components.py rest-requests/create-ldap-simple-auth-provider.json
 apps/create-components.py --server=https://keycloak.127-0-0-121.nip.io/ rest-requests/create-ldap-simple-auth-provider.json
+apps/create-components.py --server=https://keycloak.127-0-0-121.nip.io:8080/ rest-requests/create-ldap-simple-auth-provider.json
 
 
 
@@ -102,6 +103,8 @@ mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloa
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPProvidersIntegrationTest -Dkeycloak.logging.level=debug
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest -Dkeycloak.logging.level=debug
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationNoneEncryptionStartTLS -Dkeycloak.logging.level=debug
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPPasswordPolicyTest#testForcedPasswordChangeAfterReset -Dkeycloak.logging.level=debug
+
 
 # capture the traffic towards embedded-ldap during test case
 patch -p1 < ~/work/devenvs/keycloak/testsuite-tls-secrets-for-wireshark.patch
@@ -133,3 +136,11 @@ check how MSAD avoid "recursing" when adding required action i.e. writing it bac
 
 ###
 apps/create-components.py rest-requests/create-ldap-simple-auth-provider.json
+
+
+
+
+
+
+
+

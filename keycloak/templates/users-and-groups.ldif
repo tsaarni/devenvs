@@ -124,7 +124,7 @@ pwdCheckQuality: 2
 pwdMaxFailure: 3
 #pwdLockout: TRUE
 #pwdLockoutDuration: 0
-#pwdGraceAuthNLimit: 0
+#pwdGraceAuthNLimit: 5
 #pwdFailureCountInterval: 0
 pwdMustChange: TRUE
 #pwdMinLength: 6
@@ -140,6 +140,7 @@ objectClass: device
 cn: expires-fast
 pwdMaxAge: 1
 pwdAttribute: userPassword
+pwdGraceAuthNLimit: 5
 
 #
 # Test referral

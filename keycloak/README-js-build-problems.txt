@@ -490,3 +490,34 @@ index 2ea545c7a6..442a318b7a 100644
 
 
 
+
+
+
+
+
+
+diff --git a/distribution/licenses-common/pom.xml b/distribution/licenses-common/pom.xml
+index bf615a63ee..a395a39146 100644
+--- a/distribution/licenses-common/pom.xml
++++ b/distribution/licenses-common/pom.xml
+@@ -27,20 +27,5 @@
+     <packaging>jar</packaging>
+     <name>Keycloak Distribution Licenses Common</name>
+
+-    <build>
+-        <resources>
+-            <resource>
+-                <targetPath>keycloak-licenses-common</targetPath>
+-                <directory>../../</directory>
+-                <includes>
+-                    <include>LICENSE.txt</include>
+-                </includes>
+-            </resource>
+-            <resource>
+-                <targetPath>keycloak-licenses-common</targetPath>
+-                <directory>src/main/resources</directory>
+-            </resource>
+-        </resources>
+-    </build>
+
+ </project>

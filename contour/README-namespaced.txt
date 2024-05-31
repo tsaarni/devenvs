@@ -45,7 +45,7 @@ docker tag ghcr.io/projectcontour/contour:$(git rev-parse --short HEAD) localhos
 kind load docker-image localhost/contour:latest --name contour
 
 kubectl -n projectcontour scale deployment --replicas=0 contour  # NOTE:  WAIT FOR CONTOUR PODS TO TERMINATE
-kubectl -n projectcontour scale deployment --replicas=1 contour
+kubectl -n projectcontour scale deployment --replicas=2 contour
 
 
 kubectl -n projectcontour get pod
@@ -97,6 +97,10 @@ KUBECONFIG=contour.kubeconfig kubectl -n kube-system get secret     # fails
 #    --kubeconfig=contour.kubeconfig
 #
 
+kubectl create namespace empty
+
+go run github.com/projectcontour/contour/cmd/contour serve --xds-address=0.0.0.0 --xds-port=8001 --envoy-service-http-port=8080 --envoy-service-https-port=8443 --contour-cafile=ca.crt --contour-cert-file=tls.crt --contour-key-file=tls.key --watch-namespaces=empty
+
 
 
 #### Test with workload
@@ -115,3 +119,11 @@ kubectl -n projectcontour apply -f manifests/echoserver-tls.yaml
 kubectl -n projectcontour get httpproxy
 
 http --verify=certs/external-root-ca.pem https://protected.127-0-0-101.nip.io
+
+
+
+
+
+
+
+

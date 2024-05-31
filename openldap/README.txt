@@ -1,13 +1,51 @@
 
-
-go get -u github.com/tsaarni/certyaml             # install certyaml tool
 mkdir -p certs
 certyaml --destination certs configs/certs.yaml   # generate certificates and keys
 
 
 
+# 1. configure devcontainer
+cd ~/work/openldap
+mkdir -p .devcontainer
+cp ~/work/devenvs/openldap/configs/devcontainer.json .devcontainer/devcontainer.json
+
+
+# 2. launch vscode. It will automatically build and launch services from docker-compose.yml
+code ~/work/openldap
+
+
+# 3. inside devcontainer, build openldap
+cd /workspace
+autoreconf
+./configure CFLAGS='-g -O0' CXXFLAGS='-g -O0' --with-argon2 --enable-backends=mod --enable-overlays=mod --enable-modules --enable-dynamic --enable-balancer=mod --enable-crypt --enable-argon2 --disable-sql --disable-wt --disable-perl --prefix=/usr --libexec=/usr/lib/ --with-subdir=ldap --sysconfdir=/etc
+make depend -j
+make -j
+
+sudo make install
+
+sudo ldconfig       # make sure installed .so's can be loaded
+
+# 4. Run openldap
+
+sudo ~/work/devenvs/openldap/apps/run-slapd.sh
+
+
+
+sudo nsenter -n -t $(pidof slapd) wireshark -i any -f "port 389 or port 636" -Y ldap -k
+
+
+
+
+
+
+go get -u github.com/tsaarni/certyaml             # install certyaml tool
+mkdir -p certs
+certyaml --destination certs configs/certs.yaml   # generate certificates and keys
+
 docker-compose up
 docker-compose rm -f  # clean previous containers
+
+
 
 
 git clone git@github.com:tsaarni/ldap-test-server-notice-of-disconnect.git
@@ -21,7 +59,7 @@ sudo apt install python3-ldap3
 
 ipython3
 
-from ldap3 import Server, Connection, ALL                                                                                                               
+from ldap3 import Server, Connection, ALL
 s = Server('localhost', port=9012)
 
 
@@ -33,7 +71,7 @@ admin.search('ou=People,dc=example,dc=com','(objectclass=*)')
 
 
 
-# user 
+# user
 bjensen = Connection(s, user='cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com', password='bjensen')
 bjensen.bind()
 bjensen.search('ou=People,dc=example,dc=com','(objectclass=*)')
@@ -61,7 +99,7 @@ c.unbind()
 
 
 import ldap3
-from ldap3.operation.search import search_operation                                                                                                    
+from ldap3.operation.search import search_operation
 req = search_operation('ou=People,dc=example,dc=com','(objectclass=*)', ldap3.SUBTREE, ldap3.DEREF_ALWAYS, None, 0, 0, False, None, None)
 bjensen.send("searchRequest", req)
 

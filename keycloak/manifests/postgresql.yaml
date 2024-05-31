@@ -74,10 +74,27 @@ spec:
       labels:
         app: pgadmin
     spec:
+      # Since pgadmin accepts password file only if it is readable by the user that pgadmin
+      # runs as, we need to make a copy of the password file and change the ownership and permissions.
+      initContainers:
+      - name: copy-pgpassfile
+        image: alpine:3.20
+        command:
+        - sh
+        - -c
+        - |
+          cp /config/pgpassfile /var/lib/pgadmin/pgpassfile
+          chown 5050:5050 /var/lib/pgadmin/pgpassfile
+          chmod 0400 /var/lib/pgadmin/pgpassfile
+        volumeMounts:
+        - name: pgadmin-config
+          mountPath: /config
+        - name: pgadmin-data
+          mountPath: /var/lib/pgadmin
       containers:
       - name: myapp
         # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
-        image: dpage/pgadmin4:8.1
+        image: dpage/pgadmin4:8
         ports:
         - containerPort: 80
         env:
@@ -100,10 +117,14 @@ spec:
         volumeMounts:
         - name: pgadmin-config
           mountPath: /config
+        - name: pgadmin-data
+          mountPath: /var/lib/pgadmin
       volumes:
       - name: pgadmin-config
         configMap:
           name: pgadmin-config
+      - name: pgadmin-data
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -144,10 +165,10 @@ data:
           "Port": 5432,
           "MaintenanceDB": "postgres",
           "ConnectionParameters": {
-            "passfile": "/config/pgpassfile"
+            "passfile": "/var/lib/pgadmin/pgpassfile"
           }
         }
       }
     }
   pgpassfile: |
-    postgres:*:*:keycloak:keycloak
+    postgres:5432:*:keycloak:keycloak

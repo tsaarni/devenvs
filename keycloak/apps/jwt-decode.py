@@ -8,7 +8,7 @@
 # or with virtual env
 #   python3 -m venv venv
 #   . venv/bin/activate
-#   pip install jwt￼
+#   pip3 install PyJWT
 #
 import jwt
 import time

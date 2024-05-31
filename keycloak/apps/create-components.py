@@ -74,13 +74,12 @@ for f in request_files:
             f"{server}/admin/realms/master/components",
             headers={
                 "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
             },
-            data=data,
+            json=data,
             verify=False,
         )
         res.raise_for_status()
-        if res.status_code == 201:
+        if res.ok:
             res = requests.get(
                 f"{res.headers['Location']}",
                 headers={"Authorization": f"Bearer {token}"},

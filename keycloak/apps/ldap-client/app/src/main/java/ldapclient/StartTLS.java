@@ -21,16 +21,18 @@ public class StartTLS {
         env.put(Context.PROVIDER_URL, "ldap://ldap.127-0-0-1.nip.io");
 
         LdapContext ldapContext = new InitialLdapContext(env, null);
+
+
         StartTlsResponse tls = (StartTlsResponse) ldapContext.extendedOperation(new StartTlsRequest());
         SSLSession session = tls.negotiate();
-
         // Simple bind
         ldapContext.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
         ldapContext.addToEnvironment(Context.SECURITY_PRINCIPAL, "cn=ldap-admin,ou=users,o=example");
         ldapContext.addToEnvironment(Context.SECURITY_CREDENTIALS, "ldap-admin");
 
-        ldapContext.lookup("");
 
-        ldapContext.reconnect(null);
+       // ldapContext.lookup("");
+
+       // ldapContext.reconnect(null);
     }
 }
