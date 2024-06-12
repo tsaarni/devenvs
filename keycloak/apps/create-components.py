@@ -14,6 +14,7 @@ import os
 import sys
 
 import requests
+import json
 
 # Default values
 user = "admin"
@@ -69,13 +70,12 @@ token = res.json()["access_token"]
 for f in request_files:
     logging.info(f"Creating component from {f}")
     with open(f, "r") as fd:
-        data = fd.read()
         res = requests.post(
             f"{server}/admin/realms/master/components",
             headers={
                 "Authorization": f"Bearer {token}",
             },
-            json=data,
+            json=json.load(fd),
             verify=False,
         )
         res.raise_for_status()

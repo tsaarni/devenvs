@@ -140,7 +140,7 @@ objectClass: device
 cn: expires-fast
 pwdMaxAge: 1
 pwdAttribute: userPassword
-pwdGraceAuthNLimit: 5
+pwdGraceAuthNLimit: 1
 
 #
 # Test referral

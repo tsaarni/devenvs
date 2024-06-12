@@ -27,6 +27,10 @@ public class App {
                 Reconnect.main(subargs);
                 break;
 
+            case "anonymous":
+                Anonymous.main(subargs);
+                break;
+
             default:
                 System.out.println("Unknown subcommand: " + args[0]);
                 System.exit(1);

@@ -60,15 +60,12 @@ mvn -f testsuite/utils/pom.xml exec:java -Pkeycloak-server -Djavax.net.ssl.trust
 
 # create ldap simple auth provider
 apps/create-components.py rest-requests/create-ldap-simple-auth-provider.json
-apps/create-components.py --server=https://keycloak.127-0-0-121.nip.io/ rest-requests/create-ldap-simple-auth-provider.json
-apps/create-components.py --server=https://keycloak.127-0-0-121.nip.io:8080/ rest-requests/create-ldap-simple-auth-provider.json
-
 
 
 # l: mustchange  p: mustchange
 
-http://localhost:8080/
-http://localhost:8080/realms/master/account/
+http://keycloak.127.0.0.1.nip.io:8080/
+http://keycloak.127.0.0.1.nip.io:8080/realms/master/account/
 
 http://localhost:8081/auth
 http://localhost:8081/auth/realms/master/account/#/
@@ -104,6 +101,13 @@ mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloa
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest -Dkeycloak.logging.level=debug
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPUserLoginTest#loginLDAPUserAuthenticationNoneEncryptionStartTLS -Dkeycloak.logging.level=debug
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPPasswordPolicyTest#testForcedPasswordChangeAfterReset -Dkeycloak.logging.level=debug
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.** -Dkeycloak.logging.level=debug
+
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Pauth-server-quarkus -Dtest=org.keycloak.testsuite.federation.ldap.** -Dkeycloak.logging.level=debug
+
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Pauth-server-quarkus -Dtest=org.keycloak.testsuite.federation.ldap.LDAPProvidersIntegrationTest#testSyncRegistrationEmailRDNNoDefault -Dkeycloak.logging.level=debug
+
+mvn clean install -f testsuite/integration-arquillian/pom.xml -Pauth-server-quarkus -Dtest=org.keycloak.testsuite.admin.UserFederationLdapConnectionTest -Dkeycloak.logging.level=debug
 
 
 # capture the traffic towards embedded-ldap during test case
@@ -135,12 +139,7 @@ check how MSAD avoid "recursing" when adding required action i.e. writing it bac
 
 
 ###
-apps/create-components.py rest-requests/create-ldap-simple-auth-provider.json
 
 
-
-
-
-
-
-
+apps/create-components.py --server=https://keycloak.127-0-0-121.nip.io/ rest-requests/create-ldap-simple-auth-provider.json
+apps/create-components.py --server=https://keycloak.127-0-0-121.nip.io:8080/ rest-requests/create-ldap-simple-auth-provider.json
