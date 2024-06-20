@@ -1,3 +1,6 @@
+This is copy of https://github.com/neykov/extract-tls-secrets
+
+
 # extract-tls-secrets
 
 Decrypt HTTPS/TLS connections on-the-fly. Extract the shared secrets from 
