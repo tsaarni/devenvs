@@ -12,6 +12,11 @@ kind create cluster --config configs/kind-cluster-config.yaml --name contour
 kubectl kustomize examples/namespaced/ | kubectl apply -f -
 
 
+or
+
+kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/v1.29.0/examples/render/contour.yaml
+
+
 
 #### Run locally built container
 
@@ -119,11 +124,3 @@ kubectl -n projectcontour apply -f manifests/echoserver-tls.yaml
 kubectl -n projectcontour get httpproxy
 
 http --verify=certs/external-root-ca.pem https://protected.127-0-0-101.nip.io
-
-
-
-
-
-
-
-

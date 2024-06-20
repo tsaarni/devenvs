@@ -103,18 +103,21 @@ mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloa
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.LDAPPasswordPolicyTest#testForcedPasswordChangeAfterReset -Dkeycloak.logging.level=debug
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Dtest=org.keycloak.testsuite.federation.ldap.** -Dkeycloak.logging.level=debug
 
+
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Pauth-server-quarkus -Dtest=org.keycloak.testsuite.federation.ldap.** -Dkeycloak.logging.level=debug
 
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Pauth-server-quarkus -Dtest=org.keycloak.testsuite.federation.ldap.LDAPProvidersIntegrationTest#testSyncRegistrationEmailRDNNoDefault -Dkeycloak.logging.level=debug
 
 mvn clean install -f testsuite/integration-arquillian/pom.xml -Pauth-server-quarkus -Dtest=org.keycloak.testsuite.admin.UserFederationLdapConnectionTest -Dkeycloak.logging.level=debug
 
+mvn clean install -f testsuite/integration-arquillian/pom.xml  -Dtest=org.keycloak.testsuite.admin.UserFederationLdapConnectionTest#testLdapConnectionMoreServers -Dkeycloak.logging.level=debug
+
 
 # capture the traffic towards embedded-ldap during test case
 patch -p1 < ~/work/devenvs/keycloak/testsuite-tls-secrets-for-wireshark.patch
-wireshark -i lo -d tcp.port==10389,ldap -f "port 10389" -Y ldap -k -o tls.keylog_file:/tmp/wireshark-keys.log
+wireshark -i lo -d tcp.port==10389,ldap -d tcp.port==10636,ldap -f "port 10389 or port 10636" -Y ldap -k -o tls.keylog_file:/tmp/wireshark-keys.log
 
-wireshark -i lo -d tcp.port==10389,ldap -f "port 10389" -Y ldap.bindResponse_element or ldap.bindRequest_element -k -o tls.keylog_file:/tmp/wireshark-keys.log
+wireshark -i lo -d tcp.port==10389,ldap -d tcp.port==10636,ldap -f "port 10389 or port 10636" -Y ldap.bindResponse_element or ldap.bindRequest_element -k -o tls.keylog_file:/tmp/wireshark-keys.log
 
 # and add new column with field
 #   tls.record.version

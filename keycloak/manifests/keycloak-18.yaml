@@ -105,8 +105,8 @@ spec:
             ## hostname-strict-https is "hidden" config option
             ##  - true by default for production mode
             ##  - false by default for dev mode
-            #- name: KC_HOSTNAME_STRICT_HTTPS
-            #  value: "false"
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "false"
             - name: KC_PROXY
               value: edge
               #value: reencrypt

@@ -96,16 +96,45 @@ givenName: usergivenname
 pwdPolicySubentry: cn=expires-fast,ou=ppolicy,o=example
 pwdChangedTime: 20240510162449Z
 
+dn: cn=user1,ou=users,o=example
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: user1
+cn: user1
+uidNumber: 1006
+gidNumber: 1000
+userPassword: {CRYPT}$(mkpasswd -m sha-512 user1)
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: user1
+givenName: user1
+
+dn: cn=user2,ou=users,o=example
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: user2
+cn: user2
+uidNumber: 1007
+gidNumber: 1000
+userPassword: {CRYPT}$(mkpasswd -m sha-512 user2)
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: user2
+givenName: user2
+
 #
 # Groups
 #
 
 dn: cn=admins,ou=groups,o=example
 objectClass: posixGroup
-objectclass: groupofNames
+objectclass: groupOfNames
 cn: admins
 gidNumber: 1001
 member: cn=ldap-admin,ou=users,o=example
+member: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
 
 
 #
@@ -140,7 +169,7 @@ objectClass: device
 cn: expires-fast
 pwdMaxAge: 1
 pwdAttribute: userPassword
-pwdGraceAuthNLimit: 1
+pwdGraceAuthNLimit: 3
 
 #
 # Test referral

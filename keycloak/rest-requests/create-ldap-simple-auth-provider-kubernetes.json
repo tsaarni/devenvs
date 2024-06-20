@@ -1,0 +1,100 @@
+{
+    "config": {
+        "allowKerberosAuthentication": [
+            "false"
+        ],
+        "authType": [
+            "simple"
+        ],
+        "batchSizeForSync": [
+            ""
+        ],
+        "bindCredential": [
+            "ldap-admin"
+        ],
+        "bindDn": [
+            "cn=ldap-admin,ou=users,o=example"
+        ],
+        "cachePolicy": [
+            "DEFAULT"
+        ],
+        "changedSyncPeriod": [
+            "-1"
+        ],
+        "connectionPooling": [
+            "false"
+        ],
+        "connectionTimeout": [
+            ""
+        ],
+        "connectionUrl": [
+            "ldap://openldap"
+        ],
+        "customUserSearchFilter": [
+            ""
+        ],
+        "editMode": [
+            "READ_ONLY"
+        ],
+        "enabled": [
+            "true"
+        ],
+        "fullSyncPeriod": [
+            "-1"
+        ],
+        "importEnabled": [
+            "true"
+        ],
+        "pagination": [
+            "false"
+        ],
+        "rdnLDAPAttribute": [
+            "uid"
+        ],
+        "readTimeout": [
+            ""
+        ],
+        "searchScope": [
+            ""
+        ],
+        "startTls": [
+            "false"
+        ],
+        "syncRegistrations": [
+            "true"
+        ],
+        "trustEmail": [
+            "false"
+        ],
+        "useKerberosForPasswordAuthentication": [
+            "false"
+        ],
+        "usePasswordModifyExtendedOp": [
+            "true"
+        ],
+        "usernameLDAPAttribute": [
+            "uid"
+        ],
+        "userObjectClasses": [
+            "inetOrgPerson, organizationalPerson"
+        ],
+        "usersDn": [
+            "ou=users,o=example"
+        ],
+        "useTruststoreSpi": [
+            "ldapsOnly"
+        ],
+        "uuidLDAPAttribute": [
+            "entryUUID"
+        ],
+        "validatePasswordPolicy": [
+            "false"
+        ],
+        "vendor": [
+            "other"
+        ]
+    },
+    "name": "ldap",
+    "providerId": "ldap",
+    "providerType": "org.keycloak.storage.UserStorageProvider"
+}

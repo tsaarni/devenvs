@@ -28,6 +28,8 @@ cn: module
 olcModulePath: /usr/lib/ldap
 olcModuleLoad: back_mdb
 olcModuleLoad: ppolicy
+olcModuleLoad: memberof
+olcModuleLoad: refint
 
 
 #
@@ -74,6 +76,7 @@ dn: olcDatabase={1}mdb,cn=config
 objectClass: olcDatabaseConfig
 objectClass: olcMdbConfig
 olcDatabase: mdb
+olcRootDN: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
 olcSuffix: o=example
 olcDbDirectory: /data/db/
 olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
@@ -94,3 +97,16 @@ objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
 olcOverlay: ppolicy
 olcPPolicyDefault: cn=default,ou=ppolicy,o=example
+
+# NOTE:
+# The groups loaded with slapadd will not show up since memberof overlay is not active at that time.
+# To work around this limitation, add groupOfNames objects only after server is running.
+dn: olcOverlay=memberof,olcDatabase={1}mdb,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcMemberOf
+olcOverlay: memberof
+
+dn: olcOverlay=refint,olcDatabase={1}mdb,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcRefintConfig
+olcOverlay: refint
