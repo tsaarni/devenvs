@@ -2,7 +2,7 @@
 # Setup logstash environment, generic to all plugin development
 
 cd ~/work/logstash
-rbenv install  # installs version defined in logstash/.ruby-version
+rbenv install  # installs version defined in .ruby-version
 
 # activate ruby version
 rbenv global jruby-9.3.4.0
@@ -10,7 +10,7 @@ ruby --version
 
 
 
-
+# install some dependencies for jruby
 gem install rake
 gem install bundler
 
