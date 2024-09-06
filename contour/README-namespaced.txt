@@ -107,6 +107,19 @@ kubectl create namespace empty
 go run github.com/projectcontour/contour/cmd/contour serve --xds-address=0.0.0.0 --xds-port=8001 --envoy-service-http-port=8080 --envoy-service-https-port=8443 --contour-cafile=ca.crt --contour-cert-file=tls.crt --contour-key-file=tls.key --watch-namespaces=empty
 
 
+# create unrelated secrets
+kubectl create secret generic secret1 -n empty --from-literal=key1=value1
+kubectl create secret generic secret2 -n empty --from-literal=key2=value2
+kubectl create secret generic secret3 -n empty --from-literal=key3=value3
+kubectl create secret generic secret4 -n empty --from-literal=key4=value4
+
+# create & modify secret in the watched namespace
+kubectl create secret generic secret5 -n empty --from-literal=key5=value5
+while true; do kubectl patch secret secret5 -n empty --type='json' -p='[{"op": "replace", "path": "/data/key5", "value": "value5"}]'; sleep 1; done
+
+
+
+
 
 #### Test with workload
 

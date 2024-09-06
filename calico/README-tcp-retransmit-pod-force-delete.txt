@@ -14,6 +14,10 @@ kind delete cluster --name echo
 kind create cluster --config configs/kind-cluster-config-for-calico.yaml --name echo
 
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.4/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/calico.yaml
 
 
 # install/delete echo client/server test app
@@ -101,6 +105,9 @@ docker exec echo-worker2 sh -xc "date; ip addr; ip route"
 docker exec echo-worker conntrack -L
 docker exec echo-worker2 conntrack -L
 
+docker exec echo-worker  iptables -L -v -n
+docker exec echo-worker2 iptables -L -v -n
+
 docker exec echo-worker2 sh -c "sysctl -a | grep \\.rp_filter"
 
 
@@ -111,6 +118,10 @@ for iface in /proc/sys/net/ipv4/conf/*; do echo 1 > $iface/log_martians; done
 
 
 *** Python client
+
+# TODO: consider also using scapy 
+#  see example in https://github.com/projectcalico/calico/issues/8882
+
 
 import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -123,3 +134,18 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(("server", 8000))    # s.connect(("[server IP address]", 8000))
 s.sendall(b"Hello, world")
 s.recv(1024)
+
+
+
+*** BPF mode
+
+# enable BPF mode
+kubectl get felixconfigurations default -o yaml
+kubectl patch felixconfigurations default --type='json' -p='[{"op": "add", "path": "/spec/bpfEnabled", "value": true}]'
+
+# then restart client and server
+
+kubectl delete pod -l app=client --force
+kubectl delete pod -l app=server --force
+
+

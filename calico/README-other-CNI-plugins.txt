@@ -78,6 +78,14 @@ kubectl logs -l app=client -f
 
 
 
+### antrea
+
+# https://antrea.io/
+# https://github.com/antrea-io/antrea
+# TODO (already tested by L. that it also works expectedly
+
+
+
 
 
 #######

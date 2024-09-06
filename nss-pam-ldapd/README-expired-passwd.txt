@@ -66,7 +66,7 @@ sudo make install
 
 
 # run nslcd in foreground
-sudo /usr/sbin/nslcd -d
+LC_ALL=fi_FI.UTF-8 sudo /usr/sbin/nslcd -d
 
 
 # start another terminal and run sshd in foreground
@@ -76,6 +76,7 @@ sudo mkdir -p /run/sshd
 while true; do sudo /usr/sbin/sshd -D -d -f /etc/ssh/sshd_config_kdb_interactive_no; done
 
 # kbd interactive: yes
+#   Note: translations come from passwd command, not from nss-pam-ldapd
 while true; do sudo /usr/sbin/sshd -D -d -f /etc/ssh/sshd_config_kdb_interactive_yes; done
 
 
@@ -84,6 +85,9 @@ sshpass -p joe ssh joe@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o Stri
 
 # test password change
 ssh mustchange@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+
+# test expired password
+ssh expired@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 
 
 
@@ -200,3 +204,57 @@ https://www.gnu.org/software/gettext/FAQ.html
 
 # reference wrapper
 /usr/share/gettext/gettext.h
+
+
+
+
+
+### Getting no translations
+
+"My program compiles and links fine, but doesn't output translated strings."
+https://www.gnu.org/software/gettext/FAQ.html
+
+sudo -i
+apt install ltrace strace
+
+
+ltrace /usr/sbin/nslcd -d 2>&1 | grep -E "(bindtextdomain|gettext|open\()"
+
+strace -f /usr/sbin/nslcd -d 2>&1 | grep openat
+
+
+export DEBUGINFOD_URLS="https://debuginfod.ubuntu.com"
+gdb --args /usr/sbin/nslcd -d
+set debuginfod enabled on
+b bindtextdomain
+b dcgettext
+b open
+
+msgunfmt /usr/share/locale/fi/LC_MESSAGES/nss-pam-ldapd.mo
+
+
+
+
+
+gcc -o test test.c && LANG=fi_FI.UTF-8 ./test
+gcc -o test test.c && LANG=fi_FI.UTF-8 strace ./test 2&1 |grep open
+
+
+#include <libintl.h>
+#include <locale.h>
+#include <stdio.h>
+
+int main() {
+
+  setlocale(LC_ALL, "");
+  bindtextdomain("nss-pam-ldapd", "/usr/share/locale");
+  textdomain("nss-pam-ldapd");
+
+  printf(gettext("(current) LDAP Password: "));
+  printf("\n");
+
+  printf(gettext("Password expired, %d grace logins left"), 1);
+  printf("\n");
+
+  return 0;
+}

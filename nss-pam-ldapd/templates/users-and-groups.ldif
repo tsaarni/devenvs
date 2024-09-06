@@ -86,6 +86,22 @@ givenName: usergivenname
 pwdPolicySubentry: cn=expires-fast,ou=ppolicy,o=example
 pwdChangedTime: 20240510162449Z
 
+dn: cn=expires,ou=users,o=example
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: expires
+cn: expires
+uidNumber: 1006
+gidNumber: 1001
+userPassword: {CRYPT}$(mkpasswd -m sha-512 expires)
+loginShell: /bin/bash
+homeDirectory: /home/
+sn: usersurename
+givenName: usergivenname
+pwdPolicySubentry: cn=warns-early,ou=ppolicy,o=example
+pwdChangedTime: 20240510162449Z
+
 #
 # Groups
 #
@@ -133,5 +149,16 @@ objectClass: pwdPolicyChecker
 objectClass: device
 cn: expires-fast
 pwdMaxAge: 1
+#pwdExpireWarning: 3153600000
 pwdAttribute: userPassword
+#pwdGraceAuthNLimit: 5
 pwdGraceAuthNLimit: 5
+
+dn: cn=warns-early,ou=ppolicy,o=example
+objectClass: pwdPolicy
+objectClass: pwdPolicyChecker
+objectClass: device
+cn: warns-early
+pwdExpireWarning: 2147483646
+pwdMaxAge:        2147483647 # max int ~68 years
+pwdAttribute: userPassword
