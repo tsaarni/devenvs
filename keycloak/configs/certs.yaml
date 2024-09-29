@@ -29,6 +29,13 @@ issuer: cn=client-ca
 key_usages:
 key_type: RSA
 ---
+subject: cn=client-sub-ca
+issuer: cn=client-ca
+ca: true
+---
+subject: cn=x509client
+issuer: cn=client-sub-ca
+---
 subject: cn=postgres
 issuer: cn=ca
 sans:

@@ -50,12 +50,23 @@ kubectl get service server
 
 
 # capture traffic from workers
-sudo nsenter -t $(docker inspect --format '{{.State.Pid}}' echo-worker) --net wireshark -i any -k -o gui.window_title:worker -Y "tcp.port==8000"
-sudo nsenter -t $(docker inspect --format '{{.State.Pid}}' echo-worker2) --net wireshark -i any -k -o gui.window_title:worker2 -Y "tcp.port==8000"
+sudo nsenter -t $(docker inspect --format '{{.State.Pid}}' $(kubectl get pod -l app=client -o jsonpath='{.items[0].spec.nodeName}')) --net wireshark -i any -k -o gui.window_title:client-worker -Y "tcp.port==8000"
+sudo nsenter -t $(docker inspect --format '{{.State.Pid}}' $(kubectl get pod -l app=server -o jsonpath='{.items[0].spec.nodeName}')) --net wireshark -i any -k -o gui.window_title:server-worker -Y "tcp.port==8000"
 ￼
+# capture traffic from pods
+sudo nsenter -t $(pgrep -f "/app/echo client") --net wireshark -i any -k -o gui.window_title:client-pod -Y "tcp.port==8000"   # client
+sudo nsenter -t $(pgrep -f "/app/echo --catch-sigterm server") --net wireshark -i any -k -o gui.window_title:server-pod -Y "tcp.port==8000"   # server
+
 
 # or: -f "port 8000" for capture filter
 
+
+# list interfaces on pods
+kubectl exec $(kubectl get pod -l app=client -o jsonpath='{.items[0].metadata.name}') -- ip addr
+
+# list interfaces on workers
+docker exec echo-worker ip addr
+docker exec echo-worker2 ip addr
 
 
 *** Building and troubleshooting Felix
@@ -95,18 +106,30 @@ kubectl logs deployment/client -f
 
 
 
+kubectl describe pod -l app=client
+kubectl describe pod -l app=server
+
+# client
+echo "#### routes on client worker $(date)"
+docker exec $(kubectl get pod -l app=client -o jsonpath='{.items[0].spec.nodeName}') sh -xc "ip addr; ip route"
+echo "#### iptables on client worker $(date)"
+docker exec $(kubectl get pod -l app=client -o jsonpath='{.items[0].spec.nodeName}') iptables -L -v -n
+echo "#### conntrack on client worker $(date)"
+docker exec $(kubectl get pod -l app=client -o jsonpath='{.items[0].spec.nodeName}') conntrack -L
+
+# server
+echo "#### routes on server worker $(date)"
+docker exec $(kubectl get pod -l app=server -o jsonpath='{.items[0].spec.nodeName}') sh -xc "ip addr; ip route"
+echo "#### iptables on server worker $(date)"
+docker exec $(kubectl get pod -l app=server -o jsonpath='{.items[0].spec.nodeName}') iptables -L -v -n
+echo "#### conntrack on server worker $(date)"
+docker exec $(kubectl get pod -l app=server -o jsonpath='{.items[0].spec.nodeName}') conntrack -L
 
 
-#
-docker exec echo-worker sh -xc "date; ip addr; ip route"
-docker exec echo-worker2 sh -xc "date; ip addr; ip route"
+# netstat on server pod
+kubectl exec $(kubectl get pod -l app=server -o jsonpath='{.items[0].metadata.name}') -- netstat -tuln
 
 
-docker exec echo-worker conntrack -L
-docker exec echo-worker2 conntrack -L
-
-docker exec echo-worker  iptables -L -v -n
-docker exec echo-worker2 iptables -L -v -n
 
 docker exec echo-worker2 sh -c "sysctl -a | grep \\.rp_filter"
 
@@ -114,12 +137,13 @@ docker exec echo-worker2 sh -c "sysctl -a | grep \\.rp_filter"
 for iface in /proc/sys/net/ipv4/conf/*; do echo 1 > $iface/log_martians; done
 
 
-
-
+docker exec $(kubectl get pod -l app=server -o jsonpath='{.items[0].spec.nodeName}') iptables -A INPUT -m conntrack --ctstate INVALID -j LOG --log-prefix "Dropped packet: " --log-level 7
+docker exec $(kubectl get pod -l app=server -o jsonpath='{.items[0].spec.nodeName}') iptables -A FORWARD -m conntrack --ctstate INVALID -j LOG --log-prefix "Dropped packet: " --log-level 7
+docker exec $(kubectl get pod -l app=server -o jsonpath='{.items[0].spec.nodeName}') iptables -A OUTPUT -m conntrack --ctstate INVALID -j LOG --log-prefix "Dropped packet: " --log-level 7
 
 *** Python client
 
-# TODO: consider also using scapy 
+# TODO: consider also using scapy
 #  see example in https://github.com/projectcalico/calico/issues/8882
 
 
@@ -141,11 +165,10 @@ s.recv(1024)
 
 # enable BPF mode
 kubectl get felixconfigurations default -o yaml
-kubectl patch felixconfigurations default --type='json' -p='[{"op": "add", "path": "/spec/bpfEnabled", "value": true}]'
+kubectl patch felixconfigurations default --type='json' -p='[{"op": "add", "path": "/spec/bpfEnabled", "value": true}]'    # enable EBFP
+kubectl patch felixconfigurations default --type='json' -p='[{"op": "add", "path": "/spec/bpfEnabled", "value": false}]'   # disable EBFP
 
 # then restart client and server
 
 kubectl delete pod -l app=client --force
 kubectl delete pod -l app=server --force
-
-

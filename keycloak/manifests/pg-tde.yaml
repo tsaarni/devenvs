@@ -1,0 +1,177 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  ports:
+    - name: postgres
+      port: 5432
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  serviceName: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgresql
+          image: perconalab/pg_tde
+          args:
+            - "-c"
+            - "config_file=/etc/postgresql/postgresql.conf"
+            - "-c"
+            - "log_statement=all"
+            - "-c"
+            - "log_destination=stderr"
+          env:
+            - name: POSTGRES_USER
+              value: "keycloak"
+            - name: POSTGRES_PASSWORD
+              value: "keycloak"
+            - name: POSTGRES_DB
+              value: "keycloak"
+
+          ports:
+            - name: postgres
+              containerPort: 5432
+
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "1Gi"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin
+spec:
+  selector:
+    matchLabels:
+      app: pgadmin
+  template:
+    metadata:
+      labels:
+        app: pgadmin
+    spec:
+      # Since pgadmin accepts password file only if it is readable by the user that pgadmin
+      # runs as, we need to make a copy of the password file and change the ownership and permissions.
+      initContainers:
+      - name: copy-pgpassfile
+        image: alpine:3.20
+        command:
+        - sh
+        - -c
+        - |
+          cp /config/pgpassfile /var/lib/pgadmin/pgpassfile
+          chown 5050:5050 /var/lib/pgadmin/pgpassfile
+          chmod 0400 /var/lib/pgadmin/pgpassfile
+        volumeMounts:
+        - name: pgadmin-config
+          mountPath: /config
+        - name: pgadmin-data
+          mountPath: /var/lib/pgadmin
+      containers:
+      - name: myapp
+        # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
+        image: dpage/pgadmin4:8
+        ports:
+        - containerPort: 80
+        env:
+          - name: PGADMIN_DEFAULT_EMAIL
+            value: "admin@localhost.com"
+          - name: PGADMIN_DEFAULT_PASSWORD
+            value: "admin"
+          - name: PGADMIN_SERVER_JSON_FILE
+            value: "/config/servers.json"
+          - name: PGADMIN_CONFIG_SERVER_MODE
+            value: "False"
+          - name: PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED
+            value: "False"
+          - name: PGADMIN_CONFIG_WTF_CSRF_CHECK_DEFAULT
+            value: "False"
+          - name: PGADMIN_CONFIG_WTF_CSRF_ENABLED
+            value: "False"
+          - name: GUNICORN_ACCESS_LOGFILE
+            value: "/dev/null"
+        volumeMounts:
+        - name: pgadmin-config
+          mountPath: /config
+        - name: pgadmin-data
+          mountPath: /var/lib/pgadmin
+      volumes:
+      - name: pgadmin-config
+        configMap:
+          name: pgadmin-config
+      - name: pgadmin-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin
+spec:
+  selector:
+    app: pgadmin
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: pgadmin
+spec:
+  virtualhost:
+    fqdn: pgadmin.127-0-0-121.nip.io
+  routes:
+    - services:
+        - name: pgadmin
+          port: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgadmin-config
+data:
+  servers.json: |
+    {
+      "Servers": {
+        "1": {
+          "Name": "Keycloak",
+          "Group": "Servers",
+          "Username": "keycloak",
+          "Host": "postgres",
+          "Port": 5432,
+          "MaintenanceDB": "postgres",
+          "ConnectionParameters": {
+            "passfile": "/var/lib/pgadmin/pgpassfile"
+          }
+        }
+      }
+    }
+  pgpassfile: |
+    postgres:5432:*:keycloak:keycloak

@@ -33,3 +33,9 @@ envoy-mygateway   LoadBalancer   10.96.135.70   172.20.255.200   80:30093/TCP   
 
 
 
+
+# check the certificates
+kubectl -n projectcontour get secrets contourcert-mygateway -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -text -noout
+kubectl -n projectcontour get secrets contourcert-mygateway -o jsonpath='{.data.ca\.crt}' | base64 -d | openssl x509 -text -noout
+kubectl -n projectcontour get secrets envoycert-mygateway -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -text -noout
+kubectl -n projectcontour get secrets envoycert-mygateway -o jsonpath='{.data.ca\.crt}' | base64 -d | openssl x509 -text -noout

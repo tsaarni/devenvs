@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  vscode:
+    build: docker/vscode
+    environment:
+      - CA_FILENAME=/home/tsaarni/work/devenvs/openldap/certs/ca.pem
+      - KEY_FILENAME=/home/tsaarni/work/devenvs/openldap/certs/server-key.pem
+      - CERT_FILENAME=/home/tsaarni/work/devenvs/openldap/certs/server.pem
+    volumes:
+      - .:/workspace:cached
+      - /home/tsaarni/work/openldap:/workspace:cached
+      - /home/tsaarni/work/devenvs:/home/tsaarni/work/devenvs:cached
+      - shared_volume:/shared
+
+
+#
+# use "shared_volume" if need to share files between containers
+#
+volumes:
+  shared_volume:

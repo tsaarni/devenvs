@@ -1,0 +1,18 @@
+# https://github.com/opensearch-project/security/blob/main/config/opensearch.yml.example
+
+discovery.type: single-node
+plugins.security.disabled: false
+
+# https://opensearch.org/docs/latest/security/configuration/tls/
+plugins.security.ssl.transport.pemcert_filepath: opensearch-server.pem
+plugins.security.ssl.transport.pemkey_filepath: opensearch-server-key.pem
+plugins.security.ssl.transport.pemtrustedcas_filepath: server-ca.pem
+plugins.security.ssl.transport.enforce_hostname_verification: false
+plugins.security.ssl.http.enabled: true
+plugins.security.ssl.http.pemcert_filepath: opensearch-server.pem
+plugins.security.ssl.http.pemkey_filepath: opensearch-server-key.pem
+plugins.security.ssl.http.pemtrustedcas_filepath: client-ca.pem
+plugins.security.audit.type: internal_opensearch
+plugins.security.allow_default_init_securityindex: true
+plugins.security.authcz.admin_dn:
+  - CN=opensearch-admin

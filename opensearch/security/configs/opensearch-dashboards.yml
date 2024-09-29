@@ -1,0 +1,24 @@
+# https://opensearch.org/docs/latest/install-and-configure/install-dashboards/tls/
+# https://github.com/opensearch-project/OpenSearch-Dashboards/blob/main/config/opensearch_dashboards.yml
+
+server.host: "opensearch-dashboards.127-0-0-1.nip.io"
+server.port: 5601
+#server.customResponseHeaders : { "Content-Security-Policy": "script-src 'unsafe-eval' 'self'" }
+#csp_handler.enabled: true
+
+# server certs
+server.ssl.enabled: true
+server.ssl.certificate: "/input/certs/opensearch-dashboards.pem"
+server.ssl.key: "/input/certs/opensearch-dashboards-key.pem"
+
+opensearch_security.auth.type: "openid"
+opensearch_security.openid.connect_url: "http://keycloak.127-0-0-1.nip.io:8080/realms/opensearch/.well-known/openid-configuration"
+opensearch_security.openid.client_id: "opensearch-dashboards"
+opensearch_security.openid.client_secret: "insecure-client-secret"
+
+opensearch.hosts: [ "https://opensearch.127-0-0-1.nip.io:9200" ]
+
+# certificates to use when connecting to opensearch
+opensearch.ssl.certificateAuthorities: [ "/input/certs/server-ca.pem" ]
+opensearch.ssl.certificate: "/input/certs/opensearch-admin.pem"
+opensearch.ssl.key: "/input/certs/opensearch-admin-key.pem"

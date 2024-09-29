@@ -77,10 +77,6 @@ spec:
 EOF
 
 
-kubectl -n projectcontour patch daemonset envoy -f -
-
-
-
 
 # running old versions
 curl https://raw.githubusercontent.com/projectcontour/contour/release-1.0/examples/render/contour.yaml -o contour.yaml
@@ -348,6 +344,21 @@ if CurrentSpecReport().Failed {
    os.Exit(1)
 }
 
+
+############
+#
+# Run individual e2e test locally
+#
+
+make setup-kind-cluster 
+export CONTOUR_E2E_LOCAL_HOST=$(ifconfig | grep inet | grep -v '::' | grep -v 127.0.0.1 | head -n1 | awk '{print $2}')
+
+make install-contour-working
+
+go run github.com/onsi/ginkgo/v2/ginkgo -tags=e2e -mod=readonly -r -v --focus="global external auth can be disabled on a non TLS HTTPProxy" ./test/e2e/httpproxy/
+
+
+make cleanup-kind
 
 
 ##############

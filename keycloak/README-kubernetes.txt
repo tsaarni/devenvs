@@ -12,6 +12,8 @@ kubectl apply -f manifests/keycloak-19.yaml
 kubectl apply -f manifests/keycloak-20.yaml
 kubectl apply -f manifests/keycloak-21.yaml
 kubectl apply -f manifests/keycloak-22.yaml
+kubectl apply -f manifests/keycloak-23.yaml
+kubectl apply -f manifests/keycloak-25.yaml
 
 
 http://keycloak.127-0-0-121.nip.io/
@@ -181,3 +183,63 @@ kubectl scale statefulset postgres --replicas 0
 kubectl delete persistentvolumeclaims data-postgres-0
 kubectl scale statefulset postgres --replicas 1
 kubectl scale statefulset keycloak --replicas 1
+
+
+
+
+
+
+
+
+
+### Operator
+
+# https://www.keycloak.org/operator/installation
+# https://www.keycloak.org/operator/basic-deployment
+
+# create a secret with the database credentials
+kubectl create secret generic keycloak-db-secret --from-literal=username=keycloak --from-literal=password=keycloak
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+spec:
+  instances: 1
+  db:
+    vendor: postgres
+    host: postgres
+    usernameSecret:
+      name: keycloak-db-secret
+      key: username
+    passwordSecret:
+      name: keycloak-db-secret
+      key: password
+  http:
+    httpEnabled: true
+    tlsSecret: keycloak-internal
+  hostname:
+    hostname: keycloak.127-0-0-121.nip.io
+  proxy:
+    headers: xforwarded # double check your reverse proxy sets and overwrites the X-Forwarded-* headers
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: keycloak
+spec:
+  virtualhost:
+    fqdn: keycloak.127-0-0-121.nip.io
+    tls:
+      secretName: keycloak-external
+  routes:
+    - services:
+        - name: keycloak-service
+          port: 8080
+      # Allow also HTTP to make REST API use easier for dev use
+      permitInsecure: true
+EOF

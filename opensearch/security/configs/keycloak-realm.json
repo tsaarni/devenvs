@@ -1,0 +1,69 @@
+{
+  "id": "5b69a19c-bf95-4e0c-9ea1-2efbe3045d44",
+  "realm": "opensearch",
+  "enabled": true,
+  "clients": [
+    {
+      "id": "7ed30a7c-b8f4-43bc-a8eb-034bae2fbde4",
+      "clientId": "opensearch-dashboards",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "insecure-client-secret",
+      "redirectUris": ["https://opensearch-dashboards.127-0-0-1.nip.io:5601/*"],
+      "webOrigins": ["*"],
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "https://opensearch-dashboards.127-0-0-1.nip.io:5601/*"
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "id": "7ed30a7c-b8f4-43bc-a8eb-034bae2fbde4",
+        "name": "demo",
+        "description": "Demo role"
+      },
+      {
+        "id": "9294fea3-702e-4247-b0e5-33bf39c00f14",
+        "name": "admin",
+        "description": "Admin role"
+      }
+    ]
+  },
+  "users": [
+    {
+      "id": "7885e364-8731-4095-b03f-069ca205813a",
+      "username": "admin",
+      "email": "admin@example.com",
+      "firstName": "Admin",
+      "lastName": "User",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "id": "b855ab13-c0c1-4413-a6a9-ec8ca2d499b7",
+      "username": "demo",
+      "email": "demo@example.com",
+      "firstName": "Demo",
+      "lastName": "User",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["demo"]
+    }
+  ]
+}

@@ -44,7 +44,7 @@ apps/create-components.py --server=http://keycloak.127-0-0-121.nip.io/ rest-requ
 
 
 
-Create group mapper
+User Federation / ldap / Mappers / Create group mapper
 
 1. Select type:      group-ldap-mapper
 2. Name:             my-group-mapper
@@ -93,6 +93,31 @@ EOF
 
 
 
+# check user in Keycloak
+get_admin_token() {
+  http --verify certs/ca.pem --form POST https://keycloak.127-0-0-121.nip.io/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token
+}
+
+# list role mappings
+
+## user1
+http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/admin/realms/master/users/$(http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/admin/realms/master/users Authorization:"Bearer $(get_admin_token)" | jq -r '.[] | select(.username == "user1") | .id')/role-mappings/realm Authorization:"Bearer $(get_admin_token)"
+
+
+## user2
+http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/admin/realms/master/users/$(http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/admin/realms/master/users Authorization:"Bearer $(get_admin_token)" | jq -r '.[] | select(.username == "user2") | .id')/role-mappings/realm Authorization:"Bearer $(get_admin_token)"
+
+
+# list groups
+
+## user1
+http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/admin/realms/master/users/$(http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/admin/realms/master/users Authorization:"Bearer $(get_admin_token)" | jq -r '.[] | select(.username == "user1") | .id')/groups Authorization:"Bearer $(get_admin_token)"
+
+http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/admin/realms/master/users/$(http --verify certs/ca.pem https://keycloak.127-0-0-121.nip.io/admin/realms/master/users Authorization:"Bearer $(get_admin_token)" | jq -r '.[] | select(.username == "user2") | .id')/groups Authorization:"Bearer $(get_admin_token)"
+
+
+
+
 # remove user from group
 ldapmodify -H ldap://localhost -w ldap-admin -D "cn=ldap-admin,ou=users,o=example" <<EOF
 dn: cn=users,ou=groups,o=example
@@ -120,3 +145,14 @@ sudo nsenter -n -t $(pidof slapd) wireshark -f "port 389 or port 636" -Y ldap -k
 
 kubectl create configmap openldap-config --dry-run=client -o yaml --from-file=templates/database.ldif --from-file=templates/users-and-groups.ldif | kubectl apply -f -
 kubectl delete pod -l app=openldap --force
+
+
+
+
+
+
+https://www.keycloak.org/server/caching
+
+Default cache settings are defined in quarkus/runtime/src/main/resources/cache-ispn.xml
+
+"users" cache can hold max 10000 entries, and they never expire.

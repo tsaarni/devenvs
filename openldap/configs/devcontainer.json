@@ -1,0 +1,15 @@
+{
+    "name": "openldap dev",
+    "containerUser": "tsaarni",
+    "dockerComposeFile": "/home/tsaarni/work/devenvs/openldap/docker-compose-vscode.yaml",
+    "service": "vscode",
+    "workspaceFolder": "/workspace",
+    "forwardPorts": [],
+    "customizations": {
+    "vscode": {
+        "extensions": [
+            "llvm-vs-code-extensions.vscode-clangd",
+            "ms-vscode.cpptools",
+        ]
+    }
+}

@@ -1,0 +1,100 @@
+services:
+
+  opensearch:
+    #image: opensearchproject/opensearch:2.17.0
+    image: opensearchstaging/opensearch:3.0.0
+
+    command:
+      - sh
+      - -cxe
+      - |
+        # copy the certificates and configuration files under opensearch config
+        cp /input/certs/* /usr/share/opensearch/config/
+        cp /input/configs/opensearch.yml /usr/share/opensearch/config/opensearch.yml
+        cp /input/configs/opensearch-security.yml /usr/share/opensearch/config/opensearch-security/config.yml
+
+        echo "overwriting the default opensearch security plugin"
+        bin/opensearch-plugin remove opensearch-security
+        bin/opensearch-plugin install --batch file:/input/opensearch-security-3.0.0.0-SNAPSHOT.zip
+
+        # start
+        ./opensearch-docker-entrypoint.sh opensearch
+
+    environment:
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+
+    # make the configuration files and certificates available to the container
+    volumes:
+      - ./:/input:ro
+
+    # use host networking to allow opensearch to access keycloak on 127.0.0.1:8080
+    network_mode: host
+
+    # no need to expose the port as we are using host networking
+    #ports:
+    #  - "9200:9200" # opensearch http
+    #  - "9600:9600" # opensearch performance analyzer
+
+
+  opensearch-dashboards:
+    #image: opensearchproject/opensearch-dashboards:2.17.0
+    image: opensearchstaging/opensearch-dashboards:3.0.0
+
+    command:
+      - sh
+      - -cxe
+      - |
+        # copy the certificates and configuration files under opensearch-dashboards config
+        cp /input/certs/* /usr/share/opensearch-dashboards/config/
+        cp /input/configs/opensearch-dashboards.yml /usr/share/opensearch-dashboards/config/opensearch_dashboards.yml
+
+        # wait for opensearch to start by polling the cluster health API
+        echo "Wait for OpenSearch to start"
+        while ! curl -s --cacert /input/certs/server-ca.pem --cert /input/certs/opensearch-admin.pem --key /input/certs/opensearch-admin-key.pem https://opensearch.127-0-0-1.nip.io:9200/_cluster/health; do sleep 3; done
+
+        # wait for keycloak to start
+        echo "Wait for Keycloak to start"
+        while ! curl -s http://keycloak.127-0-0-1.nip.io:8080; do sleep 3; done
+
+        ./opensearch-dashboards-docker-entrypoint.sh opensearch-dashboards
+
+    environment:
+      - "OPENSEARCH_HOSTS=https://opensearch.127-0-0-1.nip.io:9200"
+
+    depends_on:
+      - opensearch
+      - keycloak
+
+    # make the configuration files and certificates available to the container
+    volumes:
+      - ./:/input:ro
+
+    # use host networking to allow openSearch dashboards to access
+    # opensearch on 127.0.0.1:9200 and keycloak on 127  0.0.1:8080
+    network_mode: host
+
+    # no need to expose the port as we are using host networking
+    #ports:
+    #  - "5601:5601" # opensearch dashboards http
+
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.6
+
+    entrypoint: /bin/bash
+    command:
+      - -cxe
+      - |
+        /opt/keycloak/bin/kc.sh import --verbose --file /input/configs/keycloak-realm.json
+        /opt/keycloak/bin/kc.sh start-dev
+
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HOSTNAME=keycloak.127-0-0-1.nip.io
+
+    # make the realm configuration file available to the container
+    volumes:
+      - ./:/input:ro
+    ports:
+      - "8080:8080" # Keycloak HTTP

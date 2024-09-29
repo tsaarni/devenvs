@@ -1,0 +1,16 @@
+subject: cn=server-ca
+---
+subject: cn=opensearch-server
+issuer: cn=server-ca
+sans:
+- DNS:opensearch.127-0-0-1.nip.io
+---
+subject: cn=opensearch-dashboards
+issuer: cn=server-ca
+sans:
+- DNS:opensearch-dashboards.127-0-0-1.nip.io
+---
+subject: cn=client-ca
+---
+subject: cn=opensearch-admin
+issuer: cn=client-ca

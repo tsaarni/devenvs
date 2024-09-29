@@ -1,0 +1,22 @@
+
+_meta:
+  type: "config"
+  config_version: 2
+
+config:
+  dynamic:
+    authc:
+      openid_auth_domain:
+        description: "OpenID Connect authentication"
+        http_enabled: true
+        transport_enabled: true
+        order: 0
+        http_authenticator:
+          type: "openid"
+          challenge: false
+          config:
+            subject_key: "preferred_username"
+            roles_key: "roles"
+            openid_connect_url: "http://keycloak.127-0-0-1.nip.io:8080/realms/opensearch/.well-known/openid-configuration"
+        authentication_backend:
+          type: "noop"

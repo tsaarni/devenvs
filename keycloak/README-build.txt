@@ -7,6 +7,9 @@ mvnd clean install -DskipTestsuite -DskipExamples -DskipTests
 mvn -T4C clean install -DskipTestsuite -DskipExamples -DskipTests
 
 
+# distribution
+mvn clean install -Pdistribution -DskipTests
+ls -l ./quarkus/dist/target/
 
 # Compile just server distribution
 ###   ls -l quarkus/dist/target/keycloak-*.gz quarkus/dist/target/keycloak-*.zip

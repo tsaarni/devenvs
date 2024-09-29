@@ -1,6 +1,10 @@
 
 https://github.com/keycloak/keycloak/issues/11716
 
+# https://github.com/keycloak/keycloak/issues/11716#issuecomment-2221888435
+#   https://github.com/MLukman/Keycloak-PII-Data-Encryption-Provider/
+#   based on JPA entity lifecycle events
+#    https://www.baeldung.com/jpa-entity-lifecycle-events
 
 
 

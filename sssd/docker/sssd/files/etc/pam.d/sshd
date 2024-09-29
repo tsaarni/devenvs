@@ -1,3 +1,4 @@
+session required pam_env.so
 auth sufficient pam_sss.so
 auth required pam_deny.so
 
@@ -5,6 +6,7 @@ account sufficient pam_sss.so
 account required pam_permit.so
 
 session required pam_userenv.so
+session required pam_env.so
 session sufficient pam_sss.so
 
 password sufficient pam_sss.so

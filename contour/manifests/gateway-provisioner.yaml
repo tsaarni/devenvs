@@ -4,6 +4,11 @@ metadata:
   name: mygatewayclass
 spec:
   controllerName: projectcontour.io/gateway-controller
+  parametersRef:
+    group: projectcontour.io
+    kind: ContourDeployment
+    namespace: projectcontour
+    name: deployment-with-cert-expiration
 ---
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1beta1
@@ -19,3 +24,12 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+---
+kind: ContourDeployment
+apiVersion: projectcontour.io/v1alpha1
+metadata:
+  namespace: projectcontour
+  name: deployment-with-cert-expiration
+spec:
+  contour:
+    certLifetime: 100

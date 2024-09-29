@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: shell-restricted
+  labels:
+    app: shell-restricted
+# deprecated since kubernetes v1.30
+#  annotations:
+#    container.apparmor.security.beta.kubernetes.io/shell: 'runtime/default'
+
+spec:
+  containers:
+  - name: shell
+    image: alpine:latest
+    command: ["/bin/sh"]
+    args:
+    - "-c"
+    - "sleep 99999999"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+      seccompProfile:
+        type: RuntimeDefault
+# new since kubernetes v1.30
+      appArmorProfile:
+        type: RuntimeDefault
