@@ -7,9 +7,9 @@ server.port: 5601
 #csp_handler.enabled: true
 
 # server certs
-server.ssl.enabled: true
-server.ssl.certificate: "/input/certs/opensearch-dashboards.pem"
-server.ssl.key: "/input/certs/opensearch-dashboards-key.pem"
+#server.ssl.enabled: true
+#server.ssl.certificate: "/input/certs/opensearch-dashboards.pem"
+#server.ssl.key: "/input/certs/opensearch-dashboards-key.pem"
 
 opensearch_security.auth.type: "openid"
 opensearch_security.openid.connect_url: "http://keycloak.127-0-0-1.nip.io:8080/realms/opensearch/.well-known/openid-configuration"

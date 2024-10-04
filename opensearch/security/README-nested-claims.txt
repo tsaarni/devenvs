@@ -1,6 +1,9 @@
 
 
 
+https://github.com/opensearch-project/security/issues/551
+https://github.com/opensearch-project/security/pull/1122
+
 
 
 ######################
@@ -14,11 +17,12 @@ mkdir certs
 certyaml -d certs/ configs/certs.yaml
 
 # start opensearch, opensearch-dashboards and keycloak
+docker-compose rm -f
 docker-compose up
 
 
 # access opensearch-dashboards
-https://opensearch-dashboards.127-0-0-1.nip.io:5601
+http://opensearch-dashboards.127-0-0-1.nip.io:5601
 
 
 # access keycloak admin ui
@@ -98,3 +102,43 @@ jq -R 'split(".") | .[1] | @base64d | fromjson'
   "family_name": "User",
   "email": "demo@example.com"
 }
+
+
+
+
+
+
+
+
+
+
+Author: Andy Lin <ndylin@amazon.com>
+Date:   Fri Apr 16 09:28:34 2021 -0700
+
+    Re-implement RolesUtil and add more tests
+
+commit 3b903a6aa18f2ad641746f18889c88481cf236ab
+Author: Andy Lin <ndylin@amazon.com>
+Date:   Wed Apr 14 16:59:15 2021 -0700
+
+    Rename Roles to RolesUtil, add comments to RolesUtil, add more unit tests
+
+commit 65064e8cfee59ba43f6d9fd8ce8f78417b999a48
+Author: Andy Lin <ndylin@amazon.com>
+Date:   Wed Apr 14 09:48:55 2021 -0700
+
+    Add rolespath to JWT authentication
+
+
+
+https://github.com/opensearch-project/security/pull/3262
+
+After RFC 6901 was introduced and the implementation was added to Jackson,
+there is no need to keep the com.jayway.jsonpath:json-path library in our source code,
+so we can replace current validation with Jackson's JsonPointer class.
+
+
+
+# docs
+https://opensearch.org/docs/latest/security/authentication-backends/jwt/
+https://opensearch.org/docs/latest/security/authentication-backends/openid-connect/

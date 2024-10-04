@@ -44,6 +44,15 @@ services:
       - sh
       - -cxe
       - |
+
+        # WORKDAROUND: plugin removed due to error message:
+        #  Cannot read properties of undefined (reading 'logger')
+        #    Version: 3.0.0
+        #     Build: 7949
+        #     TypeError: Cannot read properties of undefined (reading 'logger')
+        #     at http://opensearch-dashboards.127-0-0-1.nip.io:5601/7949/bundles/plugin/securityAnalyticsDashboards/securityAnalyticsDashboards.plugin.js:13:1728238
+        bin/opensearch-dashboards-plugin remove securityAnalyticsDashboards
+
         # copy the certificates and configuration files under opensearch-dashboards config
         cp /input/certs/* /usr/share/opensearch-dashboards/config/
         cp /input/configs/opensearch-dashboards.yml /usr/share/opensearch-dashboards/config/opensearch_dashboards.yml
