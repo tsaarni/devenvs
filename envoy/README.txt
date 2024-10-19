@@ -89,6 +89,7 @@ ci/run_envoy_docker.sh "BAZEL_BUILD_EXTRA_OPTIONS='--remote_http_cache=http://12
 
 # create container
 ci/docker_build.sh
+./ci/run_envoy_docker.sh './ci/do_ci.sh release'
 
 
 Debugging

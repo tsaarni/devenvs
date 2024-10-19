@@ -6,6 +6,7 @@ kind create cluster --config configs/kind-cluster-config.yaml --name keycloak
 
 kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
 kubectl apply -f manifests/postgresql.yaml
+
 kubectl apply -f manifests/keycloak-15.yaml
 kubectl apply -f manifests/keycloak-18.yaml
 kubectl apply -f manifests/keycloak-19.yaml
@@ -14,6 +15,7 @@ kubectl apply -f manifests/keycloak-21.yaml
 kubectl apply -f manifests/keycloak-22.yaml
 kubectl apply -f manifests/keycloak-23.yaml
 kubectl apply -f manifests/keycloak-25.yaml
+kubectl apply -f manifests/keycloak-26.yaml
 
 
 http://keycloak.127-0-0-121.nip.io/

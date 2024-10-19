@@ -1,0 +1,189 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openfga
+spec:
+  selector:
+    matchLabels:
+      app: openfga
+  template:
+    metadata:
+      labels:
+        app: openfga
+    spec:
+      containers:
+      - name: openfga
+        image: ghcr.io/openfga/openfga:v1.6.2
+        args:
+          - "run"
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: grpc
+          containerPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openfga
+spec:
+  selector:
+    app: openfga
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: grpc
+    port: 8081
+    targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openfga-envoy
+spec:
+  selector:
+    matchLabels:
+      app: openfga-envoy
+  template:
+    metadata:
+      labels:
+        app: openfga-envoy
+    spec:
+      containers:
+      - name: openfga-envoy
+        image: localhost/openfga-envoy:latest
+        imagePullPolicy: Never
+        args:
+          - "--config"
+          - "/config/config.yaml"
+        volumeMounts:
+        - name: openfga-envoy-config
+          mountPath: /config
+        ports:
+        - name: grpc
+          containerPort: 9002
+      volumes:
+      - name: openfga-envoy-config
+        configMap:
+          name: openfga-envoy-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openfga-envoy-config
+data:
+  config.yaml: |
+    server:
+      api_url: "http://openfga:8080"
+      store_id: "openfga"
+    log:
+      level: "debug"
+    mode: MONITOR
+    extraction_sets:
+      - name: jwt
+        user:
+          type: mock
+          config:
+            value: "joe@example.com"
+        object:
+          type: mock
+          config:
+            value: "/foo"
+        relation:
+          type: request_method
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openfga-envoy
+spec:
+  selector:
+    app: openfga-envoy
+  ports:
+  - name: grpc
+    port: 9002
+    targetPort: 9002
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver
+spec:
+  selector:
+    matchLabels:
+      app: echoserver
+  template:
+    metadata:
+      labels:
+        app: echoserver
+    spec:
+      containers:
+      - name: echoserver
+        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20210922-cec7cf2
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - name: http-api
+          containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  selector:
+    app: echoserver
+---
+apiVersion: projectcontour.io/v1alpha1
+kind: ExtensionService
+metadata:
+  name: openfga-envoy
+spec:
+  protocol: h2c
+  services:
+    - name: openfga-envoy
+      port: 9002
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver
+spec:
+  virtualhost:
+    fqdn: protected.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+    jwtProviders:
+      - name: keycloak
+        issuer: "http://keycloak.127-0-0-101.nip.io/realms/contour"
+        remoteJWKS:
+          # Must be FQDN if not running in the same namespace as Envoy.
+          uri: "http://keycloak.default.svc.cluster.local:8080/realms/contour/protocol/openid-connect/certs"
+    #authorization:
+    #  authPolicy:
+    #    disabled: false
+    #  extensionRef:
+    #    name: openfga-envoy
+    #    namespace: default
+
+  routes:
+    - services:
+        - name: echoserver
+          port: 80
+      jwtVerificationPolicy:
+        require: keycloak
+      #authPolicy:
+      #  disabled: false

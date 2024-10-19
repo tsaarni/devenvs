@@ -164,3 +164,17 @@ https://github.com/sigstore/cosign/blob/main/KMS.md
 ## for reading
 ##  https://github.com/salrashid123/go_pkcs11
 ##  https://github.com/salrashid123/mtls_pkcs11
+
+
+
+
+
+
+
+
+
+Using external signer?
+https://docs.keyfactor.com/signserver/latest/tutorial-signserver-container-signing-with-cosign
+
+
+

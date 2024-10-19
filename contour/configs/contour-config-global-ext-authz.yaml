@@ -1,0 +1,4 @@
+globalExtAuth:
+  extensionService: "default/openfga-envoy"
+  authPolicy:
+    disabled: true

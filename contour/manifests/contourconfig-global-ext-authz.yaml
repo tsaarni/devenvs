@@ -1,0 +1,20 @@
+apiVersion: projectcontour.io/v1alpha1
+kind: ContourConfiguration
+metadata:
+  name: contour
+  namespace: projectcontour
+spec:
+  xdsServer:
+    address: 0.0.0.0
+    port: 8001
+    tls:
+      caFile: ca.crt
+      certFile: tls.crt
+      keyFile: tls.key
+  globalExtAuth:
+    extensionRef:
+      name: openfga-envoy
+      namespace: default
+    authPolicy:
+      #disabled: false
+      disabled: true

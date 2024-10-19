@@ -1,3 +1,7 @@
+# Envoy is crashing in TtlManager
+# This happens in scenarios where setting IPv6 traffic class socket option failed and listener was not set up because of that.
+# The crash happens randomly after some time has passed.
+# Reporter says crash is related to rotating Envoy client certificate (used towards backend clusters)
 
 
 [2024-07-04T10:37:37.011+02:00][14][debug][config] [source/extensions/config_subscription/grpc/grpc_subscription_impl.cc:89] gRPC config for type.googleapis.com/envoy.config.route.v3.RouteConfigura
@@ -28,13 +32,13 @@ tion accepted with 1 resources with version 10342e68-5534-400b-96dc-cdcf4111afcb
 
 
 # issue with similar backtrace
-# https://github.com/envoyproxy/envoy/issues/20131 
+# https://github.com/envoyproxy/envoy/issues/20131
 #
 # It is unresolved, and seems to imply that some actions that the control plane could cause the deletion of TtlManager
 # before ScopedTtlUpdate is destroyed, causing the null pointer reference
 
 
- 
+
 
 # in our case before crash there was failed attempt to set DSCP socket option for IPv6
 # which might have caused it
@@ -64,3 +68,39 @@ grep -E "(Protocol not available|Caught Segmentation fault)" envoy.log
 # it seemed some certificates were rotated nearly at the same time
 # maybe these combined could trigger the problem?
 
+
+
+# rotate certificates
+
+
+rm -rf certs
+mkdir certs
+certyaml -d certs configs/certs.yaml
+chmod go+r certs/*
+
+docker run --rm --volume $HOME/work/devenvs/envoy:/input:ro --network host envoyproxy/envoy:v1.30-latest --log-level debug --config-path /input/configs/envoy-crash-in-ttlmanager.yaml
+
+# echoserver with TLS
+docker run --rm --volume $HOME/work/devenvs/envoy:/input:ro --publish 18443:8443 --env TLS_SERVER_CERT=/input/certs/upstream-server.pem --env TLS_SERVER_PRIVKEY=/input/certs/upstream-server-key.pem --env TLS_CLIENT_CACERTS=/input/certs/server-ca.pem gcr.io/k8s-staging-ingressconformance/echoserver:v20210922-cec7cf2
+
+
+
+
+touch certs/foo
+cp certs/envoy.pem certs/envoy-orig.pem
+cp certs/envoy-key.pem certs/envoy-key-orig.pem
+
+cp certs/envoy-expired.pem certs/envoy.pem
+cp certs/envoy-expired-key.pem certs/envoy-key.pem
+mv certs/foo certs/bar
+
+cp certs/envoy-orig.pem certs/envoy.pem
+cp certs/envoy-key-orig.pem certs/envoy-key.pem
+mv certs/bar certs/foo
+
+
+http --verify certs/server-ca.pem htts://localhost:8443
+openssl s_client -connect localhost:8443 -CAfile certs/server-ca.pem
+
+
+http http://localhost:8443
