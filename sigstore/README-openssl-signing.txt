@@ -36,6 +36,25 @@ docker run --rm -p 127.0.10.80:443:443 -v $PWD/certs:/certs:ro -e REGISTRY_HTTP_
 docker run --rm -p 127.0.10.81:443:443 -v $PWD/certs:/certs:ro -e REGISTRY_HTTP_ADDR=0.0.0.0:443 -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry.pem -e REGISTRY_HTTP_TLS_KEY=/certs/registry-key.pem registry:2
 
 
+docker pull alpine:3.20.3
+docker tag alpine:3.20.3 registry.127-0-10-80.nip.io/alpine:3.20.3
+docker push registry.127-0-10-80.nip.io/alpine:3.20.3
+
+
+cosign generate registry.127-0-10-80.nip.io/alpine:3.20.3 > payload.json
+
+openssl ecparam -name prime256v1 -genkey -noout -out openssl.key
+openssl ec -in openssl.key -pubout -out openssl.pub
+
+
+openssl dgst -sha256 -sign openssl.key -out payload.sig payload.json
+cat payload.sig | base64 > payloadbase64.sig
+
+
+cosign attach signature --payload payload.json --signature payloadbase64.sig registry.127-0-10-80.nip.io/alpine:3.20.3
+
+
+
 
 ### Tracing
 ### https://gist.github.com/tsaarni/06b06e18b614468caa5b522c85d0c61b
