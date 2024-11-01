@@ -1,20 +1,24 @@
 diff --git a/cmd/cosign/cli/options/registry.go b/cmd/cosign/cli/options/registry.go
-index cecaf93..7f1b25f 100644
+index 61edb47d..051f22f3 100644
 --- a/cmd/cosign/cli/options/registry.go
 +++ b/cmd/cosign/cli/options/registry.go
-@@ -19,6 +19,7 @@ import (
-        "crypto/tls"
+@@ -21,6 +21,7 @@ import (
+        "fmt"
         "io"
         "net/http"
 +       "os"
 
         ecr "github.com/awslabs/amazon-ecr-credential-helper/ecr-login"
         "github.com/chrismellard/docker-credential-acr-env/pkg/credhelper"
-@@ -104,6 +105,8 @@ func (o *RegistryOptions) GetRegistryClientOpts(ctx context.Context) []remote.Op
-                opts = append(opts, remote.WithAuthFromKeychain(kc))
+@@ -129,6 +130,12 @@ func (o *RegistryOptions) GetRegistryClientOpts(ctx context.Context) []remote.Op
+                opts = append(opts, remote.WithAuth(&authn.Bearer{Token: o.AuthConfig.RegistryToken}))
         default:
                 opts = append(opts, remote.WithAuthFromKeychain(authn.DefaultKeychain))
-+               f, _ := os.OpenFile("wireshark-keys.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
++               f, err := os.OpenFile("wireshark-keys.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
++               if err != nil {
++                       fmt.Println("Error opening wireshark-keys.log:", err)
++                       return nil
++               }
 +               opts = append(opts, remote.WithTransport(&http.Transport{TLSClientConfig: &tls.Config{KeyLogWriter: f}}))
         }
 

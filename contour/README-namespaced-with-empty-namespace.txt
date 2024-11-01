@@ -1,6 +1,10 @@
+### Contour does not get ready when routing config is not present
 # https://github.com/projectcontour/contour/issues/6291
 # https://github.com/projectcontour/contour/pull/6295
 
+###  Contour occasionally gets stuck in a non-ready state and fails to start the XDS server
+# https://github.com/projectcontour/contour/issues/6613
+# https://github.com/projectcontour/contour/pull/6614
 
 kind delete cluster --name contour
 kind create cluster --config configs/kind-cluster-config.yaml --name contour
@@ -29,6 +33,35 @@ kubectl -n projectcontour get pods
 
 
 
+#### Problem: only the leader contour becomes ready
+
+
+
+# create a dummy secret in empty namespace
+kubectl -n empty create secret generic dummy-secret --from-literal=dummy=dummy
+
+# restart contour
+kubectl -n projectcontour scale deployment --replicas=0 contour
+kubectl -n projectcontour scale deployment --replicas=2 contour
+
+# check that only the leader contour is ready
+kubectl -n projectcontour get pod -l app=contour
+
+
+
+make container
+docker tag ghcr.io/projectcontour/contour:cfcf22dd localhost/contour:latest
+kind load docker-image localhost/contour:latest --name contour
+kubectl patch deployment contour -n projectcontour --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "localhost/contour:latest"}]'
+
+
+
+
+
+###################
+
+#### Contour does not get ready when routing config is not present
+
 # create dummy configmaps in empty namespace
 for i in {1..1000}; do cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -52,24 +85,7 @@ kubectl get configmaps -n empty
 
 
 
-#### Problem: only the leader contour becomes ready
-
-
-
-# create a dummy secret in empty namespace
-kubectl -n empty create secret generic dummy-secret --from-literal=dummy=dummy
-
-# force-restart contour
-kubectl -n projectcontour delete pod -l app=contour
-
-# check that only the leader contour is ready
-kubectl -n projectcontour get deployment contour
-
-
-
-
-
-
+###############
 
 
 kubectl -n projectcontour scale deployment --replicas=1 contour
