@@ -1,5 +1,14 @@
-version: "3.8"
+# Force rebuild:
+#   docker compose build --no-cache
+
 services:
+
+  # Build sssd-build-image image first.
+  # The service does not really do anything else, just a placeholder for the image.
+  sssd-build-image:
+    build: docker/sssd-build-image
+    command: /bin/true
+
   sssd:
     build: docker/sssd
     ports:
@@ -7,6 +16,8 @@ services:
     user: "900:900"
     volumes:
       - shared_volume:/usr/local/
+    depends_on:
+      - sssd-build-image
 
   openldap:
     build: docker/openldap
@@ -20,6 +31,9 @@ services:
       - /home/tsaarni/work/openssh-portable:/workspace/source/openssh:cached
       - /home/tsaarni/work/sssd:/workspace/source/sssd:cached
       - shared_volume:/usr/local/
+    depends_on:
+      - sssd-build-image
+
 
 volumes:
   shared_volume:

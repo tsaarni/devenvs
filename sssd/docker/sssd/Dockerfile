@@ -1,94 +1,12 @@
-
-FROM ubuntu:24.04
+FROM sssd-sssd-build-image:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
-
-# SSSD build dependencies derived from the SSSD debian source package
-RUN apt-get update && \
-    apt-get install --yes --no-install-recommends \
-        autoconf \
-        automake \
-        autopoint \
-        autopoint \
-        bc \
-        bind9-dnsutils \
-        build-essential \
-        check \
-        cifs-utils \
-        docbook-xml \
-        docbook-xsl \
-        krb5-config \
-        ldap-utils \
-        libaugeas-dev \
-        libcap-dev \
-        libc-ares-dev \
-        libcmocka-dev \
-        libcollection-dev \
-        libcurl4-openssl-dev \
-        libdbus-1-dev \
-        libdhash-dev \
-        libfido2-dev \
-        libgdm-dev \
-        libglib2.0-dev \
-        libini-config-dev \
-        libjansson-dev \
-        libjose-dev \
-        libkeyutils-dev \
-        libkrad-dev \
-        libkrb5-dev \
-        libldap2-dev \
-        libldb-dev \
-        libltdl-dev \
-        libnfsidmap-dev \
-        libnl-3-dev \
-        libnl-route-3-dev \
-        libnss-wrapper \
-        libp11-kit-dev \
-        libpam-dev \
-        libpam-pwquality \
-        libpam-runtime \
-        libpam-wrapper \
-        libpcre2-dev \
-        libpopt-dev \
-        libsasl2-dev \
-        libselinux1-dev \
-        libsemanage-dev \
-        libsmbclient-dev \
-        libssl-dev \
-        libsubid-dev \
-        libsystemd-dev \
-        libtalloc-dev \
-        libtdb-dev \
-        libtevent-dev \
-        libtool \
-        libuid-wrapper \
-        libunistring-dev \
-        libxml2-utils \
-        openssh-client \
-        openssl \
-        pkgconf \
-        python3 \
-        python3-dev \
-        python3-setuptools \
-        samba-dev \
-        softhsm2 \
-        systemd-dev \
-        systemtap-sdt-dev \
-        uuid-dev \
-        xml-core \
-        xsltproc
-
-RUN apt-get install --yes --no-install-recommends \
-        ca-certificates \
-        curl \
-        dumb-init \
-        openssh-server
 
 RUN groupadd -r -g 900 sssd && useradd -r -u 900 -g sssd sssd
 
 RUN mkdir -p /source/sssd && \
-    curl -sSL https://github.com/SSSD/sssd/releases/download/2.10.0-beta2/sssd-2.10.0-beta2.tar.gz | tar -xz -C /source/sssd --strip-components=1 && \
-    cd /source/sssd && \
+    curl -sSL https://github.com/SSSD/sssd/archive/deefe9ad82e8e0057aa77ea5be60a86d223900da.tar.gz | tar -xz -C /source/sssd --strip-components=1
+RUN cd /source/sssd && \
     autoreconf -i && \
     ./configure \
         --with-sssd-user=sssd \
@@ -102,6 +20,7 @@ RUN mkdir -p /source/sssd && \
         --without-python2-bindings \
         --with-smb-idmap-interface-version=6 \
     && \
+    make -j && \
     make install
 
 RUN mkdir -p /source/syslog-redirector && \

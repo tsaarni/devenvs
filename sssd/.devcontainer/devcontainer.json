@@ -1,6 +1,6 @@
 {
     "name": "vscode",
-    "containerUser": "vscode",
+    "containerUser": "ubuntu",
     "dockerComposeFile": "/home/tsaarni/work/devenvs/sssd/docker-compose.yaml",
     "service": "vscode",
     "workspaceFolder": "/workspace",

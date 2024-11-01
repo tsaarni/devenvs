@@ -153,7 +153,8 @@ objectClass: device
 cn: expires-fast
 pwdMaxAge: 1
 pwdAttribute: userPassword
-pwdGraceAuthNLimit: 3000
+pwdGraceAuthNLimit: 3
+#pwdGraceAuthNLimit: 0
 
 dn: cn=warns-early,ou=ppolicy,o=example
 objectClass: pwdPolicy
