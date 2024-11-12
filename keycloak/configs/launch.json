@@ -48,10 +48,9 @@
             // All configuration options:
             // - https://www.keycloak.org/server/all-config
             "env": {
-                "KEYCLOAK_ADMIN": "admin",
-                "KEYCLOAK_ADMIN_PASSWORD": "admin",
-
                 "KC_HOSTNAME": "keycloak.127.0.0.1.nip.io",
+                "KC_BOOTSTRAP_ADMIN_USERNAME": "admin",
+                "KC_BOOTSTRAP_ADMIN_PASSWORD": "admin",
             },
         },
         {

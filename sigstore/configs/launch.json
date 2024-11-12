@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "cosign verify",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "cmd/cosign",
+            "args": [
+                "verify",
+                "--ca-roots=/home/tsaarni/work/devenvs/sigstore/certs/sw-sign-root-ca.pem",
+                "--ca-intermediates=/home/tsaarni/work/devenvs/sigstore/certs/sw-sign-sub-ca.pem",
+                "--certificate-identity-regexp",
+                ".*",
+                "--certificate-oidc-issuer-regexp",
+                ".*",
+                "--insecure-ignore-sct",
+                "--private-infrastructure",
+                "registry.127-0-10-80.nip.io/alpine:3.20.3"],
+            "env": {
+                "SSL_CERT_FILE": "/home/tsaarni/work/devenvs/sigstore/certs/ca.pem"
+        }
+    ]
+}
+

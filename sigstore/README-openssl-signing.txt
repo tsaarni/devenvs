@@ -56,6 +56,38 @@ cosign attach signature --payload payload.json --signature payloadbase64.sig reg
 
 
 
+docker push registry.127-0-10-80.nip.io/alpine:3.20.3
+cosign generate registry.127-0-10-80.nip.io/alpine:3.20.3 > payload.json
+
+openssl dgst -sha256 -sign certs/signer-key.pem -out payload.sig payload.json
+base64 < payload.sig > payloadbase64.sig
+cosign attach signature --payload payload.json --signature payloadbase64.sig registry.127-0-10-80.nip.io/alpine:3.20.3 --certificate=certs/signer.pem  --certificate-chain=certs/sw-sign-sub-ca.pem
+
+SIGSTORE_ROOT_FILE=certs/sw-sign-root-ca.pem cosign verify --certificate-identity-regexp '.*' --certificate-oidc-issuer-regexp '.*' --insecure-ignore-sct --private-infrastructure registry.127-0-10-80.nip.io/alpine:3.20.3
+
+cosign verify --ca-roots=certs/sw-sign-root-ca.pem --certificate-identity-regexp '.*' --certificate-oidc-issuer-regexp '.*' --insecure-ignore-sct --private-infrastructure registry.127-0-10-80.nip.io/alpine:3.20.3
+
+
+cosign verify --ca-roots=certs/sw-sign-root-ca.pem --ca-intermediates=certs/sw-sign-sub-ca.pem --certificate-identity-regexp '.*' --certificate-oidc-issuer-regexp '.*' --insecure-ignore-sct --private-infrastructure registry.127-0-10-80.nip.io/alpine:3.20.3
+
+
+cosign verify \
+￼    --cert keys/leaf.crt \
+￼    --cert-chain keys/certificate_chain.pem \
+￼    --certificate-identity-regexp '.*' \
+￼    --certificate-oidc-issuer-regexp '.*' \
+￼    --private-infrastructure \
+￼    --insecure-ignore-sct \
+￼    "127.0.0.1:5003/alpine:3.20.3"
+
+
+openssl dgst -sha256 -sign SSW_DEV_OK_CONT_202101010000_C1_2_1.key -out payload.sig payload.json
+
+cosign attach signature --payload payload.json --signature payloadbase64.sig registry.127-0-10-80.nip.io/alpine:3.20.3 --certificate=SSW_DEV_OK_CONT_202101010000_C1_2_1.pem
+
+cosign verify --ca-roots=SSW_DEV_OK_CONT_202101010000_C1_2_1.pem  --certificate-identity-regexp '.*' --certificate-oidc-issuer-regexp '.*' --insecure-ignore-sct --private-infrastructure registry.127-0-10-80.nip.io/alpine:3.20.3
+
+
 ### Tracing
 ### https://gist.github.com/tsaarni/06b06e18b614468caa5b522c85d0c61b
 
@@ -70,7 +102,7 @@ cosign attach signature --payload payload.json --signature payloadbase64.sig reg
 cd ~/work/cosign
 patch -p1 < ~/work/devenvs/sigstore/cosign-wireshark-keys.patch
 
-wireshark -i lo -f "port 443" -k -o tls.keylog_file:wireshark-keys.log
+wireshark -i lo -f "port 443" -Y http -k -o tls.keylog_file:wireshark-keys.log
 
 
 

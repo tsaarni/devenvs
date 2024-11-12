@@ -6,3 +6,14 @@ sans:
   - DNS:localhost
   - DNS:registry.127-0-10-80.nip.io
   - DNS:registry.127-0-10-81.nip.io
+---
+subject: cn=sw-sign-root-ca
+---
+subject: cn=sw-sign-sub-ca
+issuer: cn=sw-sign-root-ca
+ca: true
+---
+subject: cn=signer
+issuer: cn=sw-sign-sub-ca
+sans:
+- DNS:www.example.com

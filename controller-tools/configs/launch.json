@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug go generate",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/controller-gen",
+            "args": [
+                "crd:ignoreUnexportedFields=true,allowDangerousTypes=true",
+                "paths=./;./deprecated;./unserved;./job/...",
+                "output:dir=."
+            ],
+            "env": {
+                "GODEBUG": "gotypesalias=1",
+            },
+            "cwd": "${workspaceFolder}/pkg/crd/testdata"
+        }
+    ]
+}

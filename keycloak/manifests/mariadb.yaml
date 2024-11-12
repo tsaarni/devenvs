@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb
+spec:
+  selector:
+    app: mariadb
+  ports:
+    - name: mariadb
+      port: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb
+spec:
+  selector:
+    matchLabels:
+      app: mariadb
+  serviceName: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+        - name: mariadb
+          image: localhost/mariadb:latest
+          imagePullPolicy: Never
+          command:
+            - sh
+            - -c
+            - |
+              mariadb
+
+          env:
+            - name: MARIADB_USER
+              value: "keycloak"
+            - name: MARIADB_PASSWORD
+              value: "keycloak"
+            - name: MARIADB_ROOT_PASSWORD
+              value: "keycloak"
+            - name: MARIADB_DATABASE
+              value: "keycloak"
+
+            - name: VAULT_ADDR
+              value: "http://vault:8200"
+            - name: VAULT_TOKEN
+              value: "root"
+
+          ports:
+            - containerPort: 3306
+              name: mariadb
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: mariadb-config
+              subPath: my.cnf
+              mountPath: /etc/mysql/my.cnf
+      volumes:
+        - name: mariadb-config
+          configMap:
+            name: mariadb-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "1Gi"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-config
+data:
+  my.cnf: |
+    [client-server]
+    socket = /run/mysqld/mysqld.sock
+    !includedir /etc/mysql/mariadb.conf.d/
+    !includedir /etc/mysql/conf.d/
+    #[mariadb]
+    #plugin-load-add=hashicorp_key_management.so
+    #hashicorp-key-management-vault-url=vault:8200/v1/test
+    #hashicorp-key-management-token=root
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phpmyadmin
+spec:
+  selector:
+    matchLabels:
+      app: phpmyadmin
+  template:
+    metadata:
+      labels:
+        app: phpmyadmin
+    spec:
+      containers:
+      - name: phpmyadmin
+        image: phpmyadmin:5
+        ports:
+        - containerPort: 80
+        env:
+#        - name: PMA_PORT
+#          value: "3306"
+        - name: PMA_HOST
+          value: mariadb
+        - name: PMA_USER
+          value: root
+        - name: PMA_PASSWORD
+          value: keycloak
+#        - name: PMA_ABSOLUTE_URI
+#          value: "http://phpmyadmin.127-0-0-121.nip.io/phpmyadmin"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: phpmyadmin
+spec:
+  selector:
+    app: phpmyadmin
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: pgadmin
+spec:
+  virtualhost:
+    fqdn: phpmyadmin.127-0-0-121.nip.io
+  routes:
+    - services:
+        - name: phpmyadmin
+          port: 80
