@@ -1,0 +1,77 @@
+{
+  "realm": "envoy",
+  "enabled": true,
+  "accessTokenLifespan": 60,
+  "clients": [
+    {
+      "clientId": "envoy-public",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "insecure-client-secret",
+      "enabled": true,
+      "redirectUris": ["https://echoserver.127-0-0-15.nip.io/*"],
+      "webOrigins": ["*"],
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "https://echoserver.127-0-0-15.nip.io/*"
+      }
+    },
+    {
+      "clientId": "envoy-confidential",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "insecure-client-secret",
+      "enabled": true,
+      "redirectUris": ["https://echoserver.127-0-0-15.nip.io/*"],
+      "webOrigins": ["*"],
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "https://echoserver.127-0-0-15.nip.io/*"
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "viewer",
+        "description": "Can view content"
+      },
+      {
+        "name": "editor",
+        "description": "Can view and edit content"
+      }
+    ]
+  },
+  "users": [
+    {
+      "username": "joe",
+      "email": "joe@example.com",
+      "firstName": "Joe",
+      "lastName": "Joe",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "joe"
+        }
+      ],
+      "realmRoles": ["viewer"]
+    },
+    {
+      "username": "jane",
+      "email": "jane@example.com",
+      "firstName": "Jane",
+      "lastName": "Jane",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "jane"
+        }
+      ],
+      "realmRoles": ["editor", "viewer"]
+    }
+  ]
+}

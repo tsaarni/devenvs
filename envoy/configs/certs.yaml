@@ -6,6 +6,8 @@ subject: cn=envoy
 issuer: cn=server-ca
 sans:
 - DNS:localhost
+- DNS:keycloak.127-0-0-15.nip.io
+- DNS:echoserver.127-0-0-15.nip.io
 ---
 subject: cn=envoy-expired
 issuer: cn=server-ca

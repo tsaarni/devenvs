@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao
+spec:
+  selector:
+    app: openbao
+  ports:
+    - port: 8200
+      targetPort: 8200
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openbao
+spec:
+  selector:
+    matchLabels:
+      app: openbao
+  template:
+    metadata:
+      labels:
+        app: openbao
+    spec:
+      containers:
+        - name: openbao
+          image: ghcr.io/openbao/openbao:2.0.2
+          ports:
+            - containerPort: 8200
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - |
+              bao server -config /etc/openbao/config-file.hcl
+          volumeMounts:
+            - name: openbao-config
+              mountPath: /etc/openbao
+
+        - name: configure
+          image: ghcr.io/openbao/openbao:2.0.2
+          command:
+            - "/bin/sh"
+          args:
+            - -x
+            - -e
+            - /config/initialize-openbao.sh
+          env:
+            - name: BAO_ADDR
+              value: "http://localhost:8200"
+          volumeMounts:
+            - name: openbao-config
+              mountPath: /config
+            - name: data
+              mountPath: /data
+            - name: unseal
+              mountPath: /unseal
+
+      serviceAccountName: openbao-auth
+
+      volumes:
+        - name: openbao-config
+          configMap:
+            name: openbao-config
+        - name: data
+          emptyDir: {}
+        - name: unseal
+          emptyDir: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openbao-config
+data:
+  config-file.hcl: |
+    listener "tcp" {
+      address     = "0.0.0.0:8200"
+      tls_disable = 1
+    }
+    storage "file" {
+      path = "/data/"
+    }
+
+  initialize-openbao.sh: |
+    apk add --update-cache jq httpie
+
+    # Initialize if not already initialized.
+    initialized=$(bao status -format=json | jq -r '.initialized')
+    if [ "$initialized" = "false" ]; then
+      bao operator init -key-shares=1 -key-threshold=1 -format=json > /unseal/init.json
+    fi
+
+    # Unseal.
+    bao operator unseal $(jq -r .unseal_keys_b64[0] /unseal/init.json)
+
+    export BAO_TOKEN=$(jq -r .root_token /unseal/init.json)
+
+    # Enable kv secrets engine
+    bao secrets enable -path=mariadb-keys kv-v2
+
+    # enable kv secrets engine
+    bao kv put mariadb-keys/1 data=d59dc915633e572843abb8d9b430f996515fa80ddf4f06b7624e9d7067a1bc5b
+
+    # Create policy.
+    bao write sys/policy/my-policy policy='path "mariadb-keys/*" { capabilities = ["read", "list"] }'
+
+    # Enable kubernetes auth method
+    bao auth enable kubernetes
+    bao write auth/kubernetes/config kubernetes_host=https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT
+    bao write auth/kubernetes/role/my-role bound_service_account_names="*" bound_service_account_namespaces="default" ttl=0 max_ttl=0 policies=my-policy
+
+    # Create fixed token for mariadb
+    bao token create -policy=my-policy -ttl=0 -id=insecure-secret
+
+    sleep 99999999
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: role-tokenreview-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: openbao-auth
+  namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openbao-auth

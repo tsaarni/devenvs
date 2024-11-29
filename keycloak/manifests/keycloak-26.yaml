@@ -53,18 +53,6 @@ spec:
       labels:
         app: keycloak
     spec:
-      initContainers:
-        - name: wait-for-postgresql
-          image: alpine:3
-          command:
-            - sh
-            - -c
-            - |
-              until printf "." && nc -z -w 2 postgres 5432; do
-                  sleep 2;
-              done;
-
-              echo 'PostgreSQL OK ✓'
       containers:
         - name: keycloak
 

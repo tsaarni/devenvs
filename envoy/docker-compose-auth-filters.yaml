@@ -1,0 +1,37 @@
+services:
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.5
+
+    entrypoint: /bin/bash
+    command:
+      - -cxe
+      - |
+        /opt/keycloak/bin/kc.sh import --verbose --file /input/configs/keycloak-realm.json
+        /opt/keycloak/bin/kc.sh start-dev
+
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_HOSTNAME=keycloak.127-0-0-15.nip.io
+      - KC_PROXY_HEADERS=xforwarded
+
+    volumes:
+      - ".:/input:ro"
+
+  envoy:
+    # https://www.envoyproxy.io/docs/envoy/latest/start/docker
+    # https://hub.docker.com/r/envoyproxy/envoy
+    image: envoyproxy/envoy:v1.31-latest
+#    command: --log-level info --config-path /input/configs/envoy-oauth2-filter.yaml
+    command: --log-level info --config-path /input/configs/envoy-jwt-auth-filter.yaml
+    ports:
+      - "127.0.0.15:443:8080"
+    user: "1000:1000"
+    volumes:
+      - ".:/input:ro"
+      - "/tmp/:/tmp/"
+
+  echoserver:
+    # https://github.com/kubernetes-sigs/ingress-controller-conformance/tree/master/images/echoserver
+    image: ghcr.io/tsaarni/tsaarni/echoserver:latest

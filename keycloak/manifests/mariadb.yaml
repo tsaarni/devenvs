@@ -9,6 +9,11 @@ spec:
     - name: mariadb
       port: 3306
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mariadb
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -23,16 +28,11 @@ spec:
       labels:
         app: mariadb
     spec:
+      serviceAccountName: mariadb
       containers:
         - name: mariadb
           image: localhost/mariadb:latest
           imagePullPolicy: Never
-          command:
-            - sh
-            - -c
-            - |
-              mariadb
-
           env:
             - name: MARIADB_USER
               value: "keycloak"
@@ -43,11 +43,6 @@ spec:
             - name: MARIADB_DATABASE
               value: "keycloak"
 
-            - name: VAULT_ADDR
-              value: "http://vault:8200"
-            - name: VAULT_TOKEN
-              value: "root"
-
           ports:
             - containerPort: 3306
               name: mariadb
@@ -57,6 +52,9 @@ spec:
             - name: mariadb-config
               subPath: my.cnf
               mountPath: /etc/mysql/my.cnf
+            - name: mariadb-config
+              subPath: keyfile
+              mountPath: /etc/mysql/keyfile
       volumes:
         - name: mariadb-config
           configMap:
@@ -81,10 +79,33 @@ data:
     socket = /run/mysqld/mysqld.sock
     !includedir /etc/mysql/mariadb.conf.d/
     !includedir /etc/mysql/conf.d/
-    #[mariadb]
+
+    [mariadb]
+    #plugin-load-add=file_key_management.so
+
+    # Note that the loose option prefix is specified. This option prefix is used in case the plugin hasn't been installed yet.
+    #loose_file_key_management_filename = /etc/mysql/keyfile
+
     #plugin-load-add=hashicorp_key_management.so
-    #hashicorp-key-management-vault-url=vault:8200/v1/test
-    #hashicorp-key-management-token=root
+
+    #hashicorp-key-management-vault-url=openbao:8200/v1/mariadb-keys
+    #hashicorp-key-management-token=s.9YpPv04tDBOrX0zlZH48vfS7
+
+    #innodb_encrypt_tables = FORCE
+    #innodb_encrypt_log = ON
+    #innodb_encrypt_temporary_tables = ON
+
+    #encrypt_tmp_disk_tables = ON
+    #encrypt_tmp_files = ON
+    #encrypt_binlog = ON
+    #aria_encrypt_tables = ON
+
+    #innodb_encryption_threads = 4
+    #innodb_encryption_rotation_iops = 2000
+
+  keyfile: |
+    1;5a4e67f60192c0291e08344b630d4f1a34d412150bae97b4f2d3f0fae8153cf6
+    2;b68c74069204cd87496564de5a386531a238eefe28224db0ee72e78ddedaa98d
 ---
 apiVersion: apps/v1
 kind: Deployment

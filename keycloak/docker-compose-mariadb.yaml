@@ -1,0 +1,107 @@
+services:
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.5
+    command:
+      - start-dev
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_DB=mariadb
+      - KC_DB_URL=jdbc:mariadb://mariadb/keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+    ports:
+      - 8080:8080
+    links:
+      - mariadb
+
+  mariadb:
+    #image: mariadb:11.5
+    build:
+      dockerfile_inline: |
+        FROM mariadb:11.5
+        RUN apt-get update && \
+          apt-get install mariadb-plugin-hashicorp-key-management -y && \
+          rm -rf /var/lib/apt/lists/*
+    environment:
+      - MARIADB_USER=keycloak
+      - MARIADB_PASSWORD=keycloak
+      - MARIADB_DATABASE=keycloak
+      - MARIADB_ROOT_PASSWORD=keycloak
+    links:
+      - vault
+    configs:
+      - source: my.cnf
+        target: /etc/mysql/my.cnf
+    depends_on:
+      vault:
+        condition: service_healthy
+
+  vault:
+    image: hashicorp/vault:1.18
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=my-insecure-root-token
+      - VAULT_ADDR=http://localhost:8200
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - vault status
+      interval: 1s
+      start_period: 1s
+      start_interval: 1s
+
+  vault-configurator:
+    image: hashicorp/vault:1.18
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=my-insecure-root-token
+    entrypoint:
+      - sh
+      - -cxe
+      - |
+        vault secrets enable -path=mariadb-keys kv-v2
+        vault kv put mariadb-keys/1 data=d59dc915633e572843abb8d9b430f996515fa80ddf4f06b7624e9d7067a1bc5b
+        sleep 99999999
+    links:
+      - vault
+    depends_on:
+      vault:
+        condition: service_healthy
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5
+    environment:
+      - PMA_HOST=mariadb
+      - PMA_USER=root
+      - PMA_PASSWORD=keycloak
+    ports:
+     - 8081:80
+    links:
+      - mariadb
+
+configs:
+  my.cnf:
+    content: |
+      [client-server]
+      socket = /run/mysqld/mysqld.sock
+      !includedir /etc/mysql/mariadb.conf.d/
+      !includedir /etc/mysql/conf.d/
+
+      [mariadb]
+      plugin-load-add=hashicorp_key_management.so
+
+      hashicorp-key-management-vault-url=vault:8200/v1/mariadb-keys
+      hashicorp-key-management-token=my-insecure-root-token
+
+      innodb_encrypt_tables = FORCE
+      innodb_encrypt_log = ON
+      innodb_encrypt_temporary_tables = ON
+
+      encrypt_tmp_disk_tables = ON
+      encrypt_tmp_files = ON
+      encrypt_binlog = ON
+      aria_encrypt_tables = ON
+
+      innodb_encryption_threads = 4
+      innodb_encryption_rotation_iops = 2000

@@ -13,9 +13,11 @@ cd ~/work/gunicorn
 pip install -r requirements_test.txt
 pip install -r requirements_dev.txt
 
-python setup.py install
-python setup.py test
+### OLDOLDOLD
+###python setup.py install
+###python setup.py test
 
+pip install --editable .
 
 cd ~/work/devenvs/gunicorn
 . venv/bin/activate

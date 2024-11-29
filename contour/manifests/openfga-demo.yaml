@@ -76,7 +76,7 @@ data:
   config.yaml: |
     server:
       api_url: "http://openfga:8080"
-      store_id: "openfga"
+      store_id: "<REPLACE THIS WITH STORE ID>"
     log:
       level: "debug"
     mode: MONITOR
@@ -172,12 +172,12 @@ spec:
         remoteJWKS:
           # Must be FQDN if not running in the same namespace as Envoy.
           uri: "http://keycloak.default.svc.cluster.local:8080/realms/contour/protocol/openid-connect/certs"
-    #authorization:
+    authorization:
     #  authPolicy:
     #    disabled: false
-    #  extensionRef:
-    #    name: openfga-envoy
-    #    namespace: default
+      extensionRef:
+        name: openfga-envoy
+        namespace: default
 
   routes:
     - services:
