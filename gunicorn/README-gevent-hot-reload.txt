@@ -37,4 +37,5 @@ rm certs/server*.pem
 certyaml -d certs
 
 
+
 # Then check the server certificate again
