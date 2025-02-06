@@ -48,6 +48,7 @@ sans:
 - DNS:protected-basic-auth.127-0-0-101.nip.io
 - DNS:protected-oauth.127-0-0-101.nip.io
 - DNS:keycloak.127-0-0-101.nip.io
+- DNS:echoserver.127-0-0-101.nip.io
 ---
 subject: cn=fallback
 issuer: cn=external-root-ca
@@ -127,3 +128,14 @@ subject: cn=contour-authserver
 issuer: cn=internal-root-ca
 sans:
 - DNS:contour-authserver
+---
+subject: cn=wildcard-ingress-1
+issuer: cn=external-root-ca
+sans:
+- DNS:*.nip.io
+- DNS:*.example.com
+---
+subject: cn=wildcard-ingress-2
+issuer: cn=external-root-ca
+sans:
+- DNS:*.127-0-0-101.nip.io

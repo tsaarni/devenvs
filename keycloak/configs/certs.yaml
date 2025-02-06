@@ -68,6 +68,11 @@ sans:
 - DNS:keycloak
 - DNS:keycloak.127-0-0-121.nip.io
 ---
+subject: cn=postgres-internal
+issuer: cn=internal-ca
+sans:
+- DNS:postgres
+---
 subject: cn=federated
 issuer: cn=internal-ca
 ---

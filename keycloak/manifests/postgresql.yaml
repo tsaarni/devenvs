@@ -35,6 +35,9 @@ spec:
             - "log_statement=all"
             - "-c"
             - "log_destination=stderr"
+            # uncomment to enable TLS:
+            - "-c"
+            - "config_file=/configs/postgresql.conf"
           env:
             - name: POSTGRES_USER
               value: "keycloak"
@@ -50,6 +53,23 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+            - name: certs
+              mountPath: /certs
+            - name: configs
+              mountPath: /configs
+
+      securityContext:
+        fsGroup: 70 # postgres group in Alpine, to allow postgres process to read certs
+
+      volumes:
+        - name: certs
+          secret:
+            secretName: postgres-certs
+            optional: true
+            defaultMode: 0440
+        - name: configs
+          configMap:
+            name: postgres-config
 
   volumeClaimTemplates:
     - metadata:
@@ -60,6 +80,45 @@ spec:
         resources:
           requests:
             storage: "1Gi"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+data:
+  pg_hba.conf: |
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+    # "local" is for Unix domain socket connections only
+    local   all             all                                     trust
+    # IPv4 local connections:
+    #host    all             all             127.0.0.1/32            trust
+    # IPv6 local connections:
+    #host    all             all             ::1/128                 trust
+    # Allow replication connections from localhost, by a user with the
+    # replication privilege.
+    #local   replication     all                                     trust
+    #host    replication     all             127.0.0.1/32            trust
+    #host    replication     all             ::1/128                 trust
+
+    hostssl all keycloak 0.0.0.0/0 cert clientcert=verify-full map=keycloak
+
+    host all all all scram-sha-256
+
+  pg_ident.conf: |
+    # MAPNAME      SYSTEM-USERNAME              PG-USERNAME
+    keycloak       keycloak-internal        keycloak
+
+  postgresql.conf: |
+      ssl_ca_file = '/certs/internal-ca.pem'
+      ssl_key_file = '/certs/postgres-internal-key.pem'
+      ssl_cert_file = '/certs/postgres-internal.pem'
+      ssl = 'on'
+      hba_file = '/configs/pg_hba.conf'
+      ident_file = '/configs/pg_ident.conf'
+      listen_addresses = '*'
+      ssl_max_protocol_version = TLSv1.2
+
 ---
 apiVersion: apps/v1
 kind: Deployment

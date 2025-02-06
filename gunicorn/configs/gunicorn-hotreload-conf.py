@@ -1,9 +1,13 @@
 
 
+
 def ssl_context(conf, default_ssl_context_factory):
     import os
 
     # Store the current mtime of the certificate and key files and load them once by calling the default_ssl_context_factory.
+    #
+    # Note: the variables would need to be protected by a lock if the worker is using multiple threads.
+    #
     cert_mtime = os.path.getmtime(conf.certfile)
     key_mtime = os.path.getmtime(conf.keyfile)
     ssl_context = default_ssl_context_factory()

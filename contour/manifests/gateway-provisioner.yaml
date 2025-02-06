@@ -1,5 +1,5 @@
 kind: GatewayClass
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: mygatewayclass
 spec:
@@ -8,7 +8,7 @@ spec:
     group: projectcontour.io
     kind: ContourDeployment
     namespace: projectcontour
-    name: deployment-with-cert-expiration
+    name: contour
 ---
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1beta1
@@ -29,7 +29,12 @@ kind: ContourDeployment
 apiVersion: projectcontour.io/v1alpha1
 metadata:
   namespace: projectcontour
-  name: deployment-with-cert-expiration
+  name: contour
 spec:
-  contour:
-    certLifetime: 100
+  envoy:
+    networkPublishing:
+      type: NodePortService
+
+#spec:
+#  contour:
+#    certLifetime: 100

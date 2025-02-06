@@ -51,6 +51,7 @@
                 "KC_HOSTNAME": "keycloak.127.0.0.1.nip.io",
                 "KC_BOOTSTRAP_ADMIN_USERNAME": "admin",
                 "KC_BOOTSTRAP_ADMIN_PASSWORD": "admin",
+                //"KC_DB_URL": "jdbc:h2:file:${workspaceFolder}/quarkus/dist/target/keycloakdb;NON_KEYWORDS=VALUE;AUTO_SERVER=TRUE",
             },
         },
         {

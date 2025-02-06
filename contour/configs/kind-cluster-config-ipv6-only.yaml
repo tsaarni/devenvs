@@ -2,10 +2,7 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 kubeadmConfigPatches:
   - |
-    apiVersion: kubeadm.k8s.io/v1beta2
     kind: ClusterConfiguration
-    metadata:
-      name: config
     apiServer:
       extraArgs:
         # change port range so that we can bind privileged ports with NodePort
