@@ -1,0 +1,173 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-internal
+spec:
+  clusterIP: None
+  selector:
+    app: vault
+  ports:
+  - name: client
+    port: 8200
+    targetPort: 8200
+  publishNotReadyAddresses: true
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+spec:
+  selector:
+    matchLabels:
+      app: vault
+  serviceName: vault-internal
+  podManagementPolicy: Parallel
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Delete
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      containers:
+
+      # https://hub.docker.com/r/hashicorp/vault/tags
+      - name: vault
+        image: hashicorp/vault:1.18
+
+        command:
+          - "/bin/sh"
+        args:
+          - "-c"
+          - "vault server -config=/config/config-ha-tls.hcl -log-level=debug"
+        ports:
+          - containerPort: 8200
+        env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: VAULT_ADDR
+            value: https://localhost:8200
+          - name: VAULT_API_ADDR
+            value: https://$(POD_IP):8200
+          - name: VAULT_K8S_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: VAULT_K8S_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: HOSTNAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: VAULT_CLUSTER_ADDR
+            value: https://$(HOSTNAME).vault-internal:8201
+          - name: VAULT_RAFT_NODE_ID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: VAULT_CACERT
+            value: /certs/ca.pem
+
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -ec
+            - vault status -tls-skip-verify
+          failureThreshold: 2
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 3
+
+
+        volumeMounts:
+          - mountPath: /config
+            name: vault-config
+          - mountPath: /certs
+            name: certs
+          - name: vault-data
+            mountPath: /vault/data
+
+      volumes:
+        - name: vault-config
+          configMap:
+            name: vault-config
+        - name: certs
+          secret:
+            secretName: vault-certs
+            optional: true
+
+      serviceAccountName: vault-auth
+
+  volumeClaimTemplates:
+  - metadata:
+      name: vault-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+data:
+  config-ha-tls.hcl: |
+    ui = false
+    cluster_name = "vault"
+    disable_mlock = true
+    listener "tcp" {
+      address = "[::]:8200"
+      cluster_address = "[::]:8201"
+      tls_cert_file = "/certs/vault.pem"
+      tls_key_file = "/certs/vault-key.pem"
+    }
+
+    storage "raft" {
+      path = "/vault/data"
+      retry_join {
+        leader_api_addr = "https://vault-0.vault-internal:8200"
+        leader_ca_cert_file = "/certs/ca.pem"
+        leader_client_cert_file = "/certs/vault.pem"
+        leader_client_key_file = "/certs/vault-key.pem"
+      }
+      retry_join {
+        leader_api_addr = "https://vault-1.vault-internal:8200"
+        leader_ca_cert_file = "/certs/ca.pem"
+        leader_client_cert_file = "/certs/vault.pem"
+        leader_client_key_file = "/certs/vault-key.pem"
+      }
+      retry_join {
+        leader_api_addr = "https://vault-2.vault-internal:8200"
+        leader_ca_cert_file = "/certs/ca.pem"
+        leader_client_cert_file = "/certs/vault.pem"
+        leader_client_key_file = "/certs/vault-key.pem"
+      }
+    }
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: role-tokenreview-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: vault-auth
+  namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-auth

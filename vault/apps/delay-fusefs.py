@@ -20,8 +20,8 @@
 #   touch ./source/.block_operations
 #   rm ./source/.block_operations
 #
-
-
+#   fusermount -u blocking
+#
 
 '''
 passthroughfs.py - Example file system for pyfuse3

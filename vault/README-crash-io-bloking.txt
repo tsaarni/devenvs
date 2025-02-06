@@ -4,6 +4,33 @@
 
 
 
+#############
+#
+# Run standalone vault raft node with fuse filesystem that generates delays
+#
+
+
+
+bin/vault server -config=$HOME/work/devenvs/vault/configs/vault-config-raft.hcl -log-level=debug
+
+export VAULT_ADDR=http://127.0.0.1:8200
+
+vault operator init -key-shares=1 -key-threshold=1 -format=json > vault-unseal-config.json
+vault operator unseal $(jq -r .unseal_keys_b64[0] vault-unseal-config.json)
+
+vault login $(jq -r .root_token vault-unseal-config.json)
+
+vault secrets enable -path=secret kv-v2
+
+vault kv put secret/hello foo="Hello at: $(date)"
+vault kv get secret/hello
+
+touch source/.block_operations
+
+
+
+
+
 
 
 ########
@@ -93,32 +120,6 @@ spec:
   percent: 100
   duration: '60s'
 EOF
-
-
-
-
-#############
-#
-# Run standalone vault raft node with fuse filesystem that generates delays
-#
-
-
-
-bin/vault server -config=$HOME/work/devenvs/vault/configs/vault-config-raft.hcl -log-level=debug
-export VAULT_ADDR=http://127.0.0.1:8200
-
-vault operator init -key-shares=1 -key-threshold=1 -format=json > vault-unseal-config.json
-vault operator unseal $(jq -r .unseal_keys_b64[0] vault-unseal-config.json)
-
-vault login $(jq -r .root_token vault-unseal-config.json)
-
-vault secrets enable -path=secret kv-v2
-
-vault kv put secret/hello foo="Hello at: $(date)"
-vault kv get secret/hello
-
-touch source/.block_operations
-
 
 
 

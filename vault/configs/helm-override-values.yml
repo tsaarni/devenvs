@@ -1,0 +1,64 @@
+
+# https://github.com/hashicorp/vault-helm/blob/main/values.yaml
+
+server:
+  extraEnvironmentVars:
+    VAULT_ADDR: https://localhost:8200
+    VAULT_CACERT: /certs/ca.pem
+
+  volumes:
+    - name: certs
+      secret:
+        secretName: vault-certs
+
+  volumeMounts:
+    - mountPath: /certs
+      name: certs
+      readOnly: true
+
+
+  auditStorage:
+    enabled: true
+
+  standalone:
+    enabled: false
+
+  affinity: {}
+
+  ha:
+    enabled: true
+    raft:
+      enabled: true
+      setNodeId: true
+
+      config: |
+        ui = false
+        cluster_name = "vault"
+        listener "tcp" {
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_cert_file = "/certs/vault.pem"
+          tls_key_file = "/certs/vault-key.pem"
+        }
+
+        storage "raft" {
+          path = "/vault/data"
+          retry_join {
+            leader_api_addr = "https://vault-0.vault-internal:8200"
+            leader_ca_cert_file = "/certs/ca.pem"
+            leader_client_cert_file = "/certs/vault.pem"
+            leader_client_key_file = "/certs/vault-key.pem"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-1.vault-internal:8200"
+            leader_ca_cert_file = "/certs/ca.pem"
+            leader_client_cert_file = "/certs/vault.pem"
+            leader_client_key_file = "/certs/vault-key.pem"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-2.vault-internal:8200"
+            leader_ca_cert_file = "/certs/ca.pem"
+            leader_client_cert_file = "/certs/vault.pem"
+            leader_client_key_file = "/certs/vault-key.pem"
+          }
+        }

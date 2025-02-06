@@ -4,6 +4,10 @@ subject: cn=vault
 issuer: cn=ca
 sans:
 - DNS:localhost
+- DNS:vault
+- DNS:vault-0.vault-internal
+- DNS:vault-1.vault-internal
+- DNS:vault-2.vault-internal
 ---
 subject: cn=etcd
 issuer: cn=ca
