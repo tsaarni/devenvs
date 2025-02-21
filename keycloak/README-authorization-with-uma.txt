@@ -92,13 +92,21 @@ http -v POST http://keycloak.127.0.0.1.nip.io:8080/admin/realms/example-realm/us
   emailVerified:=true \
   credentials:='[{"type":"password","value":"joe","temporary":false}]'
 
-### Create protected resource
+### Create protected resources
 http -v POST http://keycloak.127.0.0.1.nip.io:8080/admin/realms/example-realm/clients/$CLIENT_ID/authz/resource-server/resource \
   Authorization:"Bearer $(get_admin_token)" \
   name=example-resource \
   type=urn:resource-server:example-resource \
   uris:='["/"]' \
   scopes:='[{"name":"GET"}]'
+
+http -v POST http://keycloak.127.0.0.1.nip.io:8080/admin/realms/example-realm/clients/$CLIENT_ID/authz/resource-server/resource \
+  Authorization:"Bearer $(get_admin_token)" \
+  name=example-resource-no-permission \
+  type=urn:resource-server:example-resource \
+  uris:='["/"]' \
+  scopes:='[{"name":"POST"}]'
+
 
 ### Create policy where user joe is allowed to access the resource
 http -v POST http://keycloak.127.0.0.1.nip.io:8080/admin/realms/example-realm/clients/$CLIENT_ID/authz/resource-server/policy/user \
@@ -183,6 +191,20 @@ get_joe_refresh_token
 
 
 
+
+### Test UMA ticket grant when user has no permission
+http -v --form POST http://keycloak.127.0.0.1.nip.io:8080/realms/example-realm/protocol/openid-connect/token \
+    grant_type=urn:ietf:params:oauth:grant-type:uma-ticket \
+    claim_token=$(jq -r .id_token joe-token.json) \
+    claim_token_format=http://openid.net/specs/openid-connect-core-1_0.html#IDToken \
+    client_id=example-client \
+    client_secret=example-secret \
+    audience=example-client \
+    permission=example-resource-no-permission#POST \
+    response_mode=decision
+
+
+
 # Delete realm
 http -v DELETE http://keycloak.127.0.0.1.nip.io:8080/admin/realms/example-realm \
   Authorization:"Bearer $(get_admin_token)"
@@ -196,7 +218,7 @@ http -v DELETE http://keycloak.127.0.0.1.nip.io:8080/admin/realms/example-realm 
 ### Test with some specific Keycloak version
 
 docker run --rm --publish 8080:8080 --env KC_HOSTNAME=keycloak.127.0.0.1.nip.io --env KC_BOOTSTRAP_ADMIN_USERNAME=admin --env KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:26.0.7 start-dev
-
+docker run --rm --publish 8080:8080 --env KC_HOSTNAME=keycloak.127.0.0.1.nip.io --env KEYCLOAK_ADMIN=admin --env KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:24.0.4 start-dev
 
 
 
@@ -211,3 +233,15 @@ http --form POST http://keycloak.127.0.0.1.nip.io:8080/realms/example-realm/prot
   client_id=example-client \
   client_secret=example-secret \
 | tee joe-token.json | jq .
+
+
+
+### Test UMA ticket grant
+http -v --form POST http://keycloak.127.0.0.1.nip.io:8080/realms/example-realm/protocol/openid-connect/token \
+    grant_type=urn:ietf:params:oauth:grant-type:uma-ticket \
+    claim_token=$(jq -r .access_token joe-token.json) \
+    claim_token_format=urn:ietf:params:oauth:token-type:jwt \
+    client_id=example-client \
+    client_secret=example-secret \
+    audience=example-client \
+    permission=example-resource#GET

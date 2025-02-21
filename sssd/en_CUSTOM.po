@@ -1,0 +1,8 @@
+msgid ""
+msgstr ""
+"Language: en_CUSTOM\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Your password has expired. You have %1$d grace login(s) remaining."
+msgstr "Your password has expired. You have %1$d grace login(s) remaining. Your access will be revoked."

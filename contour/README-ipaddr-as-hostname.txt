@@ -81,3 +81,48 @@ conn = context.wrap_socket(sock, server_hostname="1.2.3.4")
 conn.sendall(b"GET / HTTP/1.1\r\nHost: 1.2.3.4\r\n\r\n")
 print(conn.recv(4096).decode().replace("\r\n", "\n"))
 conn.close()
+
+
+
+
+# create HTTPProxy with IP address as hostname
+cat <<EOF | kubectl apply -f -
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver-with-ipaddr
+spec:
+  virtualhost:
+    fqdn: 127.0.0.101
+  routes:
+    - services:
+        - name: echoserver
+          port: 80
+EOF
+
+http https://127.0.0.101/foo
+
+
+kubectl create secret tls ingress --cert=certs/ingress.pem --key=certs/ingress-key.pem --dry-run=client -o yaml | kubectl apply -f -
+
+# create HTTPProxy with IP address as hostname
+cat <<EOF | kubectl apply -f -
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver-with-ipaddr
+spec:
+  virtualhost:
+    fqdn: 127.0.0.101
+    #fqdn: echoserver.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+  routes:
+    - services:
+        - name: echoserver
+          port: 80
+EOF
+
+http --verify=certs/external-root-ca.pem https://echoserver.127-0-0-101.nip.io/foo
+http --verify=false https://echoserver.127-0-0-101.nip.io/foo
+http --verify=false https://127.0.0.101/foo

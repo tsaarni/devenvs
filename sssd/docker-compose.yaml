@@ -26,6 +26,8 @@ services:
 
   vscode:
     build: docker/vscode
+    ports:
+      - "12222:22"
     volumes:
       - .:/workspace:cached
       - /home/tsaarni/work/openssh-portable:/workspace/source/openssh:cached

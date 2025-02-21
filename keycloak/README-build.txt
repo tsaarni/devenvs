@@ -223,3 +223,27 @@ cat > .vscode/settings.json <<EOF
     "java.jdt.ls.vmargs": "-Dlog.level=ALL -Djdt.ls.debug=true -Dmaven.plugin.validation=verbose -Xmx16G -Xms100m"
 }
 EOF
+
+
+
+*** Proto file generation errors
+
+[ERROR] Failed to execute goal org.infinispan.protostream:proto-schema-compatibility-maven-plugin:5.0.12.Final:proto-schema-compatibility-check (default) on project keycloak-model-infinispan: Execution default of goal org.infinispan.protostream:proto-schema-compatibility-maven-plugin:5.0.12.Final:proto-schema-compatibility-check failed: IPROTO000039: Incompatible schema changes:
+[ERROR] IPROTO000035: Field 'keycloak.State.LOGGING_OUT' number was changed from 1 to 3
+[ERROR] IPROTO000035: Field 'keycloak.State.LOGGED_OUT' number was changed from 2 to 1
+[ERROR] IPROTO000035: Field 'keycloak.State.LOGGED_OUT_UNCONFIRMED' number was changed from 3 to 2
+[ERROR] IPROTO000035: Field 'keycloak.ExecutionStatus.FAILED' number was changed from 0 to 4
+[ERROR] IPROTO000035: Field 'keycloak.ExecutionStatus.SUCCESS' number was changed from 1 to 7
+[ERROR] IPROTO000035: Field 'keycloak.ExecutionStatus.SETUP_REQUIRED' number was changed from 2 to 5
+[ERROR] IPROTO000035: Field 'keycloak.ExecutionStatus.ATTEMPTED' number was changed from 3 to 0
+[ERROR] IPROTO000035: Field 'keycloak.ExecutionStatus.SKIPPED' number was changed from 4 to 6
+[ERROR] IPROTO000035: Field 'keycloak.ExecutionStatus.CHALLENGED' number was changed from 5 to 1
+[ERROR] IPROTO000035: Field 'keycloak.ExecutionStatus.EVALUATED_TRUE' number was changed from 6 to 3
+[ERROR] IPROTO000035: Field 'keycloak.ExecutionStatus.EVALUATED_FALSE' number was changed from 7 to 2
+
+
+
+Workaround:
+
+rm ./model/infinispan/target/classes/proto/generated/KeycloakModelSchema.proto
+mvn -f model/infinispan/pom.xml clean install -DskipTests

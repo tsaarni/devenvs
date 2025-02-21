@@ -128,8 +128,10 @@ http http://localhost:9001/config_dump?include_eds | jq -C . | less
 http http://localhost:9001/config_dump| jq '.configs[].dynamic_active_clusters'
 http http://localhost:9001/config_dump| jq '.configs[].dynamic_route_configs'
 
-
-
+# enable debug loggind in live envoy server
+sudo curl --unix-socket  /proc/$(kindps contour envoy -o json | jq -r .[0].pids[0].pid)/root/admin/admin.sock -X POST http://localhost:9001/logging?level=debug
+sudo curl --unix-socket  /proc/$(kindps contour envoy -o json | jq -r .[0].pids[0].pid)/root/admin/admin.sock -X POST http://localhost:9001/logging?level=info
+sudo curl --unix-socket /proc/$(kindps contour envoy -o json | jq -r .[0].pids[0].pid)/root/admin/admin.sock -X POST http://localhost:9001/logging?config=debug
 
 
 
@@ -350,7 +352,7 @@ if CurrentSpecReport().Failed {
 # Run individual e2e test locally
 #
 
-make setup-kind-cluster 
+make setup-kind-cluster
 export CONTOUR_E2E_LOCAL_HOST=$(ifconfig | grep inet | grep -v '::' | grep -v 127.0.0.1 | head -n1 | awk '{print $2}')
 
 make install-contour-working
@@ -366,4 +368,4 @@ make cleanup-kind
 
 Install specific old version
 
-https://raw.githubusercontent.com/projectcontour/contour/v1.18.3/examples/render/contour.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/v1.18.3/examples/render/contour.yaml

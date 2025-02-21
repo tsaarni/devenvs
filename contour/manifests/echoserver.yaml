@@ -13,19 +13,23 @@ spec:
     spec:
       containers:
       - name: echoserver
-        image: gcr.io/k8s-staging-ingressconformance/echoserver:v20210922-cec7cf2
+        image: ghcr.io/tsaarni/tsaarni/echoserver:latest
         env:
-        - name: POD_NAME
+        - name: ENV_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: NAMESPACE
+        - name: ENV_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: ENV_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         ports:
         - name: http-api
-          containerPort: 3000
+          containerPort: 8080
         # readinessProbe:
         #   httpGet:
         #     path: /health

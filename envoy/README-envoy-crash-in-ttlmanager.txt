@@ -4,6 +4,21 @@
 # Reporter says crash is related to rotating Envoy client certificate (used towards backend clusters)
 
 
+[2024-07-04T10:37:37.006+02:00][14][warning][connection] [source/common/network/socket_option_impl.cc:33] Setting 41/67 option on socket failed: Protocol not available
+[2024-07-04T10:37:37.013+02:00][14][critical][backtrace] [./source/server/backtrace.h:104] Caught Segmentation fault, suspect faulting address 0x0
+
+
+41 (decimal) = IPPROTO_IPV6.
+67 (decimal) = IPV6_TCLASS 
+
+
+
+
+
+
+
+
+
 [2024-07-04T10:37:37.011+02:00][14][debug][config] [source/extensions/config_subscription/grpc/grpc_subscription_impl.cc:89] gRPC config for type.googleapis.com/envoy.config.route.v3.RouteConfigura
 tion accepted with 1 resources with version 10342e68-5534-400b-96dc-cdcf4111afcb
 [2024-07-04T10:37:37.013+02:00][14][critical][backtrace] [./source/server/backtrace.h:104] Caught Segmentation fault, suspect faulting address 0x0
