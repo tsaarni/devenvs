@@ -1,0 +1,11 @@
+subject: cn=server-ca
+---
+subject: cn=ejbca-server
+issuer: cn=server-ca
+sans:
+- DNS:ejbca.127.0.0.1.nip.io
+---
+subject: cn=managementCA
+---
+subject: cn=SuperAdmin
+issuer: cn=managementCA

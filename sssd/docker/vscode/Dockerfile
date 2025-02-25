@@ -16,8 +16,10 @@ RUN apt-get update && \
         git \
         iputils-ping \
         ldap-utils \
+        ltrace \
         less \
         silversearcher-ag \
+        strace \
         sudo \
         tini \
         vim-tiny
