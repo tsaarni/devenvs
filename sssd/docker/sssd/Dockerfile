@@ -41,6 +41,10 @@ RUN cd /source/pam-userenv && \
 RUN cd /source/getlogin-fake && \
     make
 
+RUN cd /source/pam-setlocale && \
+    make && \
+    make install
+
 RUN chown sssd:sssd /etc/sssd/sssd.conf && \
     chmod 600 /etc/sssd/sssd.conf && \
     mkdir -p /run/sssd /var/run/nscd/ && \

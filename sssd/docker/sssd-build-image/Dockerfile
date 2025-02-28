@@ -6,8 +6,10 @@ RUN apt-get update && \
         xz-utils \
         wget
 
-# SSSD build dependencies derived from the SSSD debian source package
+# SSSD build dependencies derived from the SSSD debian source package.
 # https://packages.debian.org/sid/sssd
+# Note that this is not the version of SSSD that we are building,
+# but the dependencies are likely the same so we use it as a reference.
 
 COPY files /
 

@@ -1,4 +1,5 @@
 auth   sufficient   pam_unix.so
+#auth   required     pam_setlocale.so
 auth   sufficient   pam_sss.so
 auth   required     pam_deny.so
 
