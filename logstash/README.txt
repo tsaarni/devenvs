@@ -8,6 +8,9 @@ rbenv install  # installs version defined in .ruby-version
 rbenv global jruby-9.3.4.0
 ruby --version
 
+./gradlew installDevelopmentGems
+./gradlew bootstrap
+
 
 
 # install some dependencies for jruby

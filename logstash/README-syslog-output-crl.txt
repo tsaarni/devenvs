@@ -68,7 +68,7 @@ bin/logstash -f ~/work/devenvs/logstash/configs/logstash-source-syslog.conf --lo
 
 export OSS=true
 export LOGSTASH_SOURCE=1
-export LOGSTASH_PATH=/home/tsaarni/work/logstash
+export LOGSTASH_PATH=~/work/logstash
 
 bundle install
 bundle exec rspec spec
