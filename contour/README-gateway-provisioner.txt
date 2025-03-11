@@ -22,7 +22,7 @@ http http://echoserver.127-0-0-101.nip.io
 
 
 
-
+kubectl apply -f manifests/gateway-provisioner-custom-contourconfig.yaml
 
 ####################
 #

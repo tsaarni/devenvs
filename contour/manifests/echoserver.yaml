@@ -5,11 +5,11 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: echoserver
+      app: echoserver
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: echoserver
+        app: echoserver
     spec:
       containers:
       - name: echoserver
@@ -27,9 +27,20 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: ENV_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: ENV_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+
         ports:
         - name: http-api
           containerPort: 8080
+        - name: https-api
+          containerPort: 8443
         # readinessProbe:
         #   httpGet:
         #     path: /health
@@ -45,7 +56,7 @@ spec:
     port: 80
     targetPort: http-api
   selector:
-    app.kubernetes.io/name: echoserver
+    app: echoserver
 ---
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
