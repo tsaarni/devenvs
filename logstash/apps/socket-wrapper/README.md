@@ -2,7 +2,7 @@
 
 ## Description
 
-This is a simple example of an `LD_PRELOAD`-based socket wrapper library that allows settubg the DSCP (Differentiated Services Code Point) value for outgoing packets.
+This is a simple example of an `LD_PRELOAD`-based socket wrapper library that allows setting the DSCP (Differentiated Services Code Point) value for outgoing packets.
 
 ## Usage
 
@@ -61,5 +61,9 @@ Then, run your application with and without the `LD_PRELOAD` environment variabl
 
 ### Notes
 
+- The example code wraps both `bind()` and `connect()` functions so DSCP will be set on both server and client sockets.
+  - To limit the impact to only client sockets, you can modify the code to only wrap `connect()`.
+  - To limit the impact further, in theory it could be possible to e.g. check the target address range and set DSCP only for certain ranges but it would require prior knowledge on the target address range - or some other criteria.
+- The DSCP value is hardcoded to `46` in the example code.
 - This method is compatible only with application runtimes that utilize the standard socket API calls provided by the C library.
 For instance, it will not work with Go, as Go does not depend on the C library.
