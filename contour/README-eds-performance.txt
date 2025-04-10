@@ -89,7 +89,7 @@ kubectl get pod -o wide
 
 
 
-
+# Patch the code for grpc-json-sniffer
 
 go get github.com/tsaarni/grpc-json-sniffer
 
@@ -120,6 +120,20 @@ index 90d0e330..56c66926 100644
                 )
         }
 
+
+
+
+# Add to .vscode/launch.json
+
+{
+        "version": "0.2.0",
+        "configurations": [
+                        "env": {
+                                "GRPC_JSON_SNIFFER_FILE": "grpc_capture.json",
+                                "GRPC_JSON_SNIFFER_ADDR": "localhost:8080",
+                        },
+     ]
+}
 
 
 

@@ -1,5 +1,9 @@
 
 
+# use major or major.minor as argument to pick the latest release from the release track
+apps/update-envoy.sh 1.30
+apps/update-go.sh 1
+
 https://projectcontour.io/resources/release-process/
 
 git remote add upstream git@github.com:projectcontour/contour.git
@@ -23,8 +27,8 @@ git push ${CONTOUR_UPSTREAM_REMOTE_NAME} release-${CONTOUR_RELEASE_VERSION_MAJOR
 git push ${CONTOUR_UPSTREAM_REMOTE_NAME} ${CONTOUR_RELEASE_VERSION}
 
 
-docker pull ghcr.io/projectcontour/contour:v1.30.1
-docker run --rm  ghcr.io/projectcontour/contour:v1.30.1 contour serve
+docker pull ghcr.io/projectcontour/contour:${CONTOUR_RELEASE_VERSION}
+docker run --rm  ghcr.io/projectcontour/contour:${CONTOUR_RELEASE_VERSION} contour serve
 
 
 
