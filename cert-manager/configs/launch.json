@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run cert-manager",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "cmd/controller",
+      "args": [
+        "--kubeconfig=${workspaceFolder}/kubeconfig-cert-manager-sa.yaml",
+        "--v=2",
+        "--cluster-resource-namespace=cert-manager",
+        "--leader-election-namespace=cert-manager",
+        "--acme-http01-solver-image=cert-manager-acmesolver-amd64:v1.17.0-196-g87138fb319c9f0-dirty",
+        "--kube-api-qps=9000",
+        "--kube-api-burst=9000",
+        "--concurrent-workers=200",
+        "--enable-gateway-api",
+        "--namespace=cert-manager",
+        //"--controllers=*,-clusterissuers,-certificatesigningrequests-issuer-selfsigned,-certificatesigningrequests-issuer-venafi,-certificatesigningrequests-issuer-vault,-certificatesigningrequests-issuer-acme,-certificatesigningrequests-issuer-ca",
+       // "--controllers=*,-clusterissuers,-certificaterequests-issuer-selfsigned",
+       //"--feature-gates=AdditionalCertificateOutputFormats=true,ExperimentalCertificateSigningRequestControllers=true,ExperimentalGatewayAPISupport=true,ServerSideApply=true,LiteralCertificateSubject=true,UseCertificateRequestBasicConstraints=true,NameConstraints=true,OtherNames=true",
+        "--max-concurrent-challenges=60",
+        "--dns01-recursive-nameservers-only=true",
+        "--dns01-recursive-nameservers=10.0.0.16:53"
+      ]
+    }
+  ]
+}

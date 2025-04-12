@@ -1,0 +1,43 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: self-signed-ca
+  namespace: cert-manager
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: internal-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: internal-ca
+  secretName: internal-ca-secret
+  issuerRef:
+    name: self-signed-ca
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: internal-ca-issuer
+  namespace: cert-manager
+spec:
+  ca:
+    secretName: internal-ca-secret
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: my-end-entity-cert
+  namespace: cert-manager
+spec:
+  commonName: my-end-entity
+  dnsNames:
+    - my-end-entity.example.com
+  secretName: my-end-entity-cert-secret
+  issuerRef:
+    name: internal-ca-issuer
+    kind: Issuer
