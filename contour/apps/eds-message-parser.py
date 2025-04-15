@@ -23,6 +23,11 @@ class EdsMessageParser:
         self.min_message_id = int(min_message_id)
 
     def process_discovery_request(self, data, message_id, stream_id, content):
+        if data.get("error") is not None:
+            if "context canceled" in data.get("error"):
+                self.rows.append([message_id, "DiscoveryRequest", stream_id, "<context canceled>", "", "<context canceled>f", ""])
+                return
+            raise ValueError(f"Unknown error in DiscoveryRequest: {content.get('error')}")
         version_info = content.get("versionInfo")
         resource_name = ", ".join(content.get("resourceNames"))
         response_nonce = content.get("responseNonce")
@@ -48,7 +53,7 @@ class EdsMessageParser:
             ]
             self.rows.append([message_id, "DiscoveryResponse", stream_id, version_info, nonce, cluster_name, ", ".join(addresses)])
         else:
-            raise ValueError("Cannot handle multiple resources in DiscoveryResponse")
+            raise ValueError("Cannot process multiple resources in DiscoveryResponse")
 
     def process(self, line):
         data = json.loads(line)
@@ -60,18 +65,11 @@ class EdsMessageParser:
         stream_id = data.get("stream_id")
         content = data.get("content", {})
 
-        try:
-            if data.get("method") == "/envoy.service.endpoint.v3.EndpointDiscoveryService/StreamEndpoints":
-                if data.get("message") == "envoy.service.discovery.v3.DiscoveryRequest":
-                    self.process_discovery_request(data, message_id, stream_id, content)
-                elif data.get("message") == "envoy.service.discovery.v3.DiscoveryResponse":
-                    self.process_discovery_response(data, message_id, stream_id, content)
-        except Exception as e:
-            print(f"Error {e} while processing line: {line}")
-            import traceback
-            traceback.print_exc()
-            print("Exiting")
-            exit(1)
+        if data.get("method") == "/envoy.service.endpoint.v3.EndpointDiscoveryService/StreamEndpoints":
+            if data.get("message") == "envoy.service.discovery.v3.DiscoveryRequest":
+                self.process_discovery_request(data, message_id, stream_id, content)
+            elif data.get("message") == "envoy.service.discovery.v3.DiscoveryResponse":
+                self.process_discovery_response(data, message_id, stream_id, content)
 
     def print_table(self):
         headers = ["Id", "Message", "Stream ID", "Version Info", "Nonce", "Resource Name", "Addresses"]
@@ -95,8 +93,16 @@ def main():
     table.set_min_message_id(min_message_id)
 
     with open(sys.argv[1], "r") as f:
-        for line in f:
-            table.process(line)
+        try:
+            for line in f:
+                table.process(line)
+        except Exception:
+            print(f"Error while processing line:\n{line}")
+            import traceback
+            traceback.print_exc()
+            print("Exiting")
+            exit(1)
+
 
     table.print_table()
 
