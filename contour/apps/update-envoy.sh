@@ -86,6 +86,7 @@ main() {
   echo "Update files (in main branch):"
   echo "  site/content/resources/compatibility-matrix.md"
   echo "  versions.yaml"
+  echo "  changelog (if doing bump in main branch)"
 }
 
 # Check if release track is provided

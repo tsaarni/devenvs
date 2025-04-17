@@ -33,7 +33,7 @@ getGolangImageHash() {
   local tag=${version#go}
   local url="https://registry.hub.docker.com/v2/repositories/library/golang/tags/$tag"
   local images=$(curl -s $url)
-  local imageHash=$(echo $images | jq -r '.images[] | select(.architecture == "amd64") | .digest' | head -n 1)
+  local imageHash=$(echo $images | jq -r '.digest' | head -n 1)
 
   if [ -z "$imageHash" ]; then
     echo "No amd64 image found for tag: $tag" >&2
