@@ -3,6 +3,24 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Debug Quarkus (keycloak-junit5)",
+            "request": "launch",
+            "mainClass": "org.keycloak.Keycloak",
+            "projectName": "keycloak-junit5",
+
+            "args": "start-dev --verbose",
+
+            // All configuration options:
+            // - https://www.keycloak.org/server/all-config
+            "env": {
+                "KC_HOSTNAME": "keycloak.127.0.0.1.nip.io",
+                "KC_BOOTSTRAP_ADMIN_USERNAME": "admin",
+                "KC_BOOTSTRAP_ADMIN_PASSWORD": "admin",
+                "KC_DB_URL": "jdbc:h2:./quarkus/dist/target/keycloakdb;NON_KEYWORDS=VALUE;AUTO_SERVER=TRUE",
+                //"KC_DB_URL": "jdbc:h2:file:${workspaceFolder}/quarkus/dist/target/keycloakdb;NON_KEYWORDS=VALUE;AUTO_SERVER=TRUE",
+            },
+        },        {
+            "type": "java",
             "name": "Debug Quarkus (IDELauncher)",
             "request": "launch",
             "mainClass": "org.keycloak.quarkus._private.IDELauncher",
@@ -34,24 +52,6 @@
                 // "KC_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
                 // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
                 // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
-            },
-        },
-        {
-            "type": "java",
-            "name": "Debug Quarkus (keycloak-junit5)",
-            "request": "launch",
-            "mainClass": "org.keycloak.Keycloak",
-            "projectName": "keycloak-junit5",
-
-            "args": "start-dev --verbose",
-
-            // All configuration options:
-            // - https://www.keycloak.org/server/all-config
-            "env": {
-                "KC_HOSTNAME": "keycloak.127.0.0.1.nip.io",
-                "KC_BOOTSTRAP_ADMIN_USERNAME": "admin",
-                "KC_BOOTSTRAP_ADMIN_PASSWORD": "admin",
-                //"KC_DB_URL": "jdbc:h2:file:${workspaceFolder}/quarkus/dist/target/keycloakdb;NON_KEYWORDS=VALUE;AUTO_SERVER=TRUE",
             },
         },
         {

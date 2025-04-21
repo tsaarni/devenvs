@@ -50,6 +50,7 @@ bin/logstash -f ~/work/devenvs/logstash/configs/logstash-source-syslog-ciphers.c
 
 # run rsyslog
 docker compose rm -f
+docker compose build rsyslog
 docker compose up rsyslog
 
 

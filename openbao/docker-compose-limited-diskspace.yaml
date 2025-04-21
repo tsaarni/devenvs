@@ -1,0 +1,73 @@
+services:
+
+  openbao-node-1:
+    image: ghcr.io/openbao/openbao:2.2.0
+    volumes:
+      - ./:/input:ro
+      - type: tmpfs
+        target: /data
+        tmpfs:
+          size: 5m
+    ports:
+      - "127.0.58.11:8200:8200"
+    environment:
+      - BAO_RAFT_NODE_ID=node-1
+      - BAO_API_ADDR=https://openbao.127-0-58-11.nip.io:8200
+      - BAO_CLUSTER_ADDR=https://openbao-node-1:8201
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          bao server -config /input/configs/openbao-cluster-config.hcl -log-level=debug
+          echo -e "\033[31mALERT: bao restarting...\033[0m"
+          sleep 2
+        done
+
+  openbao-node-2:
+    image: ghcr.io/openbao/openbao:2.2.0
+    volumes:
+      - ./:/input:ro
+      - type: tmpfs
+        target: /data
+        tmpfs:
+          size: 5m
+    ports:
+      - "127.0.58.12:8200:8200"
+    environment:
+      - BAO_RAFT_NODE_ID=node-2
+      - BAO_API_ADDR=https://openbao.127-0-58-12.nip.io:8200
+      - BAO_CLUSTER_ADDR=https://openbao-node-2:8201
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          bao server -config /input/configs/openbao-cluster-config.hcl -log-level=debug
+          echo -e "\033[31mALERT: bao restarting...\033[0m"
+          sleep 2
+        done
+
+  openbao-node-3:
+    image: ghcr.io/openbao/openbao:2.2.0
+    volumes:
+      - ./:/input:ro
+      - type: tmpfs
+        target: /data
+        tmpfs:
+          size: 5m
+    ports:
+      - "127.0.58.13:8200:8200"
+    environment:
+      - BAO_RAFT_NODE_ID=node-3
+      - BAO_API_ADDR=https://openbao.127-0-58-13.nip.io:8200
+      - BAO_CLUSTER_ADDR=https://openbao-node-3:8201
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          bao server -config /input/configs/openbao-cluster-config.hcl -log-level=debug
+          echo -e "\033[31mALERT: bao restarting...\033[0m"
+          sleep 2
+        done

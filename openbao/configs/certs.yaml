@@ -1,0 +1,14 @@
+subject: cn=ca
+---
+subject: cn=bao-server
+issuer: cn=ca
+sans:
+  - DNS:openbao-node-1
+  - DNS:openbao-node-2
+  - DNS:openbao-node-3
+  - DNS:openbao.127-0-58-11.nip.io
+  - DNS:openbao.127-0-58-12.nip.io
+  - DNS:openbao.127-0-58-13.nip.io
+---
+subject: cn=bao-client
+issuer: cn=ca

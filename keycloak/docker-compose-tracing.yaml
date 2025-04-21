@@ -1,0 +1,25 @@
+services:
+
+  keycloak:
+    # https://quay.io/repository/keycloak/keycloak?tab=tags
+    image: quay.io/keycloak/keycloak:26.1.1
+    command:
+      - start-dev
+      - --tracing-enabled=true
+    ports:
+      - "8080:8080"
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+
+      - KC_TRACING_ENDPOINT=http://jaeger:4317
+      - KC_TRACING_SERVICE_NAME=keycloak
+      - KC_TRACING_RESOURCE_ATTRIBUTES="k8s.namespace.name=default,k8s.pod.name=keycloak-pod,k8s.container.name=keycloak-container"
+
+  jaeger:
+    # https://www.jaegertracing.io/download/
+    image: jaegertracing/all-in-one:1.66.0
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4317:4317"    # OpenTelemetry gRPC
+      - "4318:4318"    # OpenTelemetry HTTP

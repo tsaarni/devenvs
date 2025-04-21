@@ -1,0 +1,183 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: keycloak
+spec:
+  virtualhost:
+    fqdn: keycloak.127-0-0-121.nip.io
+    tls:
+      secretName: keycloak-external
+  routes:
+    - services:
+        - name: keycloak
+          port: 8080
+      # Allow also HTTP to make REST API use easier for dev use
+      permitInsecure: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8443
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keycloak
+spec:
+  selector:
+    matchLabels:
+      app: keycloak
+  replicas: 1
+  serviceName: keycloak-headless
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+
+          ## Releases
+          ## https://www.keycloak.org/downloads-archive.html
+          ## https://quay.io/repository/keycloak/keycloak?tab=tags
+          image: quay.io/keycloak/keycloak:26.1.0
+          #imagePullPolicy: Never
+          command:
+            - /opt/keycloak/bin/kc.sh
+            - start
+          #  - --log-level=DEBUG
+
+          ## Options
+          ## https://www.keycloak.org/server/configuration
+          ## https://www.keycloak.org/server/containers
+          ## https://www.keycloak.org/server/all-config
+          env:
+            - name: KC_DB
+              value: "postgres"
+            # https://jdbc.postgresql.org/documentation/use/
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://postgres/keycloak?ssl=true&sslmode=verify-full&sslcert=/run/secrets/certs/keycloak-internal.pem&sslkey=/run/secrets/certs/keycloak-internal-key.der&sslrootcert=/run/secrets/certs/internal-ca.pem"
+
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
+
+            - name: KC_HOSTNAME
+              value: "keycloak.127-0-0-121.nip.io"
+
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: "admin"
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              value: "admin"
+            #- name: KC_HTTPS_CERTIFICATE_FILE
+            #  value: /run/secrets/certs/tls.crt
+            #- name: KC_HTTPS_CERTIFICATE_KEY_FILE
+            #  value: /run/secrets/certs/tls.key
+            #- name: KC_HTTPS_CIPHER_SUITES
+            #  value: TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+
+            - name: KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL
+              value: "info"
+
+            # https://www.keycloak.org/server/caching
+            - name: KC_CACHE
+              value: ispn
+            - name: KC_CACHE_STACK
+              # value: "kubernetes"
+              value: "jdbc-ping"
+            - name: JAVA_OPTS_APPEND
+            #  value: "-Djgroups.dns.query=keycloak-headless"
+            #  value: "-Djgroups.dns.query=keycloak-headless -javaagent:/opt/keycloak/providers/extract-tls-secrets-4.1.0-SNAPSHOT.jar=/tmp/wireshark-keys.log"
+              value: "-Djgroups.dns.query=keycloak-headless -javaagent:/opt/keycloak/providers/extract-tls-secrets-4.1.0-SNAPSHOT.jar=/tmp/wireshark-keys.log"
+
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health/live
+              port: 9000
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health/ready
+              port: 9000
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+
+          startupProbe:
+            failureThreshold: 600
+            httpGet:
+              path: /health/started
+              port: 9000
+              scheme: HTTP
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+            - containerPort: 9000
+              name: management
+              protocol: TCP
+
+          volumeMounts:
+            - mountPath: /run/secrets/certs/
+              name: certs
+              readOnly: true
+            - mountPath: /run/secrets/trusted/
+              name: trusted
+              readOnly: true
+            - mountPath: /opt/keycloak/providers
+              name: providers
+              readOnly: true
+
+      volumes:
+        - name: certs
+          secret:
+            optional: true
+            secretName: keycloak-internal
+        - name: trusted
+          secret:
+            optional: true
+            secretName: external-ca
+        - name: providers
+          hostPath:
+            path: /host/providers
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-jgroups-jdbc-ping
+data:
+  key: value
