@@ -4,11 +4,21 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <errno.h>
+#include <stdlib.h>
 
 int dscp = 46; // EF explicit forwarding.
 
-extern int __bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-extern int __connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+static int (*libc_bind)(int, const struct sockaddr *, socklen_t) = NULL;
+static int (*libc_connect)(int, const struct sockaddr *, socklen_t) = NULL;
+
+__attribute__((constructor)) void init(void) {
+  libc_bind = dlsym(RTLD_NEXT, "bind");
+  libc_connect = dlsym(RTLD_NEXT, "connect");
+  if (!libc_bind || !libc_connect) {
+    fprintf(stderr, "Failed to find original bind and connect symbols\n");
+    exit(1);
+  }
+}
 
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     if (addr->sa_family == AF_INET) {
@@ -34,7 +44,7 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
             }
         }
     }
-    return __bind(sockfd, addr, addrlen);
+    return libc_bind(sockfd, addr, addrlen);
 }
 
 int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
@@ -61,5 +71,5 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
         }
     }
 
-    return __connect(sockfd, addr, addrlen);
+    return libc_connect(sockfd, addr, addrlen);
 }
