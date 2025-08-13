@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run dev server",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": ["server", "-dev"],
+        },
+        {
+            "name": "Run with file backend",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": ["server", "-config=${env:HOME}/work/devenvs/openbao/configs/openbao-file-backend.hcl", "-log-level=debug"],
+        }
+    ]
+}

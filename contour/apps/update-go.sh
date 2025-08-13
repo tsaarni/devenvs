@@ -33,14 +33,14 @@ getGolangImageHash() {
   local tag=${version#go}
   local url="https://registry.hub.docker.com/v2/repositories/library/golang/tags/$tag"
   local images=$(curl -s $url)
-  local imageHash=$(echo $images | jq -r '.digest' | head -n 1)
+  local imageHash=$(echo $images | jq -r '.digest' | head -n 1)  # this is multi-arch image
 
   if [ -z "$imageHash" ]; then
-    echo "No amd64 image found for tag: $tag" >&2
+    echo "No image found for tag: $tag" >&2
     exit 1
   fi
 
-  echo $imageHash
+  echo "$imageHash"
 }
 
 # Function to update Go version in files.
