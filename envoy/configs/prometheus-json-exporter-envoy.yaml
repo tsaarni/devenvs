@@ -1,0 +1,21 @@
+modules:
+  envoy_memory:
+    metrics:
+      - name: envoy_memory_allocated
+        path: '{.allocated}'
+        help: Allocated memory
+      - name: envoy_memory_heap_size
+        path: '{.heap_size}'
+        help: Heap size
+      - name: envoy_memory_pageheap_free
+        path: '{.pageheap_free}'
+        help: Pageheap free
+      - name: envoy_memory_pageheap_unmapped
+        path: '{.pageheap_unmapped}'
+        help: Pageheap unmapped
+      - name: envoy_memory_total_physical_bytes
+        path: '{.total_physical_bytes}'
+        help: Total physical bytes
+      - name: envoy_memory_total_thread_cache
+        path: '{.total_thread_cache}'
+        help: Total thread cache

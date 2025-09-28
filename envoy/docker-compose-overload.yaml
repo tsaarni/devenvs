@@ -1,0 +1,56 @@
+services:
+  envoy:
+    image: envoyproxy/envoy:v1.35.3
+    depends_on:
+      - echoserver
+    volumes:
+      - ./configs/envoy-overload-manager.yaml:/etc/envoy/envoy.yaml:ro
+    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml --log-level info
+    ports:
+      - "8080:8080"
+      - "9901:9901"
+
+  echoserver:
+    image: ghcr.io/tsaarni/tsaarni/echoserver:latest
+
+  prometheus:
+    image: prom/prometheus:v3.6.0
+    depends_on:
+      - envoy
+    volumes:
+      - ./configs/prometheus-envoy-metrics.yml:/etc/prometheus/prometheus.yml:ro
+
+  # Dashboards: anonymous user cannot create dashboard (but can modify)
+  # https://github.com/grafana/grafana/issues/110828
+  grafana:
+    image: grafana/grafana:12.1.1
+    depends_on:
+      - prometheus
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./configs/grafana-datasource-prometheus.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+      - ./configs/grafana-dashboard-provisioning.yaml:/etc/grafana/provisioning/dashboards/envoy-provisioning.yaml:ro
+      - ./configs/grafana-dashboard-envoy.json:/etc/grafana/provisioning/dashboards/envoy-dashboard.json:ro
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.53.0
+    volumes:
+      - /:/rootfs:ro
+      - /run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    privileged: true
+
+  jsonexporter:
+    image: quay.io/prometheuscommunity/json-exporter:v0.7.0
+    command:
+      - --config.file=/etc/json_exporter/envoy.yaml
+    volumes:
+      - ./configs/prometheus-json-exporter-envoy.yaml:/etc/json_exporter/envoy.yaml:ro
