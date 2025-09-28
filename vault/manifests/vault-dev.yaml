@@ -1,0 +1,194 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: role-tokenreview-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: tokenreview
+    namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tokenreview
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+spec:
+  selector:
+    app: vault
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8200
+      targetPort: http
+      nodePort: 80
+    - name: https
+      protocol: TCP
+      port: 18200
+      targetPort: https
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault
+  labels:
+    app: vault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      containers:
+        - name: vault
+#          image: hashicorp/vault:1.20.3
+          image: hashicorp/vault:1.19.4
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "vault server -config=/config/vault.json"
+          env:
+            - name: VAULT_LOG_LEVEL
+              value: "debug"
+          ports:
+            - name: http
+              containerPort: 8200
+              protocol: TCP
+            - name: https
+              containerPort: 18200
+              protocol: TCP
+          volumeMounts:
+            - name: vault-config
+              mountPath: /config
+            - name: hostvolume
+              mountPath: /host
+              readOnly: true
+
+          #livenessProbe:
+          #  httpGet:
+          #    path: /v1/sys/health
+          #    port: 8200
+
+          #readinessProbe:
+          #  httpGet:
+          #    path: /v1/sys/health
+          #    port: 8200
+
+          #startupProbe:
+          #  failureThreshold: 600
+          #  httpGet:
+          #    path: /v1/sys/health
+          #    port: 8200
+
+        - name: vault-configurator
+          image: hashicorp/vault:1.20.3
+          command:
+            - "/bin/sh"
+            - "-x"
+            - /config/initialize.sh
+          env:
+            - name: VAULT_ADDR
+              value: "http://localhost:8200"
+          volumeMounts:
+            - name: vault-config
+              mountPath: /config
+            - name: hostvolume
+              mountPath: /host
+              readOnly: true
+            - name: unseal
+              mountPath: /unseal
+
+      serviceAccountName: tokenreview
+
+      volumes:
+        - name: vault-config
+          configMap:
+            name: vault-config
+        - name: hostvolume
+          hostPath:
+            path: /host
+        - name: unseal
+          emptyDir:
+            medium: Memory
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+data:
+  initialize.sh: |
+    # Wait for Vault to be up.
+    while true; do
+      vault status
+      status_code=$?
+      if [ "$status_code" -eq 2 ]; then
+        break
+      fi
+      echo "Waiting for Vault to be ready... (status code: $status_code)"
+      sleep 1
+    done
+
+    # Initialize.
+    vault operator init -key-shares=1 -key-threshold=1 -format=json > /unseal/init.json
+
+    # Extract unseal key and root token.
+    UNSEAL_KEY=$(awk '/"unseal_keys_b64"/ {getline; gsub(/[", ]/, "", $0); print $0}' /unseal/init.json)
+    ROOT_TOKEN=$(awk -F'"' '/"root_token"/ {print $4; exit}' /unseal/init.json)
+
+    # Unseal.
+    vault operator unseal "$UNSEAL_KEY"
+
+    export VAULT_TOKEN="$ROOT_TOKEN"
+
+    # Enable kubernetes auth method.
+    vault auth enable kubernetes
+    vault write auth/kubernetes/config kubernetes_host=https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT
+
+    # Enable kv1 secrets engine.
+    vault secrets enable --path=secretv1 kv
+
+
+    # Sleep forever.
+    while true; do
+      sleep 999999999
+    done
+
+  vault.json: |
+    {
+      "disable_mlock": true,
+      "api_addr": "https://vault:8200",
+      "ui": true,
+      "listener": {
+        "tcp": {
+          "address": "0.0.0.0:8200",
+          "tls_disable": true,
+          "telemetry": {
+            "unauthenticated_metrics_access": true
+          }
+        },
+
+      },
+      "storage": {
+        "file": {
+          "path": "/tmp"
+        }
+      },
+      "telemetry": {
+        "prefix_filter": [ "+vault" ],
+        "prometheus_retention_time": "1h",
+        "disable_hostname": true
+      }
+    }
