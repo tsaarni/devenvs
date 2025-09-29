@@ -17,7 +17,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": 1,
   "links": [],
   "panels": [
@@ -96,31 +96,15 @@
                 "value": "percentunit"
               },
               {
-                "id": "custom.axisSoftMax",
-                "value": 1
-              },
-              {
-                "id": "custom.gradientMode",
-                "value": "opacity"
+                "id": "custom.showPoints",
+                "value": "never"
               },
               {
                 "id": "custom.fillOpacity",
-                "value": 100
-              },
-              {
-                "id": "custom.showPoints",
-                "value": "never"
-              },
-              {
-                "id": "custom.showPoints",
-                "value": "never"
+                "value": 19
               },
               {
                 "id": "custom.lineWidth",
-                "value": 0
-              },
-              {
-                "id": "custom.axisSoftMin",
                 "value": 0
               }
             ]
@@ -128,10 +112,126 @@
         ]
       },
       "gridPos": {
-        "h": 14,
+        "h": 9,
         "w": 16,
         "x": 0,
         "y": 0
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum(envoy_memory_heap_size-envoy_memory_pageheap_unmapped-envoy_memory_pageheap_free)",
+          "legendFormat": "used_memory",
+          "range": true,
+          "refId": "used_memory"
+        },
+        {
+          "datasource": {
+            "name": "Expression",
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "($used_memory/$max_heap_size_bytes)",
+          "hide": false,
+          "refId": "pressure",
+          "type": "math"
+        },
+        {
+          "datasource": {
+            "name": "Expression",
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "20971520",
+          "hide": false,
+          "refId": "max_heap_size_bytes",
+          "type": "math"
+        }
+      ],
+      "title": "Memory pressure",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P1809F7CD0C75ACF3"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 16,
+        "x": 0,
+        "y": 9
       },
       "id": 1,
       "options": {
@@ -210,7 +310,7 @@
           "hide": false,
           "includeNullMetadata": true,
           "instant": false,
-          "legendFormat": "pageheap_unmapped",
+          "legendFormat": "pageheap_free",
           "range": true,
           "refId": "pageheap_free",
           "useBackend": false
@@ -265,33 +365,9 @@
           "range": true,
           "refId": "container_memory_rss",
           "useBackend": false
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "P1809F7CD0C75ACF3"
-          },
-          "editorMode": "code",
-          "expr": "sum(envoy_memory_heap_size-envoy_memory_pageheap_unmapped-envoy_memory_pageheap_free)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "used_memory",
-          "range": true,
-          "refId": "used_memory"
-        },
-        {
-          "datasource": {
-            "name": "Expression",
-            "type": "__expr__",
-            "uid": "__expr__"
-          },
-          "expression": "($used_memory/20971520)",
-          "hide": false,
-          "refId": "pressure",
-          "type": "math"
         }
       ],
-      "title": "Memory",
+      "title": "Memory stats",
       "type": "timeseries"
     },
     {
@@ -356,9 +432,9 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 16,
+        "w": 8,
         "x": 0,
-        "y": 14
+        "y": 19
       },
       "id": 2,
       "options": {
@@ -376,17 +452,6 @@
       },
       "pluginVersion": "12.1.1",
       "targets": [
-        {
-          "disableTextWrap": false,
-          "editorMode": "code",
-          "expr": "sum(increase(\n  envoy_server_total_connections[$__interval]\n))",
-          "fullMetaSearch": false,
-          "includeNullMetadata": true,
-          "legendFormat": "total_connections",
-          "range": true,
-          "refId": "total_connections",
-          "useBackend": false
-        },
         {
           "datasource": {
             "type": "prometheus",
@@ -423,7 +488,7 @@
           "useBackend": false
         }
       ],
-      "title": "HTTP Requests/Responses (per second)",
+      "title": "HTTP Requests/Responses (delta)",
       "type": "timeseries"
     },
     {
@@ -505,7 +570,7 @@
               },
               {
                 "id": "custom.fillOpacity",
-                "value": 14
+                "value": 26
               },
               {
                 "id": "custom.lineWidth",
@@ -520,10 +585,10 @@
         ]
       },
       "gridPos": {
-        "h": 7,
-        "w": 16,
-        "x": 0,
-        "y": 21
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 19
       },
       "id": 3,
       "options": {
@@ -544,7 +609,7 @@
         {
           "editorMode": "code",
           "expr": "sum(increase(\n  envoy_overload_envoy_overload_actions_shrink_heap_shrink_count[$__interval]\n))",
-          "legendFormat": "shrink_count (attempt)",
+          "legendFormat": "shrink_count (overload action)",
           "range": true,
           "refId": "A"
         },
@@ -560,7 +625,7 @@
           "hide": false,
           "includeNullMetadata": true,
           "instant": false,
-          "legendFormat": "released_by_timer (success)",
+          "legendFormat": "released_by_timer (memory allocator manager)",
           "range": true,
           "refId": "B",
           "useBackend": false
@@ -583,7 +648,7 @@
           "useBackend": false
         }
       ],
-      "title": "Memory unmap (per second)",
+      "title": "Memory unmap (delta)",
       "type": "timeseries"
     }
   ],
