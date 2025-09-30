@@ -12,6 +12,8 @@ services:
 
   echoserver:
     image: ghcr.io/tsaarni/tsaarni/echoserver:latest
+    environment:
+      - LOG_LEVEL=info
 
   prometheus:
     image: prom/prometheus:v3.6.0
@@ -37,6 +39,7 @@ services:
       - ./configs/grafana-dashboard-provisioning.yaml:/etc/grafana/provisioning/dashboards/envoy-provisioning.yaml:ro
       - ./configs/grafana-dashboard-envoy.json:/etc/grafana/provisioning/dashboards/envoy-dashboard.json:ro
 
+  # https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md
   cadvisor:
     image: ghcr.io/google/cadvisor:v0.53.0
     volumes:

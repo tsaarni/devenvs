@@ -1,5 +1,29 @@
 
 
+
+
+
+bazel/setup_clang.sh /opt/llvm/
+
+
+# Configure the build.
+cat > user.bazelrc <<EOF
+build --config=clang
+build --disk_cache=~/.cache/bazel-build-cache
+--local_ram_resources=20000
+EOF
+
+bazel build -c fastbuild //source/exe:envoy-static
+
+
+
+# Generate launch.json for vscode
+##  from envoy/tools/vscode/README.md
+tools/vscode/generate_debug_config.py //source/exe:envoy-static --args "-c envoy.yaml"
+
+
+
+
 # copy vscode settings
 mkdir -p .vscode
 cp ~/work/devenvs/envoy/configs/launch.json .vscode/

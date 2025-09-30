@@ -157,7 +157,7 @@
             "type": "__expr__",
             "uid": "__expr__"
           },
-          "expression": "20971520",
+          "expression": "2147483648",
           "hide": false,
           "refId": "max_heap_size_bytes",
           "type": "math"
