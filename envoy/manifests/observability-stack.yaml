@@ -1,0 +1,187 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+spec:
+  type: NodePort
+  ports:
+    - port: 3000
+      nodePort: 3000
+      protocol: TCP
+  selector:
+    app: grafana
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:12.1.1
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              value: "Admin"
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+            - name: GF_AUTH_BASIC_ENABLED
+              value: "false"
+          volumeMounts:
+            - name: host
+              mountPath: /etc/grafana/provisioning/datasources/datasource.yaml
+              subPath: configs/grafana-datasource-prometheus.yaml
+              readOnly: true
+            - name: host
+              mountPath: /etc/grafana/provisioning/dashboards/envoy-provisioning.yaml
+              subPath: configs/grafana-dashboard-provisioning.yaml
+              readOnly: true
+            - name: host
+              mountPath: /etc/grafana/provisioning/dashboards/envoy-dashboard.json
+              subPath: configs/grafana-dashboard-envoy.json
+              readOnly: true
+      volumes:
+        - name: host
+          hostPath:
+            path: /host
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+spec:
+  type: NodePort
+  ports:
+    - port: 9090
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app: prometheus
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v3.6.0
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: host
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: configs/prometheus-envoy-metrics.yml
+              readOnly: true
+      volumes:
+        - name: host
+          hostPath:
+            path: /host
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jsonexporter
+spec:
+  ports:
+    - port: 7979
+  selector:
+    app: jsonexporter
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jsonexporter
+spec:
+  selector:
+    matchLabels:
+      app: jsonexporter
+  template:
+    metadata:
+      labels:
+        app: jsonexporter
+    spec:
+      containers:
+        - name: jsonexporter
+          image: quay.io/prometheuscommunity/json-exporter:v0.7.0
+          args:
+            - --config.file=/etc/json_exporter/envoy.yaml
+          volumeMounts:
+            - name: host
+              mountPath: /etc/json_exporter/envoy.yaml
+              subPath: configs/prometheus-json-exporter-envoy.yaml
+              readOnly: true
+      volumes:
+        - name: host
+          hostPath:
+            path: /host
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cgroup-container-exporter
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: cgroup-container-exporter
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cgroup-container-exporter
+spec:
+  selector:
+    matchLabels:
+      app: cgroup-container-exporter
+  template:
+    metadata:
+      labels:
+        app: cgroup-container-exporter
+    spec:
+      containers:
+        - name: cgroup-container-exporter
+          image: ghcr.io/tsaarni/cgroup-container-exporter:latest
+          command:
+            - /cgroup-container-exporter
+          args:
+            - --host-path=/host
+            - --mode=kubernetes
+          volumeMounts:
+            - name: host-cgroup
+              mountPath: /host/sys/fs/cgroup
+              readOnly: true
+            - name: containerd-sock
+              mountPath: /run/containerd/containerd.sock
+              readOnly: true
+      volumes:
+        - name: host-cgroup
+          hostPath:
+            path: /sys/fs/cgroup
+            type: Directory
+        - name: containerd-sock
+          hostPath:
+            path: /run/containerd/containerd.sock
+            type: Socket

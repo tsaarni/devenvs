@@ -1,5 +1,15 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    apiServer:
+      extraArgs:
+        # change port range so that we can bind privileged ports with NodePort
+        # this is needed so that we can use default http and https ports when connecting services
+        # with clients such as httpie without having to override HTTP header
+        # "Host: host1.external.com:31390" with "Host: host1.external.com"
+        "service-node-port-range": "80-32767"
 nodes:
 - role: control-plane
 - role: worker
@@ -10,3 +20,10 @@ nodes:
   - containerPort: 443
     hostPort: 443
     listenAddress: "127.0.0.135"
+  - containerPort: 3000
+    hostPort: 3000
+    listenAddress: "127.0.0.135"
+  extraMounts:
+   - hostPath: ./
+     containerPath: /host
+     readOnly: true

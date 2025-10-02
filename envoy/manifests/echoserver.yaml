@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver
+spec:
+  selector:
+    matchLabels:
+      app: echoserver
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: echoserver
+    spec:
+      containers:
+      - name: echoserver
+        image: ghcr.io/tsaarni/tsaarni/echoserver:latest
+        env:
+        - name: ENV_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: ENV_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: ENV_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: ENV_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: ENV_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        ports:
+        - name: http-api
+          containerPort: 8080
+        - name: https-api
+          containerPort: 8443
+---
+# Headless so Envoy can be configured with STRICT_DNS service discovery instead of specifying endpoints for the cluster.
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver
+spec:
+  clusterIP: None
+  selector:
+    app: echoserver

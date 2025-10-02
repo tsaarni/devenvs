@@ -40,6 +40,7 @@ services:
       - ./configs/grafana-dashboard-envoy.json:/etc/grafana/provisioning/dashboards/envoy-dashboard.json:ro
 
   # https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md
+  # https://github.com/google/cadvisor/blob/master/container/libcontainer/handler.go
   cadvisor:
     image: ghcr.io/google/cadvisor:v0.53.0
     volumes:
@@ -57,3 +58,13 @@ services:
       - --config.file=/etc/json_exporter/envoy.yaml
     volumes:
       - ./configs/prometheus-json-exporter-envoy.yaml:/etc/json_exporter/envoy.yaml:ro
+
+  cgroup-container-exporter:
+    image: ghcr.io/tsaarni/cgroup-container-exporter:latest
+    entrypoint:
+      - /cgroup-container-exporter
+      - --host-path=/host
+      - --mode=docker
+    volumes:
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro

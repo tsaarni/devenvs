@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: envoy
+spec:
+  selector:
+    matchLabels:
+      app: envoy
+  template:
+    metadata:
+      labels:
+        app: envoy
+    spec:
+      containers:
+        - name: envoy
+          image: envoyproxy/envoy:v1.35.3
+          command: ["/bin/sh"]
+          args:
+          - "-c"
+          - "envoy -c /host/configs/envoy-overload-manager.yaml --log-level debug"
+          ports:
+            - containerPort: 8080
+              hostPort: 80
+              name: http
+              protocol: TCP
+          volumeMounts:
+            - name: host
+              mountPath: /host
+          resources:
+            requests:
+              memory: "128Mi"
+            limits:
+              memory: "256Mi"
+      volumes:
+        - name: host
+          hostPath:
+            path: /host
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy
+spec:
+  ports:
+    - port: 9901
+      protocol: TCP
+  selector:
+    app: envoy
