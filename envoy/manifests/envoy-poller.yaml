@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: envoy-poller
+spec:
+  containers:
+  - name: poller
+    image: python:3.13-alpine
+    env:
+      - name: TZ
+        value: Europe/Helsinki
+    command:
+      - python3
+      - -u
+      - -c
+      - |
+        import http.client
+        import time
+        last = None
+        while True:
+            try:
+                conn = http.client.HTTPConnection("envoy", 8080)
+                conn.request("GET", "/status/200")
+                response = conn.getresponse()
+                status = response.status
+                now = time.strftime("%Y-%m-%d %H:%M:%S %z", time.localtime())
+                if status != last:
+                    print(f"{now} status changed to {status}")
+                    if 500 <= status < 600:
+                        print(response.read().decode())
+                    last = status
+                conn.close()
+                time.sleep(1)
+            except Exception as e:
+                print(f"Error: {e}")
+                last = None
+                time.sleep(2)

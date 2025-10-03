@@ -88,48 +88,32 @@
             },
             "properties": [
               {
-                "id": "custom.fillOpacity",
-                "value": 11
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 0
-              },
-              {
-                "id": "custom.pointSize",
-                "value": 1
-              }
-            ]
-          },
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "cgroup_memory_max_bytes",
-                  "cgroup_memory_current_bytes"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
+                "id": "custom.lineStyle",
                 "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
                 }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 16,
         "x": 0,
         "y": 0
@@ -223,12 +207,15 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -245,14 +232,10 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
-          "unit": "decbytes"
+          "unit": "bytes"
         },
         "overrides": [
           {
@@ -275,21 +258,48 @@
               },
               {
                 "id": "custom.fillOpacity",
-                "value": 19
+                "value": 38
               },
               {
                 "id": "custom.lineWidth",
                 "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": 0
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.95
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds",
+                  "seriesBy": "last"
+                }
+              },
+              {
+                "id": "custom.gradientMode",
+                "value": "scheme"
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 9,
+        "h": 7,
         "w": 16,
         "x": 0,
-        "y": 8
+        "y": 7
       },
       "id": 4,
       "options": {
@@ -397,15 +407,31 @@
               }
             ]
           },
-          "unit": "decbytes"
+          "unit": "bytes"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pageheap_free"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FF780A",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 10,
+        "h": 7,
         "w": 16,
         "x": 0,
-        "y": 17
+        "y": 14
       },
       "id": 1,
       "options": {
@@ -583,7 +609,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "bool_yes_no"
         },
         "overrides": [
           {
@@ -626,7 +653,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 27
+        "y": 21
       },
       "id": 2,
       "options": {
@@ -649,38 +676,40 @@
             "type": "prometheus",
             "uid": "P1809F7CD0C75ACF3"
           },
-          "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "sum(increase(\n  envoy_listener_http_downstream_rq_xx{envoy_response_code_class=\"5\"}[$__interval]\n))",
-          "fullMetaSearch": false,
+          "expr": "sum(increase(envoy_listener_http_downstream_rq_xx{envoy_response_code_class=\"5\"}[$__interval])) > bool 0",
           "hide": false,
-          "includeNullMetadata": true,
           "instant": false,
           "legendFormat": "5xx",
           "range": true,
-          "refId": "5xx",
-          "useBackend": false
+          "refId": "A"
         },
         {
           "datasource": {
             "type": "prometheus",
             "uid": "P1809F7CD0C75ACF3"
           },
-          "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "sum(increase(\n  envoy_listener_http_downstream_rq_xx{envoy_response_code_class=\"2\"}[$__interval]\n))",
-          "fullMetaSearch": false,
+          "expr": "sum(increase(envoy_listener_http_downstream_rq_xx{envoy_response_code_class=\"2\"}[$__interval])) > bool 0",
           "hide": false,
-          "includeNullMetadata": true,
           "instant": false,
-          "interval": "",
           "legendFormat": "2xx",
           "range": true,
-          "refId": "2xx",
-          "useBackend": false
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P1809F7CD0C75ACF3"
+          },
+          "expr": "",
+          "hide": false,
+          "instant": false,
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "HTTP Requests/Responses (delta)",
+      "title": "HTTP responses",
       "type": "timeseries"
     },
     {
@@ -711,12 +740,15 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 1,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "always",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -739,7 +771,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "bool_yes_no"
         },
         "overrides": [
           {
@@ -754,33 +787,66 @@
               },
               {
                 "id": "unit",
-                "value": "Bps"
+                "value": "binBps"
               },
               {
                 "id": "custom.drawStyle",
-                "value": "bars"
+                "value": "line"
               },
               {
                 "id": "custom.fillOpacity",
-                "value": 26
+                "value": 49
               },
               {
                 "id": "custom.lineWidth",
                 "value": 0
               },
               {
-                "id": "custom.barWidthFactor",
-                "value": 0.8
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "shrink_count (overload action)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "released_by_timer (memory allocator manager)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 8,
         "x": 8,
-        "y": 27
+        "y": 21
       },
       "id": 3,
       "options": {
@@ -800,7 +866,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(increase(\n  envoy_overload_envoy_overload_actions_shrink_heap_shrink_count[$__interval]\n))",
+          "expr": "sum(increase(envoy_overload_envoy_overload_actions_shrink_heap_shrink_count[$__interval])) > bool 0",
           "legendFormat": "shrink_count (overload action)",
           "range": true,
           "refId": "A"
@@ -812,7 +878,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "sum(increase(\n  envoy_tcmalloc_released_by_timer[$__interval]\n))  ",
+          "expr": "sum(increase(envoy_tcmalloc_released_by_timer[$__interval])) > bool 0",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -829,7 +895,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "sum(increase(\n  envoy_memory_pageheap_unmapped[$__interval]\n))  ",
+          "expr": "rate(\n  envoy_memory_pageheap_unmapped[$__interval]\n) ",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -840,7 +906,7 @@
           "useBackend": false
         }
       ],
-      "title": "Memory unmap (delta)",
+      "title": "Memory unmap ",
       "type": "timeseries"
     }
   ],

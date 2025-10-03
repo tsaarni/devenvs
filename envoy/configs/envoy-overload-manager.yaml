@@ -40,18 +40,18 @@ static_resources:
               typed_config:
                 "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                 stat_prefix: ingress_http
-                access_log:
-                  - name: envoy.access_loggers.file
-                    filter:
-                      status_code_filter:
-                        comparison:
-                          op: GE
-                          value:
-                            default_value: 500
-                            runtime_key: null
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
-                      path: /dev/stdout
+#                access_log:
+#                  - name: envoy.access_loggers.file
+#                    filter:
+#                      status_code_filter:
+#                        comparison:
+#                          op: GE
+#                          value:
+#                            default_value: 500
+#                            runtime_key: null
+#                    typed_config:
+#                      "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+#                      path: /dev/stdout
                 route_config:
                   name: local_route
                   virtual_hosts:

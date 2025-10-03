@@ -10,10 +10,22 @@ bazel/setup_clang.sh /opt/llvm/
 cat > user.bazelrc <<EOF
 build --config=clang
 build --disk_cache=~/.cache/bazel-build-cache
---local_ram_resources=20000
+--local_cpu_resources=HOST_CPUS-4
+--local_ram_resources=HOST_RAM*0.3
 EOF
 
+
 bazel build -c fastbuild //source/exe:envoy-static
+
+bazel build -c fastbuild //source/exe:envoy-static --define tcmalloc=gperftools
+
+# The binary will be stored in bazel-bin/source/exe/envoy-static
+
+
+
+# Generate compilation database
+cp .vscode/tasks_example.json .vscode/tasks.json
+# run: "Tasks: Run Task" and select "Refresh Compilation Database Exclude Contrib"
 
 
 
