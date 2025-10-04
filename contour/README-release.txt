@@ -144,8 +144,11 @@ kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
 # check that pod is up
 kubectl -n projectcontour get pod
 
-# check image version
+# check contour version
 kubectl -n projectcontour exec -it $(kubectl -n projectcontour get pod -l app=contour -o jsonpath='{.items[0].metadata.name}') -- contour version
+
+# check envoy version
+kubectl -n projectcontour exec -it $(kubectl -n projectcontour get pod -l app=envoy -o jsonpath='{.items[0].metadata.name}') -c envoy -- envoy --version
 
 # check that traffic works
 kubectl apply -f manifests/echoserver.yaml
@@ -166,6 +169,7 @@ New Contour patch versions 1.30.1, 1.29.3 and 1.28.7 have been released! They in
 
 https://groups.google.com/g/project-contour
 
+# NOTE NOTE NOTE NOTE !!!!!!!!!!!!!!!!
 # Pick project-contour as the sender
 
 

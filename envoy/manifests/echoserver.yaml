@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: echoserver
-        image: ghcr.io/tsaarni/tsaarni/echoserver:latest
+        image: ghcr.io/tsaarni/echoserver:latest
         env:
         - name: ENV_POD_NAME
           valueFrom:

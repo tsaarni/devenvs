@@ -1,5 +1,5 @@
 tls:
   envoy-client-certificate:
-#    name: envoy-client-cert
-    name: untrusted-client
+    name: envoy-client-cert
+#    name: untrusted-client
     namespace: projectcontour

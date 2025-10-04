@@ -34,4 +34,4 @@ services:
 
   echoserver:
     # https://github.com/kubernetes-sigs/ingress-controller-conformance/tree/master/images/echoserver
-    image: ghcr.io/tsaarni/tsaarni/echoserver:latest
+    image: ghcr.io/tsaarni/echoserver:latest

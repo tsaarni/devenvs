@@ -123,3 +123,11 @@ unmapped = tcmalloc.pageheap_unmapped_bytes
 
 used = physical - unmapped
 pressure = used / configured_max_heap_size_bytes
+
+
+or in other words
+
+
+(heap_size - pageheap_unmapped) / max_heap_size
+
+

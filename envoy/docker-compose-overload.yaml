@@ -11,7 +11,7 @@ services:
       - "9901:9901"
 
   echoserver:
-    image: ghcr.io/tsaarni/tsaarni/echoserver:latest
+    image: ghcr.io/tsaarni/echoserver:latest
     environment:
       - LOG_LEVEL=info
 

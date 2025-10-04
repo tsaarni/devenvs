@@ -203,7 +203,7 @@ kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
 
 
 make container
-docker tag ghcr.io/projectcontour/contour:$(git rev-parse --short HEAD) localhost/contour:latest
+docker tag ghcr.io/projectcontour/contour:$(git describe --tags --exact-match 2>/dev/null || git rev-parse --short=8 --verify HEAD) localhost/contour:latest
 kind load docker-image localhost/contour:latest --name contour
 
 

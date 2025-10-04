@@ -66,11 +66,22 @@ sudo make install
 
 
 # run nslcd in foreground
+
+# Since nslcd calls clearenv(), setting locale with LANGUAGE does not work
+# Also, just setting LC_MESSAGES does not work unless complete working locale is installed on the system
+# So, install finnish locales so that LC_ALL works
+sudo apt update && sudo apt install -y language-pack-fi
+
 LC_ALL=fi_FI.UTF-8 sudo /usr/sbin/nslcd -d
+LC_MESSAGES=fi_FI.UTF-8 sudo /usr/sbin/nslcd -d
 
 
 # start another terminal and run sshd in foreground
 sudo mkdir -p /run/sshd
+
+# For sshd which does not call clearenv() this works:
+export LC_MESSAGES=en_US.UTF-8
+export LANGUAGE=fi
 
 # kbd interactive: no
 while true; do sudo /usr/sbin/sshd -D -d -f /etc/ssh/sshd_config_kdb_interactive_no; done
@@ -84,10 +95,17 @@ while true; do sudo /usr/sbin/sshd -D -d -f /etc/ssh/sshd_config_kdb_interactive
 sshpass -p joe ssh joe@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "echo Hello world!"
 
 # test password change
-ssh mustchange@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+#  (nykyinen) LDAP-salasana:
+sshpass -p mustchange ssh mustchange@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+
 
 # test expired password
-ssh expired@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+#  Salasana vanhentunut, 4 kirjautumista jäljellä
+sshpass -p expired ssh expired@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+
+
+# to reset grace logins for expired user
+docker restart nss-pam-ldapd-openldap-1
 
 
 
@@ -236,10 +254,7 @@ msgunfmt /usr/share/locale/fi/LC_MESSAGES/nss-pam-ldapd.mo
 
 
 
-gcc -o test test.c && LANG=fi_FI.UTF-8 ./test
-gcc -o test test.c && LANG=fi_FI.UTF-8 strace ./test 2&1 |grep open
-
-
+cat >test.c <<EOF
 #include <libintl.h>
 #include <locale.h>
 #include <stdio.h>
@@ -249,6 +264,7 @@ int main() {
   setlocale(LC_ALL, "");
   bindtextdomain("nss-pam-ldapd", "/usr/share/locale");
   textdomain("nss-pam-ldapd");
+  printf("Using locale %s\n", setlocale(LC_ALL, NULL));
 
   printf(gettext("(current) LDAP Password: "));
   printf("\n");
@@ -258,3 +274,10 @@ int main() {
 
   return 0;
 }
+EOF
+
+gcc -o test test.c && LC_MESSAGES=en_US.UTF-8 LANGUAGE=fi ./test
+gcc -o test test.c && LC_MESSAGES=en_US.UTF-8 LANGUAGE=fi strace ./test 2>&1 |grep open
+
+
+

@@ -6,7 +6,7 @@ admin:
       port_value: 9901
 
 memory_allocator_manager:
-  bytes_to_release: 10240
+  bytes_to_release: 1000000
 
 overload_manager:
   refresh_interval: 0.25s

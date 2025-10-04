@@ -21,6 +21,8 @@ kubectl port-forward envoy-0 9901:9901
 
 http http://localhost:9901/stats/prometheus
 http http://localhost:9901/memory
+
+# https://github.com/google/tcmalloc/blob/master/docs/stats.md
 http http://localhost:9901/memory/tcmalloc
 
 
@@ -108,3 +110,26 @@ EOF
 sudo pmap -x $(pidof envoy)
 sudo bash -c 'while true; do date; pmap -X $(pidof envoy) | grep tcmalloc; sleep 3; done'
 sudo ~/wiki/files/bin/parse_smaps.py -p envoy
+
+
+
+
+
+
+# defaults on ubuntu 24.04.3 LTS
+
+cat /sys/kernel/mm/transparent_hugepage/enabled /sys/kernel/mm/transparent_hugepage/defrag /sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none
+
+'/sys/kernel/mm/transparent_hugepage/enabled:': No such file or directory
+/sys/kernel/mm/transparent_hugepage/defrag:: No such file or directory
+'/sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none:': No such file or directory
+
+cat /proc/sys/vm/overcommit_memory
+1
+
+# change according to
+# https://google.github.io/tcmalloc/tuning.html
+
+sudo bash -c "echo always >/sys/kernel/mm/transparent_hugepage/enabled"
+sudo bash -c "echo defer+madvise >/sys/kernel/mm/transparent_hugepage/defrag"
+sudo bash -c "echo 0 >/sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none"

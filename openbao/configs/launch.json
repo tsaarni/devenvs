@@ -6,8 +6,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}",
-            "args": ["server", "-dev"],
+            "args": ["server", "-dev", "-dev-root-token-id=root"],
         },
         {
             "name": "Run with file backend",

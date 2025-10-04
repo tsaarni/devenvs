@@ -65,3 +65,13 @@ ssh mustchange@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKe
 # because it executes passwd command as separate process and therefore does not have access
 # to the password entered by the user which is in memory of the sshd process
 while true; do sudo /usr/sbin/sshd -D -d -f /etc/ssh/sshd_config_kdb_interactive_no; done
+
+
+# kbd interactive: yes
+# 
+#  (mustchange@localhost) Password: <current-password>
+#  (mustchange@localhost) You are required to change your password immediately (password expired).
+#  Password must be changed
+#  New password:      <--- asks new password without prompting old
+#
+while true; do sudo /usr/sbin/sshd -D -d -f /etc/ssh/sshd_config_kdb_interactive_yes; done
