@@ -16,6 +16,7 @@ kubectl apply -f manifests/keycloak-22.yaml
 kubectl apply -f manifests/keycloak-23.yaml
 kubectl apply -f manifests/keycloak-25.yaml
 kubectl apply -f manifests/keycloak-26.yaml
+kubectl apply -f manifests/keycloak-26.4.yaml
 
 
 http://keycloak.127-0-0-121.nip.io/
@@ -34,7 +35,7 @@ kubectl create secret tls keycloak-external --cert=certs/keycloak-server.pem --k
 kubectl create secret tls keycloak-internal --cert=certs/keycloak-internal.pem --key=certs/keycloak-internal-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic internal-ca --from-file=ca.crt=certs/internal-ca.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic external-ca --from-file=certs/truststore.p12 --dry-run=client -o yaml | kubectl apply -f -
-
+kubectl create secret generic postgres-certs --from-file=certs/internal-ca.pem --from-file=certs/postgres-internal.pem --from-file=certs/postgres-internal-key.pem --dry-run=client -o yaml | kubectl apply -f -
 
 # logs
 kubectl logs statefulset/keycloak

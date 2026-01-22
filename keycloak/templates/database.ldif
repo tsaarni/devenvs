@@ -79,7 +79,12 @@ olcDatabase: mdb
 olcRootDN: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
 olcSuffix: o=example
 olcDbDirectory: /data/db/
-olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
+### Keycloak changes user passwords using the admin account, not the user's old password.
+### If "manage" access is granted, and ppolicy's pwdMustChange: TRUE is set, changing the password as admin sets pwdReset: TRUE,
+### which causes an endless password reset loop.
+### Workaround: grant "write" access instead of "manage".
+#olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" manage by * break
+olcAccess: to * by group.exact="cn=admins,ou=groups,o=example" write by * break
 olcAccess: to attrs=userPassword,shadowLastChange
   by dn="cn=ldap-client,ou=users,o=example" read
   by self write

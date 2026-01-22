@@ -1,4 +1,27 @@
 
+
+
+# Add support for SASL EXTERNAL authentication for LDAP federation
+# https://github.com/keycloak/keycloak/issues/11725
+
+# KEYCLOAK-14055 Add SASL EXTERNAL authentication for LDAP federation
+# https://github.com/keycloak/keycloak/pull/7365
+
+
+# PR tests
+
+mvnd clean install -DskipExamples -DskipTests
+mvn -T4C clean install -DskipExamples -DskipTests
+
+
+./mvnw test -Pauth-server-quarkus -pl testsuite/integration-arquillian/tests/base -Dkeycloak.logging.level=debug -Dtest=org.keycloak.testsuite.federation.ldap.**
+./mvnw test -Pauth-server-quarkus -pl testsuite/integration-arquillian/tests/base -Dkeycloak.logging.level=debug -Dtest=org.keycloak.testsuite.admin.UserFederationLdapConnectionTest
+./mvnw test -Pauth-server-quarkus -Dtest=org.keycloak.keystore.TestReloadingKeystore
+
+
+###########
+
+
 export WORKDIR=~/work/devenvs/keycloak
 
 
@@ -386,3 +409,19 @@ openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/ldap-ad
 
 
 # do above again and expiration date on client certificate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

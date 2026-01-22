@@ -59,7 +59,7 @@ spec:
           ## Releases
           ## https://www.keycloak.org/downloads-archive.html
           ## https://quay.io/repository/keycloak/keycloak?tab=tags
-          image: quay.io/keycloak/keycloak:26.0.5
+          image: quay.io/keycloak/keycloak:26.5.1
           #imagePullPolicy: Never
           command:
             - /opt/keycloak/bin/kc.sh
@@ -71,14 +71,14 @@ spec:
           ## https://www.keycloak.org/server/containers
           ## https://www.keycloak.org/server/all-config
           env:
-            #- name: KC_DB
-            #  value: "postgres"
-            #- name: KC_DB_URL
-            #  value: "jdbc:postgresql://postgres/keycloak"
             - name: KC_DB
-              value: "mariadb"
+              value: "postgres"
             - name: KC_DB_URL
-              value: "jdbc:mariadb://mariadb/keycloak"
+              value: "jdbc:postgresql://postgres/keycloak"
+            #- name: KC_DB
+            #  value: "mariadb"
+            #- name: KC_DB_URL
+            #  value: "jdbc:mariadb://mariadb/keycloak"
             - name: KC_DB_USERNAME
               value: "keycloak"
             - name: KC_DB_PASSWORD

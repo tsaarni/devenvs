@@ -2,5 +2,9 @@
   "eslint.workingDirectories": ["js"],
   "java.compile.nullAnalysis.mode": "automatic",
   "java.debug.settings.onBuildFailureProceed": true,
-  "java.jdt.ls.vmargs": "-Xmx16G -Xms100m"
+  "java.jdt.ls.vmargs": "-Xmx16G -Xms100m",
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.test.config": {
+    "vmArgs": ["-Djava.util.logging.manager=org.jboss.logmanager.LogManager"]
+  }
 }

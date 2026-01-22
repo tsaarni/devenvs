@@ -18,6 +18,12 @@
                 "KC_BOOTSTRAP_ADMIN_PASSWORD": "admin",
                 "KC_DB_URL": "jdbc:h2:./quarkus/dist/target/keycloakdb;NON_KEYWORDS=VALUE;AUTO_SERVER=TRUE",
                 //"KC_DB_URL": "jdbc:h2:file:${workspaceFolder}/quarkus/dist/target/keycloakdb;NON_KEYWORDS=VALUE;AUTO_SERVER=TRUE",
+
+                // UI development
+                // Uncomment following, remove KC_HOSTNAME
+                //"KC_ADMIN_VITE_URL": "http://localhost:5174",
+                // then run UI under Vite
+                // (cd js; pnpm --filter keycloak-admin-ui run dev)
             },
         },        {
             "type": "java",

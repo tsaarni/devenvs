@@ -1,10 +1,24 @@
 subject: cn=cacert
 ---
+subject: cn=cacert2
+---
 issuer: cn=cacert
 subject: cn=cert1
-key_type: RSA
+sans:
+- DNS:localhost
+#key_type: RSA
+---
+issuer: cn=cacert2
+subject: cn=cert2
+sans:
+- DNS:localhost
 ---
 subject: cn=clientcacert
 ---
 issuer: cn=clientcacert
 subject: cn=clicert
+---
+subject: cn=clientcacert2
+---
+issuer: cn=clientcacert2
+subject: cn=clicert2

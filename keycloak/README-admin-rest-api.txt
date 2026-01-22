@@ -11,30 +11,35 @@ http://localhost:8081/auth/admin/master/console/#/realms/master/token-settings
 
 
 
-TOKEN=$(http --form POST http://localhost:8081/auth/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token)
+
+function get_admin_token() {
+  http --form POST http://keycloak.127-0-0-1.nip.io:8080/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token
+}
+
+
+
+http -v http://keycloak.127-0-0-1.nip.io:8080/realms/master/.well-known/openid-configuration
+http -v http://keycloak.127-0-0-1.nip.io:8080/realms/master/protocol/openid-connect/certs
 
 
 # get realm
-http -v GET http://localhost:8081/auth/admin/realms/master  Authorization:"bearer $TOKEN"
+http -v GET http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master  Authorization:"bearer $(get_admin_token)"
 
 # create realm
-http -v POST http://localhost:8081/auth/admin/realms/ Authorization:"bearer $TOKEN" id=my-realm realm=my-realm adminEventsEnabled=true
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/ Authorization:"bearer $(get_admin_token)" id=my-realm realm=my-realm adminEventsEnabled=true
 
 # delete realm
-http -v DELETE http://localhost:8081/auth/admin/realms/my-realm Authorization:"bearer $TOKEN"
+http -v DELETE http://keycloak.127-0-0-1.nip.io:8080/admin/realms/my-realm Authorization:"bearer $(get_admin_token)"
 
 # get users
-http -v GET http://localhost:8081/auth/admin/realms/master/users Authorization:"bearer $TOKEN"
+http -v GET http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users Authorization:"bearer $(get_admin_token)"
 
 # create user
-http -v POST http://localhost:8081/auth/admin/realms/master/users Authorization:"bearer $TOKEN" username=foo
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users Authorization:"bearer $(get_admin_token)" username=joe enabled:=true credentials:='[{"type": "password", "value": "joe", "temporary": false}]'
 
-http -v POST http://localhost:8081/auth/admin/realms/master/users Authorization:"bearer $TOKEN" username=user3 enabled:=true totp:=false emailVerified:=false firstName="" lastName="" email="" credentials:='[{"type": "password", "value": "mypass", "temporary": false}]'
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users Authorization:"bearer $(get_admin_token)" username=user3 enabled:=true totp:=false emailVerified:=false firstName="" lastName="" email="" credentials:='[{"type": "password", "value": "mypass", "temporary": false}]'
 
-http -v POST http://localhost:8081/auth/admin/realms/master/users Authorization:"bearer $TOKEN" username=ldapuser enabled:=true firstName=Ldap lastName=User attributes:='{"telephoneNumber": ["1", "2", "3"]}'
-
-http -v http://localhost:8081/auth/realms/master/.well-known/openid-configuration
-http -v http://localhost:8081/auth/realms/master/protocol/openid-connect/certs
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users Authorization:"bearer $(get_admin_token)" username=ldapuser enabled:=true firstName=Ldap lastName=User attributes:='{"telephoneNumber": ["1", "2", "3"]}'
 
 
 # enable failed login attempt detection
@@ -42,27 +47,35 @@ http -v http://localhost:8081/auth/realms/master/protocol/openid-connect/certs
 #
 # - create user joe
 # - do failed login attempt
-http --form POST http://localhost:8081/auth/realms/master/protocol/openid-connect/token username=joe password=wrong grant_type=password client_id=test-client
+
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/ Authorization:"bearer $(get_admin_token)" id=brute-force-realm realm=brute-force-realm enabled=true bruteForceProtected=true
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/brute-force-realm/users Authorization:"bearer $(get_admin_token)" username=joe enabled:=true credentials:='[{"type": "password", "value": "joe", "temporary": false}]'
+
+http --form POST http://keycloak.127-0-0-1.nip.io:8080/realms/brute-force-realm/protocol/openid-connect/token username=joe password=wrong grant_type=password client_id=test-client
 
 # correct
-http --form POST http://localhost:8081/auth/realms/master/protocol/openid-connect/token username=joe password=joe grant_type=password client_id=test-client
+http --form POST http://keycloak.127-0-0-1.nip.io:8080/realms/brute-force-realm/protocol/openid-connect/token username=joe password=joe grant_type=password client_id=test-client
+
+
 
 
 # get user
-http -v GET "http://localhost:8081/auth/admin/realms/master/users?username=joe" Authorization:"bearer $TOKEN"
-http -v GET http://localhost:8081/auth/admin/realms/master/users/c3240bbe-c996-465e-a7d5-e4870f34aebc Authorization:"bearer $TOKEN"
+http -v GET "http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users?username=joe" Authorization:"bearer $(get_admin_token)"
+
+id=$(http GET "http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users?username=joe" Authorization:"bearer $(get_admin_token)" | jq -r '.[0].id')
+http -v GET http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users/$id Authorization:"bearer $(get_admin_token)"
 
 
 # list user (lists IDs)
-http -v GET "http://localhost:8081/auth/admin/realms/master/users" Authorization:"bearer $TOKEN"
+http -v GET "http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users" Authorization:"bearer $(get_admin_token)"
 
-# delete user by ide
-http -v DELETE http://localhost:8081/auth/admin/realms/master/users/24b39570-bc5b-46a3-a5eb-3d9dc9feb561 Authorization:"bearer $TOKEN"
+# delete user by id
+http -v DELETE http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/users/$id Authorization:"bearer $(get_admin_token)"
 
 
 
 # get admin events ("save admin events" must be enabled first)
-http -v GET http://localhost:8081/auth/admin/realms/master/admin-events Authorization:"bearer $TOKEN"
+http -v GET http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/admin-events Authorization:"bearer $(get_admin_token)"
 
 
 #####################################
@@ -70,38 +83,119 @@ http -v GET http://localhost:8081/auth/admin/realms/master/admin-events Authoriz
 # create confidential client
 #
 
-# get admin token
-TOKEN=$(http --form POST http://keycloak.127-0-0-121.nip.io/auth/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token)
+# Create realm
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/ Authorization:"bearer $(get_admin_token)" id=my-realm realm=my-realm adminEventsEnabled=true enabled=true
 
-# create client
-http POST http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/clients Authorization:"bearer $TOKEN" clientId=foo publicClient=false redirectUris:='["http://localhost"]' serviceAccountsEnabled=true secret=mysecret
+# Create client
+http POST http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/clients \
+  Authorization:"bearer $(get_admin_token)" \
+  clientId=foo \
+  publicClient=false \
+  redirectUris[]=http://localhost \
+  serviceAccountsEnabled=true \
+  secret=mysecret
 
 
-# get client token using client credentials (requires serviceAccountsEnabled=true for the client)
-http --form POST http://keycloak.127-0-0-121.nip.io/auth/realms/master/protocol/openid-connect/token grant_type=client_credentials client_id=foo client_secret=mysecret
+# Create client
+http POST http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/clients \
+  Authorization:"bearer $(get_admin_token)" \
+  clientId=bar \
+  publicClient=false \
+  redirectUris[]=http://localhost \
+  serviceAccountsEnabled=true \
+  secret="\${vault.mysecret}"
 
 
+# Get client token using client credentials (requires serviceAccountsEnabled=true for the client)
+http --form POST http://keycloak.127-0-0-121.nip.io:8080/realms/my-realm/protocol/openid-connect/token grant_type=client_credentials client_id=foo client_secret=mysecret
 
-# list all clients
-http GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/clients Authorization:"bearer $TOKEN"
+# List all clients in the realm
+http GET http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/clients Authorization:"bearer $(get_admin_token)"
 
-# list specific client
-http GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/clients/29d6a41b-766f-42f6-9cbf-d5b18e476d8a Authorization:"bearer $TOKEN"
+# Get client configuration by name or by id
+http GET "http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/clients?clientId=foo" Authorization:"bearer $(get_admin_token)"
+
+http GET http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/clients/2f214329-2fc7-4cac-b79d-3907138f9887 Authorization:"bearer $(get_admin_token)"
 
 # list client secret
-http GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/clients/29d6a41b-766f-42f6-9cbf-d5b18e476d8a/client-secret Authorization:"bearer $TOKEN"
+http GET http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/clients/2f214329-2fc7-4cac-b79d-3907138f9887/client-secret Authorization:"bearer $(get_admin_token)"
+
+
+# Delete client
+http -v DELETE http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/clients/2f214329-2fc7-4cac-b79d-3907138f9887 Authorization:"bearer $(get_admin_token)"
 
 
 
-#################################
+# Delete realm
+http -v DELETE http://keycloak.127-0-0-1.nip.io:8080/admin/realms/my-realm Authorization:"bearer $(get_admin_token)"
+
+
+###########################################
 #
-# password grant
+# Create LDAP federation
 #
 
-TOKEN=$(http --form POST http://keycloak.127-0-0-121.nip.io/auth/realms/master/protocol/openid-connect/token username=group-admin-user password=secret grant_type=password client_id=admin-cli | jq -r .access_token)
+# Create realm
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/ Authorization:"bearer $(get_admin_token)" id=my-realm realm=my-realm adminEventsEnabled=true enabled=true
 
-http -v GET http://keycloak.127-0-0-121.nip.io/auth/admin/realms/master/users Authorization:"bearer $TOKEN"
+http -v POST http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/components \
+  Authorization:"bearer $(get_admin_token)" \
+  id=my-ldap \
+  name="my ldap" \
+  providerId=ldap \
+  providerType="org.keycloak.storage.UserStorageProvider" \
+  config[connectionUrl][]=ldap://ldap.example.com \
+  config[usersDn][]=ou=scientists,dc=example,dc=com \
+  config[bindDn][]=cn=admin,dc=example,dc=com \
+  config[bindCredential][]=mypassword \
+  config[editMode][]=READ_ONLY
 
+# Get LDAP configuration
+http -v GET http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/components/my-ldap Authorization:"bearer $(get_admin_token)"
+
+# Delete realm
+http -v DELETE http://keycloak.127-0-0-1.nip.io:8080/admin/realms/my-realm Authorization:"bearer $(get_admin_token)"
+
+
+###########################################
+#
+# Configure IDP brokering
+#
+
+# Create realm
+http -v POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/ Authorization:"bearer $(get_admin_token)" id=my-realm realm=my-realm adminEventsEnabled=true enabled=true
+
+http -v POST http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/identity-provider/instances \
+  Authorization:"bearer $(get_admin_token)" \
+  alias=oidc-keycloak \
+  providerId=oidc \
+  config[clientId]=my-client-id \
+  config[clientSecret]=my-secret \
+  config[authorizationUrl]=https://another-keycloak:8443/realms/other-realm/protocol/openid-connect/auth \
+  config[tokenUrl]=https://another-keycloak:8443/realms/other-realm/protocol/openid-connect/token \
+  config[userInfoUrl]=https://another-keycloak:8443/realms/other-realm/protocol/openid-connect/userinfo \
+  config[jwksUrl]=https://another-keycloak:8443/realms/other-realm/protocol/openid-connect/certs \
+  config[logoutUrl]=https://another-keycloak:8443/realms/other-realm/protocol/openid-connect/logout \
+  config[issuer]=https://another-keycloak:8443/realms/other-realm \
+  config[redirectUri]=https://keycloak.127-0-0-121.nip.io:8443/auth/realms/my-realm/broker/oidc-keycloak/endpoint
+
+# Get IDP configuration
+http -v GET http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/identity-provider/instances/oidc-keycloak Authorization:"bearer $(get_admin_token)"
+
+# Delete realm
+http -v DELETE http://keycloak.127-0-0-1.nip.io:8080/admin/realms/my-realm Authorization:"bearer $(get_admin_token)"
+
+
+
+
+
+
+###########################################
+#
+# export configuration for a realm
+#
+
+http -v POST http://keycloak.127-0-0-121.nip.io:8080/admin/realms/my-realm/partial-export Authorization:"bearer $(get_admin_token)"
 
 
 ##################################

@@ -58,7 +58,7 @@
             ""
         ],
         "startTls": [
-            "true"
+            "false"
         ],
         "syncRegistrations": [
             "true"
@@ -90,7 +90,7 @@
         "validatePasswordPolicy": [
             "false"
         ],
-        "validateLdapPasswordPolicy": [
+        "enableLdapPasswordPolicy": [
             "true"
         ],
         "vendor": [

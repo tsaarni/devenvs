@@ -160,7 +160,103 @@ Implementation
 services/src/main/java/org/keycloak/connections/httpclient/DefaultHttpClientFactory.java
 services/src/main/java/org/keycloak/connections/httpclient/HttpClientBuilder.java
 
+Use
+
+session.getProvider(HttpClientProvider.class).postText()
+
+
+
+
+
+
 
 https://www.keycloak.org/server/configuration-provider#_configuring_a_default_provider
 https://www.keycloak.org/server/outgoinghttp
 https://www.keycloak.org/server/keycloak-truststore
+
+
+
+
+server-spi-private/src/main/java/org/keycloak/http/simple/SimpleHttp.java
+
+
+
+
+
+----------
+
+
+Java TLS CRL check system properties
+
+-Dcom.sun.net.ssl.checkRevocation=true
+-Dcom.sun.security.enableCRLDP=true
+
+
+
+docker build docker/openldap/ -t localhost/openldap:latest
+kind load docker-image --name keycloak localhost/openldap:latest
+
+
+kubectl create configmap openldap-config --dry-run=client -o yaml --from-file=templates/database.ldif --from-file=templates/users-and-groups.ldif | kubectl apply -f -
+kubectl create secret tls openldap-cert --cert=certs/openldap-internal.pem --key=certs/openldap-internal-key.pem --dry-run=client -o yaml | kubectl apply -f -
+kubectl create secret tls ldap-admin --cert=certs/ldap-admin.pem --key=certs/ldap-admin-key.pem --dry-run=client -o yaml | kubectl apply -f -
+
+# patch tls secret to inject ca.crt
+kubectl patch secret openldap-cert --patch-file /dev/stdin <<EOF
+data:
+  ca.crt: $(cat certs/client-ca.pem | base64 -w 0)
+EOF
+
+kubectl apply -f manifests/openldap.yaml
+
+
+
+
+cd /home/tsaarni/work/keycloak-worktree/26.2.10-nordix
+mvnd clean install -DskipTestsuite -DskipExamples -DskipTests
+cp ./quarkus/dist/target/keycloak-26.2.10.tar.gz quarkus/container
+docker build --build-arg KEYCLOAK_DIST=keycloak-26.2.10.tar.gz -f quarkus/container/Dockerfile -t localhost/keycloak:latest quarkus/container
+
+
+kind load docker-image --name keycloak localhost/keycloak:latest
+
+kubectl edit statefulset keycloak
+
+        image: localhost/keycloak:latest
+        imagePullPolicy: Never
+
+      - command:
+        - /opt/keycloak/bin/kc.sh
+        - start
+        - --spi-keystore-default-ldap-certificate-file=/run/secrets/ldap-admin-certs/tls.crt
+        - --spi-keystore-default-ldap-certificate-key-file=/run/secrets/ldap-admin-certs/tls.key
+        - --truststore-paths=/run/secrets/trusted-internal/ca.crt
+
+        env:
+        - name: JAVA_OPTS_APPEND
+          value: "-Dcom.sun.net.ssl.checkRevocation=true -Dcom.sun.security.enableCRLDP=true"
+
+        volumeMounts:
+        - mountPath: /run/secrets/trusted-internal/
+          name: trusted-internal
+          readOnly: true
+        - mountPath: /run/secrets/ldap-admin-certs/
+          name: ldap-admin-certs
+          readOnly: true
+
+      volumes:
+      - name: trusted-internal
+        secret:
+          optional: true
+          secretName: internal-ca
+      - name: ldap-admin-certs
+        secret:
+          optional: true
+          secretName: ldap-admin
+
+
+
+apps/create-components.py --server=http://keycloak.127-0-0-121.nip.io/ rest-requests/create-ldap-starttls-provider-kubernetes.json
+
+
+http://keycloak.127-0-0-121.nip.io/

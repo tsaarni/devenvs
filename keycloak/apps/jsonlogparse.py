@@ -23,6 +23,22 @@ import json
 import sys
 import argparse
 import re
+import codecs
+
+# Custom JSON decoder to handle invalid escape sequences
+def raw_decode_with_invalid_escapes(s, *args, **kwargs):
+    try:
+        return json.loads(s, *args, **kwargs)
+    except json.JSONDecodeError as e:
+        if 'Invalid \\escape' in str(e):
+            # Replace the problematic string with a valid JSON string
+            # by escaping all backslashes
+            s = s.replace('\\', '\\\\')
+            # But fix double escaping of valid escape sequences
+            for esc in ['\\"', '\\/', '\\b', '\\f', '\\n', '\\r', '\\t']:
+                s = s.replace('\\\\' + esc[1:], esc)
+            return json.loads(s, *args, **kwargs)
+        raise
 
 SEVERITY_COLORS = {
     "DEBUG": "\033[0;37m",
@@ -39,10 +55,14 @@ def highlight_keyword(match):
     return f"\033[0;31m{match.group(0)}\033[0m"
 
 def format_log_line(line, colorize):
-    jsondoc = json.loads(line)
-    timestamp = jsondoc.get("timestamp", "")
-    severity = jsondoc.get("severity", "").upper()
-    message = jsondoc.get("message", "")
+    # handle escapes
+    try:
+        jsondoc = raw_decode_with_invalid_escapes(line)
+        timestamp = jsondoc.get("timestamp", "")
+        severity = jsondoc.get("severity", "").upper()
+        message = jsondoc.get("message", "")
+    except Exception as e:
+        return f"Error parsing log: {str(e)}\n"
 
     if colorize:
         timestamp = f"\033[0;36m{timestamp}\033[0m"

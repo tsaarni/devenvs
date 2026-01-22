@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && \
@@ -15,7 +15,7 @@ RUN cd /src/check-password && \
     make
 
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && \

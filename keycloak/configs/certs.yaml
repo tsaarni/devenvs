@@ -79,3 +79,8 @@ issuer: cn=internal-ca
 subject: cn=federated-revoked
 issuer: cn=internal-ca
 revoked: true
+---
+subject: cn=openldap-internal
+issuer: cn=internal-ca
+sans:
+- DNS:openldap
