@@ -17,7 +17,8 @@ mvn clean install -DskipTests=true
 mvn checkstyle:check  # coding style check
 mvn test              # run all tests
 
-# run individual tests in vscode 
+
+# run individual tests in vscode   (<<<<IMPORTANT FOR TESTING)
 # but compile with 
 #   mvn install -DskipTests=true
 # before running individual tests in vscode
