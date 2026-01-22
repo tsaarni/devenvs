@@ -23,35 +23,37 @@ class EdsMessageParser:
         self.min_message_id = int(min_message_id)
 
     def process_discovery_request(self, data, message_id, stream_id, content):
+        timestamp = format_time(data.get("time"))
         if data.get("error") is not None:
             if "context canceled" in data.get("error"):
-                self.rows.append([message_id, "DiscoveryRequest", stream_id, "<context canceled>", "", "<context canceled>f", ""])
+                self.rows.append([message_id, timestamp, "DiscoveryRequest", stream_id, "<context canceled>", "", "<context canceled>f", ""])
                 return
             raise ValueError(f"Unknown error in DiscoveryRequest: {content.get('error')}")
         version_info = content.get("versionInfo")
         resource_name = ", ".join(content.get("resourceNames"))
         response_nonce = content.get("responseNonce")
-        self.rows.append([message_id, "DiscoveryRequest", stream_id, version_info, response_nonce, resource_name, ""])
+        self.rows.append([message_id, timestamp, "DiscoveryRequest", stream_id, version_info, response_nonce, resource_name, ""])
 
     def process_discovery_response(self, data, message_id, stream_id, content):
+        timestamp = format_time(data.get("time"))
         version_info = content.get("versionInfo")
         nonce = content.get("nonce")
         resources = content.get("resources")
 
         if len(resources) == 0:
-            self.rows.append([message_id, "DiscoveryResponse", stream_id, version_info, nonce, "", ""])
+            self.rows.append([message_id, timestamp, "DiscoveryResponse", stream_id, version_info, nonce, "", ""])
         elif len(resources) == 1:
             cluster_name = resources[0].get("clusterName")
             endpoints = resources[0].get("endpoints")
             if len(endpoints) == 0:
-                self.rows.append([message_id, "DiscoveryResponse", stream_id, version_info, nonce, cluster_name, ""])
+                self.rows.append([message_id, timestamp, "DiscoveryResponse", stream_id, version_info, nonce, cluster_name, ""])
                 return
             lb_endpoints = endpoints[0].get("lbEndpoints")
             addresses = [
                 lb_endpoint.get("endpoint").get("address").get("socketAddress").get("address")
                 for lb_endpoint in lb_endpoints
             ]
-            self.rows.append([message_id, "DiscoveryResponse", stream_id, version_info, nonce, cluster_name, ", ".join(addresses)])
+            self.rows.append([message_id, timestamp, "DiscoveryResponse", stream_id, version_info, nonce, cluster_name, ", ".join(addresses)])
         else:
             raise ValueError("Cannot process multiple resources in DiscoveryResponse")
 
@@ -72,7 +74,7 @@ class EdsMessageParser:
                 self.process_discovery_response(data, message_id, stream_id, content)
 
     def print_table(self):
-        headers = ["Id", "Message", "Stream ID", "Version Info", "Nonce", "Resource Name", "Addresses"]
+        headers = ["Id", "Time", "Message", "Stream ID", "Version Info", "Nonce", "Resource Name", "Addresses"]
         column_widths = [max(len(str(row[i])) for row in [headers] + self.rows) for i in range(len(headers))]
 
         def format_row(row):
@@ -82,6 +84,10 @@ class EdsMessageParser:
         print("- -".join("-" * width for width in column_widths))
         for row in self.rows:
             print(format_row(row))
+
+# Format timestamp like "2025-10-09T19:30:50.365127642Z" to "19:30:50.365"
+def format_time(timestamp):
+    return timestamp[11:23]
 
 def main():
 

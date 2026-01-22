@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver
+spec:
+  selector:
+    matchLabels:
+      app: echoserver
+  template:
+    metadata:
+      labels:
+        app: echoserver
+    spec:
+      containers:
+      - name: echoserver
+        image: ghcr.io/tsaarni/echoserver:latest
+        env:
+        - name: ENV_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: ENV_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: ENV_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: ENV_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: ENV_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: TLS_CERT_FILE
+          value: /certs/tls.crt
+        - name: TLS_KEY_FILE
+          value: /certs/tls.key
+
+        ports:
+        - name: http-api
+          containerPort: 8080
+        - name: https-api
+          containerPort: 8443
+        # readinessProbe:
+        #   httpGet:
+        #     path: /health
+        #     port: 3000
+        volumeMounts:
+        - name: certs
+          mountPath: /certs
+          readOnly: true
+      volumes:
+      - name: certs
+        secret:
+          secretName: echoserver-cert
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  - name: https
+    port: 443
+    targetPort: https-api
+  selector:
+    app: echoserver
+---
+# http http://echoserver.127-0-0-101.nip.io
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver
+spec:
+  virtualhost:
+    fqdn: echoserver.127-0-0-101.nip.io
+  routes:
+    - services:
+        - name: echoserver
+          port: 80
+---
+# http --verify=certs/external-root-ca.pem https://protected.127-0-0-101.nip.io
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver-protected
+spec:
+  virtualhost:
+    fqdn: protected.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+  routes:
+    - services:
+        - name: echoserver
+          port: 80
+---
+# http --cert=certs/client-1.pem --cert-key=certs/client-1-key.pem --verify=certs/external-root-ca.pem https://protected2.127-0-0-101.nip.io
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver-mutually-protected
+spec:
+  virtualhost:
+    fqdn: protected2.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+      clientValidation:
+        caSecret: client-root-ca-1
+        forwardClientCertificate:
+          cert: true
+  routes:
+    - services:
+        - name: echoserver
+          port: 80
+---

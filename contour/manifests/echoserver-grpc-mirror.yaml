@@ -1,0 +1,195 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver
+spec:
+  selector:
+    matchLabels:
+      app: echoserver
+  template:
+    metadata:
+      labels:
+        app: echoserver
+    spec:
+      containers:
+      - name: echoserver
+        image: ghcr.io/tsaarni/echoserver:latest
+        env:
+        - name: ENV_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: ENV_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: ENV_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: ENV_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: ENV_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: TLS_CERT_FILE
+          value: /certs/tls.crt
+        - name: TLS_KEY_FILE
+          value: /certs/tls.key
+        - name: SSLKEYLOGFILE
+          value: /tmp/wireshark-keys.log
+        ports:
+        - name: http-api
+          containerPort: 8080
+        - name: https-api
+          containerPort: 8443
+        volumeMounts:
+        - name: echoserver-cert
+          mountPath: /certs
+          readOnly: true
+        - name: sslkeylogfile
+          mountPath: /tmp
+      volumes:
+      - name: echoserver-cert
+        secret:
+          secretName: echoserver-cert
+          optional: true
+      - name: sslkeylogfile
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  - name: https
+    port: 443
+    targetPort: https-api
+  selector:
+    app: echoserver
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-mirror
+spec:
+  selector:
+    matchLabels:
+      app: echoserver-mirror
+  template:
+    metadata:
+      labels:
+        app: echoserver-mirror
+    spec:
+      containers:
+      - name: echoserver
+        image: ghcr.io/tsaarni/echoserver:latest
+        env:
+        - name: ENV_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: ENV_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: ENV_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: ENV_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: ENV_POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: TLS_CERT_FILE
+          value: /certs/tls.crt
+        - name: TLS_KEY_FILE
+          value: /certs/tls.key
+        - name: SSLKEYLOGFILE
+          value: /tmp/wireshark-keys.log
+        ports:
+        - name: http-api
+          containerPort: 8080
+        - name: https-api
+          containerPort: 8443
+        volumeMounts:
+        - name: echoserver-cert
+          mountPath: /certs
+          readOnly: true
+        - name: sslkeylogfile
+          mountPath: /tmp
+      volumes:
+      - name: echoserver-cert
+        secret:
+          secretName: echoserver-cert
+          optional: true
+      - name: sslkeylogfile
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-external-echoserver
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  - name: https
+    port: 443
+    targetPort: https-api
+  selector:
+    app: echoserver-mirror
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-mirror
+spec:
+  type: ExternalName
+  externalName: my-external-echoserver.default.svc.cluster.local
+  ports:
+  - name: http
+    port: 80
+    targetPort: http-api
+  - name: https
+    port: 443
+    targetPort: https-api
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: echoserver
+spec:
+  virtualhost:
+    fqdn: echoserver.127-0-0-101.nip.io
+    tls:
+      secretName: ingress
+  routes:
+    - services:
+        - name: echoserver
+          port: 443
+          protocol: tls
+#          protocol: h2c
+
+        - name: echoserver-mirror
+          port: 443
+#          protocol: h2c
+          protocol: tls
+          mirror: true
+          requestHeadersPolicy:
+            set:
+              - name: Host
+                value: external-service3.example.com
