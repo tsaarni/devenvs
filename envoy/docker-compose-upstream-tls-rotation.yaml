@@ -1,0 +1,22 @@
+services:
+  envoy:
+    image: envoyproxy/envoy:v1.36.2
+    volumes:
+      - ./configs/envoy-with-upstream-tls.yaml:/etc/envoy/envoy.yaml:ro
+      - ./configs/envoy-upstream-tls-cert-sds-secret.yaml:/etc/envoy/envoy-upstream-tls-cert-sds-secret.yaml:ro
+      - ./configs/envoy-upstream-tls-ca-sds-secret.yaml:/etc/envoy/envoy-upstream-tls-ca-sds-secret.yaml:ro
+      - ./certs:/certs:ro
+    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml --service-cluster mycluster --service-node envoy --log-level info
+    ports:
+      - "8080:8080"
+      - "9901:9901"
+
+  echoserver:
+    image: ghcr.io/tsaarni/echoserver:latest
+    environment:
+      - TLS_CERT_FILE=/certs/upstream-server.pem
+      - TLS_KEY_FILE=/certs/upstream-server-key.pem
+      - SSLKEYLOGFILE=/wireshark-keys.log
+    volumes:
+      - ./certs/upstream-server.pem:/certs/upstream-server.pem:ro
+      - ./certs/upstream-server-key.pem:/certs/upstream-server-key.pem:ro

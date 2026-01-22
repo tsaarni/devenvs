@@ -1,0 +1,15 @@
+// parts borrowed from envoy/.devcontainer/devcontainer.json
+{
+    "clangd.arguments": [
+        "--background-index=false",  // https://clangd.llvm.org/design/indexing
+        "--query-driver=**",
+    ],
+    "files.exclude": {
+        "**/.clangd/**": true,
+        "**/bazel-*/**": true
+    },
+    "files.watcherExclude": {
+        "**/.clangd/**": true,
+        "**/bazel-*/**": true
+    }
+}
