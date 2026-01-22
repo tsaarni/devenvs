@@ -12,8 +12,6 @@ ui = true
 
 api_addr = "http://localhost:8200"
 
-storage "raft" {
-  #path = "/home/tsaarni/work/devenvs/vault/blocking/"
+storage "file" {
   path = "/tmp/vault/data"
-  node_id = "node1"
 }
