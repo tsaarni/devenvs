@@ -21,6 +21,17 @@ bundle install
 bundle exec rspec spec
 
 
+##export JAVA_OPTS="-javaagent:$HOME/work/tls-testapp/java/app/build/extract-tls-secrets-4.0.0.jar=wireshark-keys.log"
+##wireshark -i lo -k -f "port 9999" -o tls.keylog_file:$HOME/work/logstash-output-syslog/wireshark-keys.log
+##bundle exec rspec spec/outputs/syslog_tls_spec.rb --example "with TLS versions"
+
+
 export JAVA_OPTS="-javaagent:$HOME/work/tls-testapp/java/app/build/extract-tls-secrets-4.0.0.jar=wireshark-keys.log"
-wireshark -i lo -k -f "port 9999" -o tls.keylog_file:$HOME/work/logstash-output-syslog/wireshark-keys.log
+wireshark -i lo -k -o tls.keylog_file:$HOME/work/logstash-output-syslog/wireshark-keys.log
 bundle exec rspec spec/outputs/syslog_tls_spec.rb --example "with TLS versions"
+
+# use display filter
+tls.handshake.type == 1
+# then see
+#  Extension: supported_versions
+

@@ -4,12 +4,13 @@
 cd ~/work/logstash
 rbenv install  # installs version defined in .ruby-version
 
-# activate ruby version
-rbenv global jruby-9.3.4.0
+# activate jruby
+rbenv local
 ruby --version
 
 ./gradlew installDevelopmentGems
 ./gradlew bootstrap
+
 
 
 
@@ -43,6 +44,30 @@ git reset --hard                   # clean modified files (working tree + index)
 
 
 
+
+### Test plugins
+
+# First update the syslog source with the instructions above
+
+# Next go to plugin directory
+
+# If not activated yet, activate jruby
+cp ~/work/logstash/.ruby-version .
+rbenv local
+ruby --version  
+
+# Depend on syslog source code instead of packaged versions
+export LOGSTASH_SOURCE=1
+export LOGSTASH_PATH=~/work/logstash
+
+bundle install
+bundle exec rspec spec
+
+
+
+
+
+
 ### Run java tests
 
 java --version
@@ -64,3 +89,16 @@ export LOGSTASH_PATH=$PWD
 ./gradlew installDevelopmentGems
 ./gradlew installDefaultGems
 ./gradlew javaTests
+
+
+
+
+### Documentation
+
+After changing docs
+
+gem install asciidoctor
+asciidoctor -a include_path=$HOME/work/logstash-docs/docs/plugins/include -o docs/index.html docs/index.asciidoc
+xdg-open docs/index.html
+
+
