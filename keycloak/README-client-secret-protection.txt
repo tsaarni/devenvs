@@ -3,6 +3,10 @@
 ### https://github.com/keycloak/keycloak/pull/39650
 
 
+## PR
+#  https://github.com/keycloak/keycloak/pull/39650
+#  https://github.com/keycloak/keycloak/pull/45842
+
 
 ### Client secret: hashing of stored secrets
 ### https://github.com/keycloak/keycloak/discussions/8455
@@ -83,114 +87,6 @@ New realm settings allow to set the allowed client secret types and the default 
 
 
 
-
-*** Create client
-
-
-mkdir -p .vscode
-cp -a ~/work/devenvs/keycloak/configs/launch.json  ~/work/devenvs/keycloak/configs/settings.json .vscode
-
-
-Start parameters in .vscode/launch.json
-
-            "args": "start-dev --verbose --vault=file --vault-dir=${workspaceFolder}/quarkus/dist/target/vault-secrets --log-level=INFO,org.keycloak.vault:debug",
-
-
-Create secret
-
-mkdir -p quarkus/dist/target/vault-secrets
-echo -n "my-client-secret" > quarkus/dist/target/vault-secrets/second_client-secret
-
-
-First realm
-
-{
-  "realm": "first",
-  "displayName": "First Keycloak Realm",
-  "enabled": true,
-  "identityProviders": [
-    {
-      "alias": "keycloak-oidc",
-      "displayName": "Second Keycloak Realm (federated)",
-      "providerId": "keycloak-oidc",
-      "enabled": true,
-      "config": {
-        "tokenUrl": "http://keycloak.127.0.0.1.nip.io:8080/realms/second/protocol/openid-connect/token",
-        "authorizationUrl": "http://keycloak.127.0.0.1.nip.io:8080/realms/second/protocol/openid-connect/auth",
-        "clientId": "federator",
-        "clientSecret": "my-client-secret"
-      }
-    }
-  ]
-}
-
-Second realm
-
-{
-  "realm": "second",
-  "displayName": "Second Keycloak Realm",
-  "enabled": true,
-  "clients": [
-    {
-      "clientId": "federator",
-      "enabled": true,
-      "redirectUris": ["http://keycloak.127.0.0.1.nip.io:8080/*"],
-      "webOrigins": ["*"],
-      "publicClient": false,
-      "protocol": "openid-connect",
-      "serviceAccountsEnabled": true,
-      "secret": "${vault.client-secret}"
-    }
-  ],
-  "users": [
-    {
-      "username": "joe",
-      "email": "joe@example.com",
-      "firstName": "Joe",
-      "lastName": "Average",
-      "enabled": true,
-      "credentials": [
-        {
-          "type": "password",
-          "value": "joe",
-          "temporary": false
-        }
-      ]
-    }
-  ]
-}
-
-
-
-# login with IdP federation
-http://keycloak.127.0.0.1.nip.io:8080/realms/first/account/
-
-
-wireshark -i lo -k -Y 'http' -f 'tcp port 8080'
-
-
-
-function get_admin_token() {
-  http --form POST http://keycloak.127-0-0-1.nip.io:8080/realms/master/protocol/openid-connect/token username=admin password=admin grant_type=password client_id=admin-cli | jq -r .access_token
-}
-
-
-http POST http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/clients \
-    Authorization:"Bearer $(get_admin_token)" \
-    name="Test client" \
-    clientId="test-client" \
-    enabled:=true \
-    secret="\${vault.client-secret}" \
-    protocol="openid-connect" \
-    serviceAccountsEnabled:=true \
-    publicClient:=false
-
-http http://keycloak.127-0-0-1.nip.io:8080/admin/realms/master/clients Authorization:"Bearer $(get_admin_token)"
-
-http --form POST http://keycloak.127-0-0-1.nip.io:8080/realms/master/protocol/openid-connect/token \
-    client_id="test-client" \
-    client_secret="my-client-secret" \
-    grant_type="client_credentials"
 
 #############
 #
@@ -362,10 +258,10 @@ sudo nsenter --target $(kindps secrets-provider openbao --output json | jq -r '.
 
 
 
-
-
-
-
+####################################################################3
+#
+# TESTING: vault SPI
+#
 
 
 
@@ -380,7 +276,7 @@ echo -n "my-client-secret" > quarkus/dist/target/vault-secrets/master_client-sec
             "env": {
                 "KC_BOOTSTRAP_ADMIN_USERNAME": "admin",
                 "KC_BOOTSTRAP_ADMIN_PASSWORD": "admin",
-                "KC_ADMIN_VITE_URL": "http://localhost:5174",
+                "KC_ADMIN_VITE_URL": "http://localhost:5174",    # keycloak server at :8080 will forward ui requets here
             },
 
 # Start dev admin ui with nodejs on the background
@@ -443,6 +339,114 @@ http http://127.0.0.1:8080/admin/realms/master/clients/$CLIENT_ID/installation/p
 
 
 
+8. Create view-only user
+
+
+http POST http://127.0.0.1:8080/admin/realms/master/users \
+    Authorization:"Bearer $(get_admin_token)" \
+    username="joe" \
+    enabled:=true \
+    credentials:='[{"type":"password","value":"joe","temporary":false}]'
+
+USER_ID=$(http http://127.0.0.1:8080/admin/realms/master/users?username=joe Authorization:"Bearer $(get_admin_token)" | jq -r '.[0].id')
+
+MASTER_REALM_ID=$(http GET http://127.0.0.1:8080/admin/realms/master/clients Authorization:"Bearer $(get_admin_token)" | jq -r '.[] | select(.clientId=="master-realm") | .id')
+
+VIEW_CLIENTS_ROLE=$(http GET http://127.0.0.1:8080/admin/realms/master/clients/$MASTER_REALM_ID/roles Authorization:"Bearer $(get_admin_token)" | jq -c '.[] | select(.name=="view-clients")')
+
+http POST http://127.0.0.1:8080/admin/realms/master/users/$USER_ID/role-mappings/clients/$MASTER_REALM_ID \
+    Authorization:"Bearer $(get_admin_token)" \
+    --raw="[$VIEW_CLIENTS_ROLE]"
+
+
+
+9. verify that user can see but not change the client secret
+
+- Log in as joe:joe
+- Navigate to "Clients"
+- Click "test-client"
+- Click on the "Credentials" tab
+- Check that user can view the client secret but not set it (field is disabled)
+
+
+
+
+10. Create client with JWT client secret authentication
+
+http POST http://127.0.0.1:8080/admin/realms/master/clients \
+    Authorization:"Bearer $(get_admin_token)" \
+    name="JWT Test client" \
+    clientId="jwt-test-client" \
+    enabled:=true \
+    secret="\${vault.client-secret}" \
+    protocol="openid-connect" \
+    serviceAccountsEnabled:=true \
+    publicClient:=false \
+    clientAuthenticatorType="client-secret-jwt"
+
+11. View that JWT client has the secret reference
+
+http http://127.0.0.1:8080/admin/realms/master/clients?clientId=jwt-test-client Authorization:"Bearer $(get_admin_token)"
+
+
+
+12. Test JWT client authentication with vault secret
+
+# Generate JWT signed with the vault secret
+JWT_TOKEN=$(python3 << 'EOF'
+import json, base64, hmac, hashlib, time, uuid
+client_id = 'jwt-test-client'
+client_secret = 'my-client-secret'
+#client_secret = '${vault.client-secret}'
+audience = 'http://127.0.0.1:8080/realms/master/protocol/openid-connect/token'
+header = json.dumps({'alg': 'HS256', 'typ': 'JWT'}, separators=(',', ':'))
+payload = json.dumps({
+    'iss': client_id, 'sub': client_id, 'aud': audience,
+    'exp': int(time.time()) + 3600, 'iat': int(time.time()), 'jti': str(uuid.uuid4())
+}, separators=(',', ':'))
+b64encode = lambda s: base64.urlsafe_b64encode(s.encode()).decode().rstrip('=')
+unsigned_token = f'{b64encode(header)}.{b64encode(payload)}'
+signature = base64.urlsafe_b64encode(hmac.new(client_secret.encode(), unsigned_token.encode(), hashlib.sha256).digest()).decode().rstrip('=')
+print(f'{unsigned_token}.{signature}')
+EOF
+)
+
+http --form POST http://127.0.0.1:8080/realms/master/protocol/openid-connect/token \
+    client_id="jwt-test-client" \
+    client_assertion_type="urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
+    client_assertion="$JWT_TOKEN" \
+    grant_type="client_credentials"
+
+13. Verify JWT client adapter configuration contains the secret
+
+
+JWT_CLIENT_ID=$(http http://127.0.0.1:8080/admin/realms/master/clients?clientId=jwt-test-client Authorization:"Bearer $(get_admin_token)" | jq -r '.[0].id')
+http http://127.0.0.1:8080/admin/realms/master/clients/$JWT_CLIENT_ID/installation/providers/keycloak-oidc-keycloak-json Authorization:"Bearer $(get_admin_token)"
+
+
+
+14. Test JWT authentication in web UI
+
+- Navigate to  http://127.0.0.1:8080
+- Log in admin:admin
+- Navigate to the "Clients" section
+- Click on "JWT Test client"
+- Click on the "Settings" tab
+- Verify "Client Authenticator" is set to "Signed JWT with Client Secret (client-secret-jwt)"
+- Click on the "Credentials" tab
+- Click on the eye button next to the client secret to verify it shows ${vault.client-secret}
+- Edit the client secret field to "new-jwt-client-secret"
+- Save the changes
+- Test JWT authentication with new secret:
+
+
+
+
+
+
+
+
+
 ## Custom admin UI extension
 ## https://github.com/keycloak/keycloak/discussions/24805
 
@@ -465,6 +469,3 @@ http http://127.0.0.1:8080/admin/realms/master/clients/$CLIENT_ID/installation/p
 # uses new junit based e2e test framework
 
 mvn -f tests/pom.xml test -Dtest=ClientVaultTest
-
-
-

@@ -431,3 +431,10 @@ index d2b8affb0c..f90bce7b1b 100755
 
 
 
+
+*** Update documentation 
+
+./mvnw clean install -am -pl docs/documentation/dist -Pdocumentation
+
+kde-open ./docs/documentation/server_admin/target/generated-docs/index.html
+

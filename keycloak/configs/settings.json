@@ -2,8 +2,9 @@
   "eslint.workingDirectories": ["js"],
   "java.compile.nullAnalysis.mode": "automatic",
   "java.debug.settings.onBuildFailureProceed": true,
-  "java.jdt.ls.vmargs": "-Xmx16G -Xms100m",
-  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.jdt.ls.vmargs": "-Xmx16G -Xms100m -Djava.import.generatesMetadataFilesAtProjectRoot=false",
+  "java.configuration.maven.userSettings": "${workspaceFolder}/maven-settings.xml",
+  "java.import.gradle.enabled": false,
   "java.test.config": {
     "vmArgs": ["-Djava.util.logging.manager=org.jboss.logmanager.LogManager"]
   }
