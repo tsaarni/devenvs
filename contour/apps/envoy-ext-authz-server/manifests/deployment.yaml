@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envoy-ext-authz-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: envoy-ext-authz-server
+  template:
+    metadata:
+      labels:
+        app: envoy-ext-authz-server
+    spec:
+      containers:
+      - name: envoy-ext-authz-server
+        image: envoy-ext-authz-server:latest
+        imagePullPolicy: Never
+        args:
+        - --grpc-tls-cert=/tls/tls.crt
+        - --grpc-tls-key=/tls/tls.key
+        ports:
+        - name: grpc
+          containerPort: 9001
+        - name: http
+          containerPort: 9002
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+      volumes:
+      - name: tls
+        secret:
+          secretName: contour-authserver-cert
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy-ext-authz-server
+spec:
+  selector:
+    app: envoy-ext-authz-server
+  ports:
+  - name: grpc
+    port: 9001
+    targetPort: grpc
+  - name: http
+    port: 9002
+    targetPort: http
