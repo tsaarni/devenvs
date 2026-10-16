@@ -3,23 +3,88 @@
 
 
 
-bazel/setup_clang.sh /opt/llvm/
+cd ~/work/envoy
+mkdir -p .vscode
+cp ~/work/devenvs/envoy/configs/{settings.json,launch.json} .vscode/
+
+
+
+diff --git a/bazel/envoy_internal.bzl b/bazel/envoy_internal.bzl
+index 8282fb3e4f..91301e3106 100644
+--- a/bazel/envoy_internal.bzl
++++ b/bazel/envoy_internal.bzl
+@@ -16,6 +16,7 @@ def envoy_copts(repository, test = False):
+         "-Wvla",
+         "-Wno-deprecated-declarations",
+         "-Wreturn-type",
++        "-Wno-nullability-completeness",
+     ]
+     _repo = repo_label(repository)
+
+
+https://github.com/bazel-contrib/toolchains_llvm/blob/master/toolchain/distributions/github.jsonc
+
+diff --git a/bazel/toolchains.bzl b/bazel/toolchains.bzl
+index aa296862d7..61630327c2 100644
+--- a/bazel/toolchains.bzl
++++ b/bazel/toolchains.bzl
+@@ -13,7 +13,7 @@ def envoy_toolchains():
+     )
+     llvm_toolchain(
+         name = "llvm_toolchain",
+-        llvm_version = "18.1.8",
++        llvm_version = "21.1.8",
+         cxx_standard = {"": "c++20"},
+         sysroot = {
+             "linux-x86_64": "@sysroot_linux_amd64//:sysroot",
+
 
 
 # Configure the build.
 cat > user.bazelrc <<EOF
 build --config=clang
-build --disk_cache=~/.cache/bazel-build-cache
---local_cpu_resources=HOST_CPUS-4
---local_ram_resources=HOST_RAM*0.3
+build --disk_cache=~/.cache/envoy-bazel
+build --local_resources=cpu=HOST_CPUS*0.5
+build --local_resources=memory=HOST_RAM*0.3
+EOF
+
+# llvm 21.1.0
+cat > user.bazelrc <<EOF
+build --config=clang
+build --disk_cache=~/.cache/envoy-bazel
+build --local_resources=cpu=HOST_CPUS*0.3
+build --local_resources=memory=HOST_RAM*0.3
+build --copt=-Wno-nullability-completeness
 EOF
 
 
-bazel build -c fastbuild //source/exe:envoy-static
+cat > user.bazelrc <<EOF
+build --config=clang
+build --disk_cache=~/.cache/envoy-bazel
+build --local_resources=cpu=HOST_CPUS*0.5
+build --local_resources=memory=HOST_RAM*0.3
+build --override_repository=envoy_build_config=%workspace%/envoy_build_config
+EOF
 
+
+### The binary will be stored in bazel-bin/source/exe/envoy-static
+
+bazel build -c fastbuild //source/exe:envoy-static     # Build binary
+bazel build -c fastbuild -s //source/exe:envoy-static  # See the actual compilation commands
+
+bazel build -c dbg //source/exe:envoy-static           # Include debug symbols
+gdb --args bazel-bin/source/envoy-static ...           # Run with gdb debugger
+
+
+nice -n 10 bazel build -c dbg //source/exe:envoy-static --//bazel:http3=False
+## workaround for compilation errors
+#  --//bazel:http3=False
+
+
+# build with gperftools tcmalloc
 bazel build -c fastbuild //source/exe:envoy-static --define tcmalloc=gperftools
 
-# The binary will be stored in bazel-bin/source/exe/envoy-static
+
 
 
 
@@ -27,90 +92,40 @@ bazel build -c fastbuild //source/exe:envoy-static --define tcmalloc=gperftools
 cp .vscode/tasks_example.json .vscode/tasks.json
 # run: "Tasks: Run Task" and select "Refresh Compilation Database Exclude Contrib"
 
+or
+
+ENVOY_GEN_COMPDB_OPTIONS="--vscode --include_headers --exclude_contrib" ./ci/do_ci.sh refresh_compdb
+
 
 
 # Generate launch.json for vscode
 ##  from envoy/tools/vscode/README.md
-tools/vscode/generate_debug_config.py //source/exe:envoy-static --args "-c envoy.yaml"
+./tools/vscode/generate_debug_config.py //source/exe:envoy-static --args "-c envoy.yaml"
 
 
-
-
-# copy vscode settings
-mkdir -p .vscode
-cp ~/work/devenvs/envoy/configs/launch.json .vscode/
 
 # setup git hooks
 ./support/bootstrap
 
-# setup clang
-bazel/setup_clang.sh /usr/local/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04
-
-# compile with clang (not gcc) and libc++ (not libstdc++)
-echo "build --config=libc++" > user.bazelrc
-echo "--local_ram_resources=20000" >> user.bazelrc
-
-# generate compile_commands.json
-tools/vscode/refresh_compdb.sh
-
-
-
-
-### Install toolchain
-
-
-# Toolchain instructions are here bazel/README.md
-# https://github.com/envoyproxy/envoy/blob/master/bazel/README.md
-
-
-# get pre-compiled clang
-wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
-sudo tar xf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz -C/usr/local/
-
-
-# check list from bazel/README.md
-sudo apt-get install \
-   autoconf \
-   automake \
-   cmake \
-   curl \
-   libtool \
-   make \
-   ninja-build \
-   patch \
-   python3-pip \
-   unzip \
-   virtualenv
-
-
-# error:
-# ./bootstrap0: error while loading shared libraries: libc++.so.1: cannot open shared object file: No such file or directory
-# then install also libc++1-14
-
-
 
 
 # fix code formatting before commit
-./tools/code_format/check_format.py fix
+bazel run //tools/code_format:check_format -- fix
+bazel run //tools/code_format:check_format -- fix source/common/stats/thread_local_store.cc
+
+# Uncommitted changes (default)
+./tools/local_fix_format.sh
+
+# Changes since main branch
+./tools/local_fix_format.sh -main
+
+# Specific files
+./tools/local_fix_format.sh source/common/stats/thread_local_store.cc
 
 
 
 
 
-### Building and debugging
-
-# Build Envoy
-bazel build -c fastbuild //source/exe:envoy-static
-
-# Add -s to bazel command line to see the actual compilation commands
-bazel build -c fastbuild -s //source/exe:envoy-static
-
-
-# Build with debug symbols
-bazel build -c dbg //source/exe:envoy-static
-gdb --args bazel-bin/source/envoy-static ...
-
-# The binary will be stored in bazel-bin/source/exe/envoy-static
 
 
 ## Build and run Envoy test suite within container image, utilizing [Bazel remote cache](https://github.com/buchgr/bazel-remote)
@@ -123,9 +138,45 @@ docker run -v $HOME/.cache/bazel-remote-cache:/data -u $(id -u):$(id -g) -p 2808
 ci/run_envoy_docker.sh "BAZEL_BUILD_EXTRA_OPTIONS='--remote_http_cache=http://127.0.0.1:28080' ./ci/do_ci.sh bazel.release"
 ci/run_envoy_docker.sh "BAZEL_BUILD_EXTRA_OPTIONS='--remote_http_cache=http://127.0.0.1:28080' ./ci/do_ci.sh bazel.debug.server_only"
 
-# create container
-ci/docker_build.sh
+# create container 
+
+## 1. compile (/tmp/envoy-docker-build/  ~/.cache/envoy-bazel)
 ./ci/run_envoy_docker.sh './ci/do_ci.sh release'
+./ci/run_envoy_docker.sh './ci/do_ci.sh release.server_only'
+
+## 2. build image  (THIS DOES NOT WORK 2026-05-30)
+sudo rm -rf /tmp/bazel-shared
+ENVOY_DOCKER_IN_DOCKER=1 ENVOY_DOCKER_BUILD_DIR=/tmp/envoy-docker-build ./ci/run_envoy_docker.sh './ci/do_ci.sh docker'
+
+## 2. build image  (hack)
+mkdir -p linux/amd64
+cp /tmp/envoy-docker-build/envoy/x64/bin/release.tar.zst linux/amd64/
+CI_SHA1=$(git rev-parse HEAD~1) DOCKER_PLATFORM=linux/amd64 DOCKER_LOAD_IMAGES=1 ENVOY_OCI_DIR=/tmp/envoy-oci ./distribution/docker/build.sh
+rm -rf linux/
+
+
+or
+
+diff --git a/ci/docker-entrypoint-extra.sh b/ci/docker-entrypoint-extra.sh
+index 891f79b402..e360542ceb 100755
+--- a/ci/docker-entrypoint-extra.sh
++++ b/ci/docker-entrypoint-extra.sh
+@@ -7,7 +7,7 @@ fi
+ SOCKET_GID=$(stat -c '%g' /var/run/docker.sock)
+ if ! getent group "$SOCKET_GID" > /dev/null; then
+     # Create a group with the same GID as the socket
+-    groupmod -g "$SOCKET_GID" docker \
+-        || (delgroup docker && addgroup -g "$SOCKET_GID" docker)
+-    gpasswd -a envoybuild docker
++    groupadd -g "$SOCKET_GID" docker
+ fi
++DOCKER_GROUP=$(getent group "$SOCKET_GID" | cut -d: -f1)
++usermod -aG "$DOCKER_GROUP" envoybuild
+
+
+
+
+
 
 
 Debugging
@@ -189,12 +240,12 @@ bazel build -c dbg //source/exe:envoy-static && cp -a bazel-bin/source/exe/envoy
 # compilation database
 tools/gen_compilation_database.py    # reload vscode window afterwards
 
-# fix format
-./tools/code_format/check_format.py fix
-
 
 ### Document changes
 
-ci/do_ci.sh docs
+cd docs
+bazel run --@envoy//tools/tarball:target=//:html @envoy//tools/tarball:unpack "$PWD"/generated/docs/
+cd generated/docs
+python3 -m http.server 8000
+xdg-open http://localhost:8000
 
-xdg-open ./generated/docs/index.html

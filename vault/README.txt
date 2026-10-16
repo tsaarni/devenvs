@@ -4,12 +4,18 @@
 # build & debug
 #
 
-make tools
+make tools        # installs vault dev dependencies (stubmaker, enumer...)
 
-make
+make              # builds vault, same as "make dev"
+make quickdev     # skips "make prep" which code generates enums, enterprise stubs etc
+
 
 # build debug version
 make GCFLAGS="all=-N -l"
+
+# force different minimum go version than what is in .go-version
+make GO_VERSION_MIN=1.25.3
+
 
 mkdir -p .devcontainer .vscode
 cp ~/work/devenvs/vault/configs/devcontainer.json ~/work/devenvs/vault/configs/launch.json .vscode/

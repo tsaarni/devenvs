@@ -27,8 +27,8 @@ rm -f certs/admin-keystore.p12
 openssl pkcs12 -export -passout pass:secret -noiter -nomaciter -in certs/ldap-admin.pem -inkey certs/ldap-admin-key.pem -out admin-keystore.p12
 
 
-docker-compose rm -f
-docker-compose up openldap ldap-client
+docker compose rm -f
+docker compose up openldap ldap-client
 
 
 sudo nsenter -n -t $(pidof slapd) wireshark -f "port 389 or port 636" -Y ldap -k -o tls.keylog_file:$HOME/work/devenvs/keycloak/output/wireshark-keys.log
@@ -170,8 +170,8 @@ apps/create-components.py --server=https://keycloak.127-0-0-121.nip.io:8080/ res
 1. Start OpenLDAP and LDAP client containers
 
 cd ~/work/devenvs/keycloak
-docker-compose rm -f
-docker-compose up openldap ldap-client
+docker compose rm -f
+docker compose up openldap ldap-client
 
 
 2. Capture traffic to/from OpenLDAP
@@ -182,14 +182,16 @@ sudo nsenter --target $(pidof slapd) --net wireshark -i any -k -o tls.keylog_fil
 3. Run Keycloak
 
 mkdir -p .vscode
-cp -a ~/work/devenvs/keycloak/configs/launch.json  ~/work/devenvs/keycloak/configs/settings.json .vscode
+cp -a ~/work/devenvs/keycloak/configs/launch.json ~/work/devenvs/keycloak/configs/settings.json .vscode
 code .
+
+# launch debuger
 
 
 4. Create LDAP federation provider
 
 cd ~/work/devenvs/keycloak
-apps/create-components.py --server=http://127.0.0.1:8080/ rest-requests/create-ldap-ppolicy-provider.json
+apps/create-components.py --server=http://keycloak.127.0.0.1.nip.io:8080 rest-requests/create-ldap-ppolicy-provider.json
 
 
 5. Check that the provider is created

@@ -8,6 +8,7 @@
                         "mode": "auto",
                         "cwd": "${workspaceRoot}",
                         "program": "cmd/contour",
+                        // --config-path=nnnn.yaml
                         "args": ["serve", "--xds-address=0.0.0.0", "--xds-port=8001", "--envoy-service-http-port=8080", "--envoy-service-https-port=8443", "--contour-cafile=ca.crt", "--contour-cert-file=tls.crt", "--contour-key-file=tls.key", "--debug"]
                 },
                 {

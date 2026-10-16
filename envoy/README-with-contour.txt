@@ -294,3 +294,60 @@ git add api/ generated_api_shadow/
 
 docs/build.sh
 xdg-open generated/docs/index.html
+
+
+
+
+
+
+#########################################################################
+#
+# Patch Contour deployment
+
+kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
+
+# Replace envoy image and keep the pod running for debugging
+kubectl -n projectcontour patch daemonset envoy --type='json' -p='[
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/securityContext/runAsNonRoot",
+    "value": false
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/1/image",
+    "value": "ubuntu:24.04"
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/1/command",
+    "value": ["sleep", "999999999" ]
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/1/args",
+    "value": []
+  },
+  {
+    "op": "remove",
+    "path": "/spec/template/spec/containers/1/readinessProbe"
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/1/securityContext",
+    "value": {"runAsUser": 0}
+  }
+]'
+
+# Restart envoy pod
+kubectl -n projectcontour delete pod -l app=envoy --force
+
+# Upload envoy binary to the pod
+kubectl -n projectcontour cp bazel-bin/source/exe/envoy-static $(kubectl -n projectcontour get pod -l app=envoy -o jsonpath='{.items[0].metadata.name}'):/usr/local/bin/envoy -c envoy
+
+# Run envoy in the pod with config from configmap
+kubectl -n projectcontour exec $(kubectl -n projectcontour get pod -l app=envoy -o jsonpath='{.items[0].metadata.name}') -c envoy -- /usr/local/bin/envoy  -c /config/envoy.json --service-cluster projectcontour --service-node envoy-tw8qt --log-level info --base-id 1
+
+
+kubectl apply -f ~/work/devenvs/contour/manifests/echoserver.yaml
+http http://echoserver.127-0-0-101.nip.io

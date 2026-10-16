@@ -1,9 +1,5 @@
 
 
-# use major or major.minor as argument to pick the latest release from the release track
-apps/update-envoy.sh 1.30
-apps/update-go.sh 1
-
 https://projectcontour.io/resources/release-process/
 
 git remote add upstream git@github.com:projectcontour/contour.git
@@ -12,12 +8,12 @@ export CONTOUR_UPSTREAM_REMOTE_NAME=upstream
 
 
 
-export CONTOUR_RELEASE_VERSION=v1.30.1
+export CONTOUR_RELEASE_VERSION=v1.33.2
 export CONTOUR_RELEASE_VERSION_MAJOR=1
 export CONTOUR_RELEASE_VERSION_MINOR=30
-export CONTOUR_PREVIOUS_VERSION=v1.30.0
+export CONTOUR_PREVIOUS_VERSION=v1.33.1
 
-git checkout release-1.30
+git checkout release-1.33
 git pull
 git reset --hard
 echo ./hack/release/make-release-tag.sh $CONTOUR_PREVIOUS_VERSION $CONTOUR_RELEASE_VERSION
@@ -32,12 +28,12 @@ docker run --rm  ghcr.io/projectcontour/contour:${CONTOUR_RELEASE_VERSION} conto
 
 
 
-export CONTOUR_RELEASE_VERSION=v1.29.3
+export CONTOUR_RELEASE_VERSION=v1.32.3
 export CONTOUR_RELEASE_VERSION_MAJOR=1
-export CONTOUR_RELEASE_VERSION_MINOR=29
-export CONTOUR_PREVIOUS_VERSION=v1.29.2
+export CONTOUR_RELEASE_VERSION_MINOR=32
+export CONTOUR_PREVIOUS_VERSION=v1.32.2
 
-git checkout release-1.29
+git checkout release-1.32
 git pull
 git reset --hard
 echo ./hack/release/make-release-tag.sh $CONTOUR_PREVIOUS_VERSION $CONTOUR_RELEASE_VERSION
@@ -51,12 +47,12 @@ git push ${CONTOUR_UPSTREAM_REMOTE_NAME} ${CONTOUR_RELEASE_VERSION}
 
 
 
-export CONTOUR_RELEASE_VERSION=v1.28.7
+export CONTOUR_RELEASE_VERSION=v1.31.4
 export CONTOUR_RELEASE_VERSION_MAJOR=1
-export CONTOUR_RELEASE_VERSION_MINOR=28
-export CONTOUR_PREVIOUS_VERSION=v1.28.6
+export CONTOUR_RELEASE_VERSION_MINOR=31
+export CONTOUR_PREVIOUS_VERSION=v1.31.3
 
-git checkout release-1.28
+git checkout release-1.31
 git pull
 git reset --hard
 echo ./hack/release/make-release-tag.sh $CONTOUR_PREVIOUS_VERSION $CONTOUR_RELEASE_VERSION

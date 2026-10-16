@@ -12,7 +12,7 @@ export LC_MESSAGES=en_US.UTF-8
 # when the program has called bindtextdomain() with dirname /usr/share/locale.
 export LANGUAGE=en_CUSTOM
 
-/usr/sbin/sssd
+#/usr/sbin/sssd
 /usr/sbin/sshd
 
 tail -F /tmp/log

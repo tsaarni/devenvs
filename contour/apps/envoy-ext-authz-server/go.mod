@@ -3,13 +3,15 @@ module github.com/tsaarni/envoy-ext-authz-server
 go 1.26
 
 require (
+	github.com/alecthomas/kong v1.16.1
 	github.com/envoyproxy/go-control-plane/envoy v1.37.0
 	golang.org/x/net v0.51.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260223185530-2f722ef697dc
 	google.golang.org/grpc v1.79.1
+	google.golang.org/protobuf v1.36.11
 )
 
-require github.com/lmittmann/tint v1.1.3 // indirect
+require github.com/lmittmann/tint v1.1.3
 
 require (
 	github.com/cncf/xds/go v0.0.0-20260202195803-dba9d589def2 // indirect
@@ -17,5 +19,4 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
 )

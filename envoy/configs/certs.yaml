@@ -43,3 +43,6 @@ subject: cn=expired-client
 issuer: cn=client-ca
 not_before: 2020-01-01T00:00:00Z
 not_after: 2020-01-02T00:00:00Z
+---
+subject: cn=envoy-client
+issuer: cn=server-ca

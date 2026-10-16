@@ -2,14 +2,11 @@
 #     rm -rf certs && mkdir certs && certyaml --destination certs configs/certs.yaml
 #
 # Start
-#     docker-compose up
+#     docker compose up
 #
 # Cleanup
-#     docker-compose down -v
-#     docker-compose rm -f -v
+#     docker compose down -v
 #
-
-version: "3.8"
 services:
   # OLC configuration for the server is in templates/*
   openldap:
@@ -18,12 +15,12 @@ services:
       - "389:389"
       - "636:636"
     volumes:
-      - .:/input:ro
+      - .:/host:ro
       - ./output:/output
     environment:
-      - CERT_FILENAME=/input/certs/ldap.pem
-      - KEY_FILENAME=/input/certs/ldap-key.pem
-      - CA_FILENAME=/input/certs/client-ca.pem
+      - CERT_FILENAME=/host/certs/openldap.pem
+      - KEY_FILENAME=/host/certs/openldap-key.pem
+      - CA_FILENAME=/host/certs/internal-client-ca.pem
 
   # sshd with sssd
   #   sshpass -p user ssh user@localhost -p 2222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "echo Hello world!"
@@ -32,22 +29,21 @@ services:
     ports:
       - "2222:22"
     volumes:
-      - .:/input:ro
+      - .:/host:ro
 
-  # postgres requires specific permissions for the certs
+  # Init container: copies certs with correct ownership for postgres (uid 70)
   postgres-init:
     image: docker.io/postgres:14-alpine
     entrypoint: sh
-    command: -x -c "cp -a input/certs/* /certs && chown 70 certs/* && chmod 600 certs/*"
+    command: -x -c "cp -a host/certs/* /certs && chown 70 certs/* && chmod 600 certs/*"
     volumes:
-      - .:/input:ro
+      - .:/host:ro
       - postgres-certs:/certs
 
-  # Connect to postgresql CLI
-  #
-  # docker exec -it keycloak-postgres-1 psql --username=keycloak
-  #   \dt                     # show tables
-  #   select * from pg_user;  # show users
+  # Connect to postgresql CLI:
+  #   docker exec -it keycloak-postgres-1 psql --username=keycloak
+  #     \dt                     -- show tables
+  #     select * from pg_user;  -- show users
   postgres:
     image: docker.io/postgres:14-alpine
     # uncomment for TLS config
@@ -66,7 +62,7 @@ services:
       - ./tmp:/var/lib/postgresql/data
     depends_on:
       postgres-init:
-       condition: service_completed_successfully
+        condition: service_completed_successfully
 
   pgadmin:
     # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html

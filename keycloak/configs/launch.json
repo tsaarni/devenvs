@@ -25,39 +25,25 @@
                 // then run UI under Vite
                 // (cd js; pnpm --filter keycloak-admin-ui run dev)
             },
-        },        {
+        },
+        {
             "type": "java",
-            "name": "Debug Quarkus (IDELauncher)",
+            "name": "Debug Quarkus with mirrord / Kubernetes (keycloak-junit5)",
             "request": "launch",
-            "mainClass": "org.keycloak.quarkus._private.IDELauncher",
-            "projectName": "keycloak-quarkus-server-app",
+            "mainClass": "org.keycloak.Keycloak",
+            "projectName": "keycloak-junit5",
 
-            // Configure JVM options:
-            //"vmArgs": "-Dfoo=bar
+            "args": "start-dev --verbose",
 
-            // All configuration options:
-            // - https://www.keycloak.org/server/all-config
             "env": {
-                "KEYCLOAK_ADMIN": "admin",
-                "KEYCLOAK_ADMIN_PASSWORD": "admin",
-
-                //"KC_LOG_LEVEL": "debug",
-
-                "KC_HOSTNAME": "keycloak.127.0.0.1.nip.io",
-
+                "KC_BOOTSTRAP_ADMIN_USERNAME": "admin",
+                "KC_BOOTSTRAP_ADMIN_PASSWORD": "admin",
                 "KC_DB": "postgres",
-                "KC_DB_URL": "jdbc:postgresql://localhost:5432/keycloak",
+                "KC_DB_URL": "jdbc:postgresql://postgres/keycloak?sslmode=disable",
                 "KC_DB_USERNAME": "keycloak",
                 "KC_DB_PASSWORD": "keycloak",
-
-                // "KC_SPI_TRUSTSTORE_FILE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/truststore.p12",
-                // "KC_SPI_TRUSTSTORE_FILE_PASSWORD": "secret",
-                // "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client.pem",
-                // "KC_SPI_KEYSTORE_DEFAULT_LDAP_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/ldap-client-key.pem",
-                // "KC_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
-                // "KC_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
-                // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server.pem",
-                // "KC_SPI_KEYSTORE_DEFAULT_HTTPS_CERTIFICATE_KEY_FILE": "/home/tsaarni/work/devenvs/keycloak/certs/keycloak-server-key.pem",
+                "MIRRORD_ACTIVE": "1",
+                "MIRRORD_CONFIG_FILE": "/home/tsaarni/work/devenvs/keycloak/configs/mirrord.toml",
             },
         },
         {
@@ -87,14 +73,6 @@
             "name": "Debug (Launch) - Current File",
             "request": "launch",
             "mainClass": "${file}"
-        },
-        {
-            "type": "java",
-            "name": "Debug KeycloakServer",
-            "request": "launch",
-            "mainClass": "org.keycloak.testsuite.KeycloakServer",
-            "projectName": "keycloak-testsuite-utils",
-            "vmArgs": "-Dkeycloak.migration.action=import -Dkeycloak.migration.provider=dir -Dkeycloak.migration.dir=/home/tsaarni/work/keycloak-devenv/migrations/ldap-federation/ -Djavax.net.ssl.trustStore=/home/tsaarni/work/keycloak-devenv/truststore.p12 -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.javax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.keyStore=/home/tsaarni/work/keycloak-devenv/admin-keystore.p12 -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.javax.net.ssl.keyStoreType=PKCS12 -Dresources -Dkeycloak.logging.level=debug"
         },
     ]
 }

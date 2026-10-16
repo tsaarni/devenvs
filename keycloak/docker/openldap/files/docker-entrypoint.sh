@@ -4,8 +4,8 @@ rm -rf /data/* || true
 mkdir -p /data/config /data/db /data/ldif
 
 # process templates
-eval "cat <<< \"$(</input/templates/database.ldif)\"" > /data/ldif/database.ldif
-eval "cat <<< \"$(</input/templates/users-and-groups.ldif)\"" > /data/ldif/users-and-groups.ldif
+eval "cat <<< \"$(</host/templates/database.ldif)\"" > /data/ldif/database.ldif
+eval "cat <<< \"$(</host/templates/users-and-groups.ldif)\"" > /data/ldif/users-and-groups.ldif
 
 # import templates
 slapadd -v -n 0 -l /data/ldif/database.ldif -F /data/config

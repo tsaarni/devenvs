@@ -91,3 +91,9 @@ static_resources:
           healthy_threshold: 1
           http_health_check:
             path: "/healthz"
+
+layered_runtime:
+  layers:
+  - name: mylayer
+    static_layer:
+      envoy.reloadable_features.fixed_heap_use_allocated: true

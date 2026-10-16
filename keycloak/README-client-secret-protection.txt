@@ -469,3 +469,43 @@ http http://127.0.0.1:8080/admin/realms/master/clients/$JWT_CLIENT_ID/installati
 # uses new junit based e2e test framework
 
 mvn -f tests/pom.xml test -Dtest=ClientVaultTest
+
+### Test failure: CustomLauncherInterceptor / quarkus-junit5-config
+
+When running:
+
+    ./mvnw test -f tests/base/pom.xml -Dtest=ClientVaultTest
+
+The test fails with:
+
+    java.util.ServiceConfigurationError: org.junit.platform.launcher.LauncherSessionListener:
+    Provider io.quarkus.test.junit.launcher.CustomLauncherInterceptor could not be instantiated
+    Caused by: java.lang.ClassNotFoundException: io.quarkus.test.config.QuarkusClassOrderer
+
+Root cause: test-framework/core/pom.xml excludes io.quarkus:quarkus-junit5-config from the
+keycloak-junit5 dependency. But quarkus-junit5's CustomLauncherInterceptor (registered via
+ServiceLoader) needs QuarkusClassOrderer from that excluded jar.
+
+This is a pre-existing issue in 26.5.x (not caused by the Quarkus bump). Fixed on upstream
+main in commit 0223b6823b (large refactor to JUnit 6 + TestContainers 2.x).
+
+Workaround: remove the exclusion in test-framework/core/pom.xml:
+
+    --- a/test-framework/core/pom.xml
+    +++ b/test-framework/core/pom.xml
+    @@ in the keycloak-junit5 dependency, remove:
+    -            <exclusions>
+    -                <exclusion>
+    -                    <groupId>io.quarkus</groupId>
+    -                    <artifactId>quarkus-junit5-config</artifactId>
+    -                </exclusion>
+    -            </exclusions>
+
+Then rebuild:
+
+    ./mvnw install -DskipTests -pl test-framework/core
+
+Revert the workaround after running tests:
+
+    git checkout test-framework/core/pom.xml
+    ./mvnw install -DskipTests -pl test-framework/core

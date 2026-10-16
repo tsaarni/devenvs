@@ -1,17 +1,72 @@
 
+### unit tests
+
+make test TEST=./builtin/credential/jwt TESTARGS="-v"
+
+
+### e2e tests
+
 # Create Kind cluster
 kind delete cluster --name openbao
-kind create cluster --config configs/kind-cluster-config.yaml --name openbao
+kind create cluster --config ~/work/devenvs/openbao/configs/kind-cluster-config.yaml --name openbao
 
 
 # Generate certs
 rm -rf certs
 mkdir -p certs
-certyaml -d certs configs/certs.yaml
+certyaml -d certs ~/work/devenvs/openbao/configs/certs.yaml
 
 
 # Create the certs secret
 kubectl create secret generic openbao-certs --dry-run=client -o yaml --from-file=certs/ca.pem --from-file=certs/bao-server.pem --from-file=certs/bao-server-key.pem | kubectl apply -f -
+
+
+kubectl apply -f ~/work/devenvs/openbao/manifests/openbao-with-placeholder-pods.yaml
+kubectl apply -f ~/work/devenvs/openbao/manifests/shell.yaml
+
+
+
+cd ~/work/openbao
+make
+kubectl cp bin/bao openbao-0:/usr/bin/bao
+kubectl exec -it openbao-0 -- bao server -dev -dev-listen-address=0.0.0.0:8200 -dev-root-token-id=root -log-level=debug
+
+
+
+
+
+# Configure JWT auth method
+
+# Enable the JWT auth method
+kubectl exec -it shell -- http POST http://openbao:8200/v1/sys/auth/jwt X-Vault-Token:root type=jwt
+
+# Configure the JWT auth method to use Kubernetes OIDC discovery
+kubectl exec -it shell -- http POST http://openbao:8200/v1/auth/jwt/config X-Vault-Token:root provider_config:='{"provider":"kubernetes"}'
+
+# Create a test role
+kubectl exec -it shell -- http POST http://openbao:8200/v1/auth/jwt/role/my-role X-Vault-Token:root role_type=jwt user_claim=sub bound_subject="system:serviceaccount:default:openbao-client" bound_audiences="https://kubernetes.default.svc.cluster.local"
+
+
+
+# Test succesful login
+kubectl exec -it shell -- http POST http://openbao:8200/v1/auth/jwt/login role=my-role jwt=@/var/run/secrets/kubernetes.io/serviceaccount/token
+
+
+
+
+# Test failed login with not-authorized service account token
+
+kubectl create serviceaccount not-authorized
+kubectl create token not-authorized --duration=87600h | kubectl create secret generic not-authorized-token --from-file=token=/dev/stdin --dry-run=client -o yaml | kubectl apply -f -
+INVALID_TOKEN=$(kubectl get secret not-authorized-token -o json | jq -r '.data.token' | base64 -d)
+
+kubectl exec -it shell -- sh -c "http POST http://openbao:8200/v1/auth/jwt/login role=my-role jwt=$INVALID_TOKEN"
+
+
+
+#########
+
+
 
 # Deploy openbao
 kubectl apply -f manifests/openbao.yaml

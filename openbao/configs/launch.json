@@ -6,7 +6,13 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "args": ["server", "-dev", "-dev-root-token-id=root"],
+            "program": "${workspaceFolder}",
+            "args": ["server", "-dev", "-dev-root-token-id=root", "-log-level=debug"],
+            "env": {
+                "SSLKEYLOGFILE": "${workspaceFolder}/wireshark-keys.log",
+                "KUBERNETES_SERVICE_HOST": "localhost",
+                "KUBERNETES_SERVICE_PORT": "16443"
+            }
         },
         {
             "name": "Run with file backend",

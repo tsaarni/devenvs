@@ -22,3 +22,8 @@ subject: cn=clientcacert2
 ---
 issuer: cn=clientcacert2
 subject: cn=clicert2
+---
+subject: cn=zookeeper
+issuer: cn=cacert
+sans:
+- DNS:localhost

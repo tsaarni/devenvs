@@ -3,12 +3,17 @@ subject: cn=ca
 subject: cn=bao-server
 issuer: cn=ca
 sans:
+  - DNS:localhost
   - DNS:openbao-node-1
   - DNS:openbao-node-2
   - DNS:openbao-node-3
+  - DNS:openbao-0.openbao-internal
+  - DNS:openbao-1.openbao-internal
+  - DNS:openbao-2.openbao-internal
   - DNS:openbao.127-0-58-11.nip.io
   - DNS:openbao.127-0-58-12.nip.io
   - DNS:openbao.127-0-58-13.nip.io
+  - DNS:openbao.127-0-0-195.nip.io
 ---
 subject: cn=bao-client
 issuer: cn=ca

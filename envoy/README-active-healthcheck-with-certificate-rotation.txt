@@ -47,3 +47,18 @@ source/common/upstream/health_checker_impl.cc
 
 source/extensions/health_checkers/http/health_checker_impl.h
 source/extensions/health_checkers/http/health_checker_impl.cc
+
+
+
+
+
+
+
+
+
+
+### Test
+
+
+bazel test -c fastbuild //test/integration:sds_dynamic_integration_test --test_filter="*ClusterWarmingWhileHealthCheckBlocksOnSds*"
+

@@ -26,6 +26,9 @@ spec:
         - name: host
           mountPath: "/host"
           readOnly: true
+        - name: not-authorized-token
+          mountPath: "/var/run/secrets/not-authorized"
+          readOnly: true
   serviceAccountName: vault-client
   volumes:
     - name: projected
@@ -39,3 +42,6 @@ spec:
       hostPath:
         path: /host
         type: Directory
+    - name: not-authorized-token
+      secret:
+        secretName: not-authorized-token

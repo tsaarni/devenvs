@@ -2,7 +2,7 @@
 
 
 # Start envoy proxy
-docker run --rm --volume $PWD:/input:ro --network host envoyproxy/envoy:v1.31.0 envoy --config-path /input/configs/envoy-xfcc.yaml
+docker run --rm --volume $PWD:/host:ro --network host envoyproxy/envoy:v1.31.0 envoy --config-path /host/configs/envoy-xfcc.yaml
 
 # run echoserver backend for testing
 docker run --rm --network host --env HTTP_PORT=8080  gcr.io/k8s-staging-ingressconformance/echoserver:v20210922-cec7cf2

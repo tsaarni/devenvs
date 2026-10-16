@@ -20,8 +20,12 @@ kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
 # or
 kubectl apply -f examples/contour
 
+
 # create endpoints that directs traffic to host, to execute controllers directly from source code without deploying
-sed "s/REPLACE_ADDRESS_HERE/$(docker network inspect kind | jq -r '.[0].IPAM.Config[0].Gateway')/" manifests/contour-endpoints-dev.yaml | kubectl apply -f -
+sed "s/REPLACE_ADDRESS_HERE/$(docker network inspect kind | jq -r '.[0].IPAM.Config[] | select(.Gateway | test(":") | not) | .Gateway')/" manifests/contour-endpointslice-dev.yaml | kubectl apply -f -
+
+
+### OLD sed "s/REPLACE_ADDRESS_HERE/$(docker network inspect kind | jq -r '.[0].IPAM.Config[0].Gateway')/" manifests/contour-endpoints-dev.yaml | kubectl apply -f -
 
 
 
@@ -114,6 +118,10 @@ http localhost:6060/debug/dag | dot -Tpng -o dag.png
 sudo nsenter --target $(pidof contour) --net wireshark -f "port 8001" -k
 
 
+# capture echoserver
+sudo nsenter --target $(kindps contour echoserver -o json | jq -r .[0].pids[0].pid) --net wireshark -i any -k -f "tcp port 8080" -Y http
+
+
 # contour metrics
 kubectl -n projectcontour port-forward pod/$(kubectl -n projectcontour get pod -l app=contour -o jsonpath='{.items[0].metadata.name}') 8000
 http localhost:8000/metrics
@@ -148,6 +156,7 @@ kubectl create secret generic internal-root-ca --from-file=ca.crt=certs/internal
 kubectl create secret tls ingress --cert=certs/ingress.pem --key=certs/ingress-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret tls client --cert=certs/client-1.pem --key=certs/client-1-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic client-root-ca-1 --from-file=ca.crt=certs/client-root-ca-1.pem --dry-run=client -o yaml | kubectl apply -f -
+kubectl create secret generic envoy-ext-authz-server-tls --from-file=tls.crt=certs/envoy-ext-authz-server.pem --from-file=tls.key=certs/envoy-ext-authz-server-key.pem --from-file=ca.crt=certs/internal-root-ca.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n projectcontour create secret tls envoy-client-cert --cert=certs/envoy.pem --key=certs/envoy-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n projectcontour create secret tls fallback-cert --cert=certs/fallback.pem --key=certs/fallback-key.pem --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n projectcontour create secret generic metrics-cert --from-file=ca.pem=certs/metrics-client-root-ca.pem --from-file=tls.crt=certs/metrics.pem --from-file=tls.key=certs/metrics-key.pem --dry-run=client -o yaml | kubectl apply -f -
@@ -345,6 +354,13 @@ make cleanup-kind
 if CurrentSpecReport().Failed {
    os.Exit(1)
 }
+
+
+
+
+ENVOY_PID=$(pidof envoy)
+sudo curl -v -X POST --unix-socket /proc/${ENVOY_PID}/root/admin/admin.sock "http://localhost/runtime?name=envoy.reloadable_features.foobarbaz"
+sudo curl --unix-socket /proc/${ENVOY_PID}/root/admin/admin.sock "http://localhost/runtime"
 
 
 ############

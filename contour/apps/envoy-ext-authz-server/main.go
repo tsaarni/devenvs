@@ -3,13 +3,14 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"flag"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/alecthomas/kong"
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	"github.com/lmittmann/tint"
 	"golang.org/x/net/http2"
@@ -18,7 +19,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-var log *slog.Logger
+var log = slog.Default()
 
 func buildTLSConfig(certFile, keyFile, caFile string) (*tls.Config, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
@@ -33,7 +34,9 @@ func buildTLSConfig(certFile, keyFile, caFile string) (*tls.Config, error) {
 			return nil, fmt.Errorf("reading CA file: %w", err)
 		}
 		pool := x509.NewCertPool()
-		pool.AppendCertsFromPEM(caCert)
+		if !pool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("CA file %q contains no certificates", caFile)
+		}
 		tlsConfig.ClientCAs = pool
 		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		log.Info("mTLS enabled", "ca", caFile)
@@ -45,8 +48,12 @@ func buildTLSConfig(certFile, keyFile, caFile string) (*tls.Config, error) {
 // mustTLSConfig builds a TLS config from the given cert/key/ca files.
 // Returns nil if cert and key are empty (TLS disabled). Exits on error.
 func mustTLSConfig(cert, key, ca string) *tls.Config {
-	if cert == "" || key == "" {
+	if cert == "" && key == "" && ca == "" {
 		return nil
+	}
+	if cert == "" || key == "" {
+		log.Error("TLS requires both certificate and key")
+		os.Exit(1)
 	}
 	cfg, err := buildTLSConfig(cert, key, ca)
 	if err != nil {
@@ -61,76 +68,93 @@ func listenAndServe(srv *http.Server, tlsCfg *tls.Config) error {
 	if tlsCfg == nil {
 		return srv.ListenAndServe()
 	}
-	lis, err := tls.Listen("tcp", srv.Addr, tlsCfg)
-	if err != nil {
-		return err
-	}
-	return srv.Serve(lis)
+	return srv.ListenAndServeTLS("", "")
+}
+
+// config holds all settings. Each flag has a matching AUTHZ_* environment variable
+// (e.g. --grpc-tls-cert / AUTHZ_GRPC_TLS_CERT); command line takes precedence.
+type config struct {
+	Name          string `help:"Server identity in logs and responses." default:"authz"`
+	DefaultStatus int    `help:"Verdict status when no x-authz-status is sent (200 allows, 201..599 denies)." default:"200"`
+
+	GRPCAddr    string `name:"grpc-addr" help:"gRPC listen address (empty disables)." default:":9001"`
+	GRPCTLSCert string `name:"grpc-tls-cert" help:"gRPC server TLS certificate file." type:"path"`
+	GRPCTLSKey  string `name:"grpc-tls-key" help:"gRPC server TLS key file." type:"path"`
+	GRPCTLSCA   string `name:"grpc-tls-ca" help:"gRPC client CA file (enables mTLS)." type:"path"`
+
+	HTTPAddr    string `name:"http-addr" help:"HTTP listen address (empty disables)." default:":9002"`
+	HTTPTLSCert string `name:"http-tls-cert" help:"HTTP server TLS certificate file." type:"path"`
+	HTTPTLSKey  string `name:"http-tls-key" help:"HTTP server TLS key file." type:"path"`
+	HTTPTLSCA   string `name:"http-tls-ca" help:"HTTP client CA file (enables mTLS)." type:"path"`
 }
 
 func main() {
 	log = slog.New(tint.NewHandler(os.Stdout, &tint.Options{Level: slog.LevelDebug}))
 	slog.SetDefault(log)
 
-	// gRPC server: implements Envoy ext-authz gRPC "Check" protocol (envoy.service.auth.v3.Authorization).
-	// Always uses HTTP/2: h2c (plaintext) when no TLS is configured, h2 (TLS) when TLS is configured.
-	grpcPort := flag.Int("grpc-port", 9001, "gRPC ext-authz server port")
-	grpcTLSCert := flag.String("grpc-tls-cert", "", "gRPC server TLS certificate file")
-	grpcTLSKey := flag.String("grpc-tls-key", "", "gRPC server TLS key file")
-	grpcTLSCA := flag.String("grpc-tls-ca", "", "gRPC server TLS CA file for client cert verification (enables mTLS)")
+	var cli config
+	kong.Parse(&cli,
+		kong.Name("envoy-ext-authz-server"),
+		kong.Description("Envoy ext_authz test server. Every flag can also be set with the environment variable shown in its help."),
+		kong.DefaultEnvars("AUTHZ"),
+	)
+	name, defaultStatus := &cli.Name, &cli.DefaultStatus
+	grpcAddr, httpAddr := &cli.GRPCAddr, &cli.HTTPAddr
+	grpcTLSCert, grpcTLSKey, grpcTLSCA := &cli.GRPCTLSCert, &cli.GRPCTLSKey, &cli.GRPCTLSCA
+	httpTLSCert, httpTLSKey, httpTLSCA := &cli.HTTPTLSCert, &cli.HTTPTLSKey, &cli.HTTPTLSCA
 
-	// HTTP server: implements Envoy ext-authz HTTP protocol (plain HTTP check request/response).
-	// Supports HTTP/1.1 and HTTP/2: plaintext (HTTP/h2c) when no TLS, encrypted (HTTPS/h2) when TLS is configured.
-	httpPort := flag.Int("http-port", 9002, "HTTP ext-authz server port")
-	httpTLSCert := flag.String("http-tls-cert", "", "HTTP server TLS certificate file")
-	httpTLSKey := flag.String("http-tls-key", "", "HTTP server TLS key file")
-	httpTLSCA := flag.String("http-tls-ca", "", "HTTP server TLS CA file for client cert verification (enables mTLS)")
-
-	flag.Parse()
-
-	log.Info("Starting envoy ext-authz server", "grpc-port", *grpcPort, "http-port", *httpPort)
+	if !validStatus(*defaultStatus) || *name == "" || strings.IndexFunc(*name, func(r rune) bool {
+		return r < 32 || r > 126
+	}) >= 0 || (*grpcAddr == "" && *httpAddr == "") {
+		log.Error("Invalid configuration: require printable nonempty name, status 200..599, and at least one listener")
+		os.Exit(1)
+	}
+	server := &authzServer{name: *name, defaultStatus: *defaultStatus}
+	log = log.With("instance", *name)
 
 	grpcTLS := mustTLSConfig(*grpcTLSCert, *grpcTLSKey, *grpcTLSCA)
 	httpTLS := mustTLSConfig(*httpTLSCert, *httpTLSKey, *httpTLSCA)
 
-	// Start gRPC ext-authz server.
-	// gRPC requires HTTP/2; without TLS this is h2c, with TLS this is h2 negotiated via ALPN.
-	go func() {
-		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *grpcPort))
-		if err != nil {
-			log.Error("gRPC listen failed", "error", err)
-			os.Exit(1)
-		}
-		var opts []grpc.ServerOption
-		if grpcTLS != nil {
-			opts = append(opts, grpc.Creds(credentials.NewTLS(grpcTLS)))
-		}
-		srv := grpc.NewServer(opts...)
-		authv3.RegisterAuthorizationServer(srv, &grpcAuthzServer{})
-		log.Info("gRPC ext-authz server listening", "port", *grpcPort, "tls", grpcTLS != nil)
-		if err := srv.Serve(lis); err != nil {
-			log.Error("gRPC server failed", "error", err)
-			os.Exit(1)
-		}
-	}()
+	errors := make(chan error, 2)
+	if *grpcAddr != "" {
+		go func() {
+			lis, err := net.Listen("tcp", *grpcAddr)
+			if err != nil {
+				errors <- fmt.Errorf("gRPC listen: %w", err)
+				return
+			}
+			var opts []grpc.ServerOption
+			if grpcTLS != nil {
+				opts = append(opts, grpc.Creds(credentials.NewTLS(grpcTLS)))
+			}
+			srv := grpc.NewServer(opts...)
+			authv3.RegisterAuthorizationServer(srv, &grpcAuthzServer{authzServer: server})
+			log.Info("gRPC ext-authz server listening", "addr", lis.Addr(), "tls", grpcTLS != nil)
+			errors <- srv.Serve(lis)
+		}()
+	}
 
 	// Start HTTP ext-authz server.
 	// h2c.NewHandler enables h2c (HTTP/2 cleartext) in addition to HTTP/1.1 on plaintext connections.
 	// http2.ConfigureServer enables HTTP/2 via ALPN on TLS connections.
 	h2s := &http2.Server{}
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", httpAuthzHandler)
 	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(":%d", *httpPort),
-		Handler: h2c.NewHandler(mux, h2s),
+		Addr:    *httpAddr,
+		Handler: h2c.NewHandler(server, h2s),
 	}
 	if httpTLS != nil {
 		httpServer.TLSConfig = httpTLS
-		http2.ConfigureServer(httpServer, h2s) // adds "h2" to TLS NextProtos for ALPN
+		if err := http2.ConfigureServer(httpServer, h2s); err != nil {
+			log.Error("HTTP/2 configuration failed", "error", err)
+			os.Exit(1)
+		}
 	}
-	log.Info("HTTP ext-authz server listening", "port", *httpPort, "tls", httpTLS != nil)
-	if err := listenAndServe(httpServer, httpTLS); err != nil {
-		log.Error("HTTP server failed", "error", err)
-		os.Exit(1)
+	if *httpAddr != "" {
+		go func() {
+			log.Info("HTTP ext-authz server starting", "addr", *httpAddr, "tls", httpTLS != nil)
+			errors <- listenAndServe(httpServer, httpTLS)
+		}()
 	}
+	log.Error("Listener stopped", "error", <-errors)
+	os.Exit(1)
 }

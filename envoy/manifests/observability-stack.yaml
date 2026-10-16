@@ -167,7 +167,7 @@ spec:
           command:
             - /cgroup-container-exporter
           args:
-            - --host-path=/host
+            - --cgroup-path=/host/sys/fs/cgroup
             - --mode=kubernetes
           volumeMounts:
             - name: host-cgroup
@@ -180,6 +180,55 @@ spec:
         - name: host-cgroup
           hostPath:
             path: /sys/fs/cgroup
+            type: Directory
+        - name: containerd-sock
+          hostPath:
+            path: /run/containerd/containerd.sock
+            type: Socket
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smaps-container-exporter
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: smaps-container-exporter
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smaps-container-exporter
+spec:
+  selector:
+    matchLabels:
+      app: smaps-container-exporter
+  template:
+    metadata:
+      labels:
+        app: smaps-container-exporter
+    spec:
+      containers:
+        - name: smaps-container-exporter
+          image: ghcr.io/tsaarni/smaps-container-exporter:latest
+          command:
+            - /smaps-container-exporter
+          args:
+            - --proc-path=/host/proc
+            - --containerd-sock=/run/containerd/containerd.sock
+            - --filter=default/*/envoy/*
+          volumeMounts:
+            - name: host-proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: containerd-sock
+              mountPath: /run/containerd/containerd.sock
+              readOnly: true
+      volumes:
+        - name: host-proc
+          hostPath:
+            path: /proc
             type: Directory
         - name: containerd-sock
           hostPath:

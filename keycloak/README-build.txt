@@ -16,10 +16,14 @@ ls -l ./quarkus/dist/target/
 mvnd -pl quarkus/deployment,quarkus/dist -am -DskipTests clean install
 
 
+# Start with in-memory H2 database (configuration resets on restart)
+./mvnw -f quarkus/server/pom.xml compile quarkus:dev -Dkc.config.built=true -Dquarkus.args="start-dev --db=dev-mem" -Dkc.bootstrap-admin-username=admin -Dkc.bootstrap-admin-password=admin
 
 
-# Run in dev mode
-java -jar quarkus/server/target/lib/quarkus-run.jar start-dev
+# Run in dev mode, with H2 database
+./mvnw -f quarkus/server/pom.xml compile quarkus:dev -Dkc.config.built=true -Dquarkus.args="start-dev" -Dkc.bootstrap-admin-username=admin -Dkc.bootstrap-admin-password=admin
+rm quarkus/server/target/kc/data/h2/keycloakdb*
+
 
 # Run distro
 cd quarkus/dist/target/
@@ -291,7 +295,7 @@ The error comes when trying to launch debugger
 
 *** cannot convert from Stream<Object> to Stream<RoleModel>
 
-Caused by: java.lang.Error: Unresolved compilation problems: 
+Caused by: java.lang.Error: Unresolved compilation problems:
 	Type mismatch: cannot convert from Stream<Object> to Stream<RoleModel>
 	Type mismatch: cannot convert from Stream<RoleModel> to Stream<Object>
 	Type mismatch: cannot convert from Stream<Object> to Stream<RoleModel>
@@ -432,9 +436,25 @@ index d2b8affb0c..f90bce7b1b 100755
 
 
 
-*** Update documentation 
+*** Update documentation
 
-./mvnw clean install -am -pl docs/documentation/dist -Pdocumentation
+./mvnw clean install -am -pl docs/documentation/aggregation -Pdocumentation
 
 kde-open ./docs/documentation/server_admin/target/generated-docs/index.html
 
+kde-open docs/documentation/target/release_notes/index.html
+
+
+
+# See the docs generated for SPI parameters
+# from SPI's getConfigMetadata() calls
+mvn clean install -am -pl docs/guides -Pdocumentation -DskipTests
+./mvnw clean install -am -pl docs/documentation/aggregation -Pdocumentation
+kde-open docs/guides/target/generated-docs/server/index.html
+
+
+
+
+*** Reformat code
+
+mvn spotless:apply

@@ -1,86 +1,73 @@
-subject: cn=ca
-key_type: RSA
+# CAs
+subject: cn=external-server-ca
 ---
-subject: cn=client-ca
+subject: cn=internal-server-ca
 ---
-subject: cn=ldap
-issuer: cn=ca
-sans:
-- DNS:localhost
-- DNS:openldap
-- DNS:ldap.127-0-0-1.nip.io
-- DNS:ldaps.127-0-0-101.nip.io
-key_type: RSA
+subject: cn=external-client-ca
 ---
-subject: cn=user,ou=users,o=example
-issuer: cn=client-ca
-key_type: RSA
+subject: cn=internal-client-ca
 ---
-subject: cn=ldap-admin,ou=users,o=example
-issuer: cn=client-ca
-key_type: RSA
----
-subject: cn=ldap-client,ou=users,o=example
-issuer: cn=client-ca
-key_type: RSA
----
-subject: cn=foo,uid=admin,ou=system
-issuer: cn=client-ca
-key_usages:
-key_type: RSA
----
-subject: cn=client-sub-ca
-issuer: cn=client-ca
-ca: true
----
-subject: cn=x509client
-issuer: cn=client-sub-ca
----
-subject: cn=postgres
-issuer: cn=ca
-sans:
-- DNS:localhost
----
-subject: cn=postgres-admin
-issuer: cn=client-ca
----
+
+# Keycloak HTTPS (via ingress)
 subject: cn=keycloak-server
-issuer: cn=ca
+issuer: cn=external-server-ca
 sans:
-- DNS:localhost
-- DNS:keycloak.127-0-0-1.nip.io
-- DNS:keycloak.127-0-0-121.nip.io
+  - DNS:keycloak.127-0-0-121.nip.io
+  - DNS:keycloak.127-0-0-1.nip.io
+  - DNS:localhost
 ---
+# IDP federation: expired cert testing
 subject: cn=keycloak-server-expired
-issuer: cn=ca
+issuer: cn=external-server-ca
 sans:
-- DNS:localhost
-- DNS:keycloak.127-0-0-1.nip.io
-- DNS:keycloak.127-0-0-121.nip.io
+  - DNS:keycloak.127-0-0-121.nip.io
+  - DNS:keycloak.127-0-0-1.nip.io
+  - DNS:localhost
 not_before: 2023-10-01T09:00:00Z
 not_after: 2023-10-29T09:00:00Z
 ---
-subject: cn=internal-ca
----
+
+# Pod-to-pod server certs
 subject: cn=keycloak-internal
-issuer: cn=internal-ca
+issuer: cn=internal-server-ca
 sans:
-- DNS:keycloak
-- DNS:keycloak.127-0-0-121.nip.io
+  - DNS:keycloak
+  - DNS:keycloak-headless
 ---
-subject: cn=postgres-internal
-issuer: cn=internal-ca
+subject: cn=postgres
+issuer: cn=internal-server-ca
 sans:
-- DNS:postgres
+  - DNS:postgres
+  - DNS:localhost
 ---
-subject: cn=federated
-issuer: cn=internal-ca
+subject: cn=openldap
+issuer: cn=internal-server-ca
+sans:
+  - DNS:openldap
+  - DNS:localhost
+  - IP:127.0.0.1
 ---
-subject: cn=federated-revoked
-issuer: cn=internal-ca
+
+# External client certs
+subject: cn=x509client
+issuer: cn=external-client-ca
+
+---
+# CRL testing: generates external-client-ca-crl.pem
+subject: cn=revoked-client
+issuer: cn=external-client-ca
 revoked: true
 ---
-subject: cn=openldap-internal
-issuer: cn=internal-ca
-sans:
-- DNS:openldap
+
+# Internal client certs (pod-to-pod)
+subject: cn=ldap-admin,ou=users,o=example
+issuer: cn=internal-client-ca
+---
+subject: cn=envoy-client
+issuer: cn=internal-client-ca
+---
+subject: cn=keycloak-db-client
+issuer: cn=internal-client-ca
+---
+subject: cn=keycloak-ldap-client
+issuer: cn=internal-client-ca

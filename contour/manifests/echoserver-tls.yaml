@@ -49,7 +49,8 @@ spec:
   ports:
   - name: http
     port: 443
-    targetPort: https-api
+    #targetPort: https-api
+    targetPort: http-api
   selector:
     app: echoserver-protected
 ---

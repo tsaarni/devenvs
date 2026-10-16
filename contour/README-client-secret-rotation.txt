@@ -29,8 +29,14 @@ kubectl -n projectcontour scale deployment contour --replicas=1
 kubectl apply -f manifests/echoserver-active-healthcheck-yaml
 
 
+# dummy update to trigger cluster update in Envoy
+kubectl patch httpproxy echoserver --type json -p '[{"op":"add","path":"/spec/routes/0/timeoutPolicy","value":{"response":"60s"}}]'
+kubectl patch httpproxy echoserver --type json -p '[{"op":"replace","path":"/spec/routes/0/timeoutPolicy/response","value":"120s"}]'
+
 
 http http://echoserver.127-0-0-101.nip.io
+
+
 
 
 http http://echoserver.127-0-0-101.nip.io | jq -r .tls.peer_certificates_decoded
@@ -64,6 +70,9 @@ printf "\n\n--- envoy /stats before rotation: $(date) ---\n\n\n" > troubleshooti
 http http://localhost:8002/stats >> troubleshooting-logs.txt
 
 
+
+cd ~/work/devenv/contour
+
 # Rotate envoy client certificate
 date
 rm certs/envoy.pem certs/envoy-key.pem
@@ -96,7 +105,19 @@ http http://echoserver.127-0-0-101.nip.io | jq -r .tls.peer_certificates_decoded
 
 
 
+
+
+# test that health check still will notice unhealthy backend
+#  - scale down echoserver to 0 replicas
+kubectl scale deployment echoserver --replicas=0
+
+until http --check-status GET http://echoserver.127-0-0-101.nip.io; do sleep 1; done; date
+
+
+
+####
 ### Patch contour to enable grpc-json-sniffer
+###
 README-xds-grpc-json-sniffer.txt
 
 kubectl -n projectcontour port-forward deployments/contour 12345
@@ -106,111 +127,6 @@ http://localhost:12345
 
 
 
-
-
-kubectl -n projectcontour port-forward daemonset/envoy 9001
-
-# list all keys in config dump
-http http://localhost:9001/config_dump?include_eds | jq -r 'paths | map(if (type == "number") then "[" + tostring + "]" else "[\"" + tostring + "\"]" end) | join("")'
-
-http http://localhost:9001/config_dump?include_eds | jq '.["configs"][1]["dynamic_active_clusters"][0]'
-
-{
-  "version_info": "954d4a8d-90b3-48e3-a82c-dd56d417e8f2",
-  "cluster": {
-    "@type": "type.googleapis.com/envoy.config.cluster.v3.Cluster",
-    "name": "default/echoserver/443/2cd1eacd71",
-    "type": "EDS",
-    "eds_cluster_config": {
-      "eds_config": {
-        "api_config_source": {
-          "api_type": "GRPC",
-          "grpc_services": [
-            {
-              "envoy_grpc": {
-                "cluster_name": "contour",
-                "authority": "contour"
-              }
-            }
-          ],
-          "transport_api_version": "V3"
-        },
-        "resource_api_version": "V3"
-      },
-      "service_name": "default/echoserver/https"
-    },
-    "connect_timeout": "2s",
-    "health_checks": [
-      {
-        "timeout": "2s",
-        "interval": "5s",
-        "unhealthy_threshold": 3,
-        "healthy_threshold": 5,
-        "http_health_check": {
-          "host": "contour-envoy-healthcheck",
-          "path": "/status"
-        }
-      }
-    ],
-    "transport_socket": {
-      "name": "envoy.transport_sockets.tls",
-      "typed_config": {
-        "@type": "type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext",
-        "common_tls_context": {
-          "tls_params": {
-            "tls_minimum_protocol_version": "TLSv1_2",
-            "tls_maximum_protocol_version": "TLSv1_3",
-            "cipher_suites": [
-              "[ECDHE-ECDSA-AES128-GCM-SHA256|ECDHE-ECDSA-CHACHA20-POLY1305]",
-              "[ECDHE-RSA-AES128-GCM-SHA256|ECDHE-RSA-CHACHA20-POLY1305]",
-              "ECDHE-ECDSA-AES256-GCM-SHA384",
-              "ECDHE-RSA-AES256-GCM-SHA384"
-            ]
-          },
-          "validation_context": {
-            "trusted_ca": {
-              "inline_bytes": "< CA CERT HERE >"
-            },
-            "match_typed_subject_alt_names": [
-              {
-                "san_type": "DNS",
-                "matcher": {
-                  "exact": "echoserver"
-                }
-              }
-            ]
-          },
-          "tls_certificate_sds_secret_configs": [
-            {
-              "name": "projectcontour/envoy-client-cert/4c5d24829f",
-              "sds_config": {
-                "api_config_source": {
-                  "api_type": "GRPC",
-                  "grpc_services": [
-                    {
-                      "envoy_grpc": {
-                        "cluster_name": "contour",
-                        "authority": "contour"
-                      }
-                    }
-                  ],
-                  "transport_api_version": "V3"
-                },
-                "resource_api_version": "V3"
-              }
-            }
-          ]
-        }
-      }
-    },
-    "common_lb_config": {
-      "healthy_panic_threshold": {}
-    },
-    "alt_stat_name": "default_echoserver_443",
-    "ignore_health_on_host_removal": true
-  },
-  "last_updated": "2025-12-10T10:07:59.571Z"
-}
 
 
 https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/health_check.proto#envoy-v3-api-msg-config-core-v3-healthcheck
@@ -230,95 +146,6 @@ https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/health_check.p
                           # mark a host healthy.
 
 
-
-10:34:38   - rotate cert
-           - requests towards backend still work     for about 5 seconds
-10:34:43   - requests stop working                   for about 20 seconds
-                503 Service Unavailable
-                no healthy upstream
-10:35:04   - requests start working again            26 seconds after cert rotation
-
-
-
-~/work/devenvs/contour/healthcheck-upstream-cert-rotate-grpc-capture.json
-
-first rotation triggered at 12:23:23   (no problems)
-
-12:23:23.499  StreamSecrets  Response  <empty>
-12:23:23.500  StreamClusters Response  upstream sds secret config name: projectcontour/envoy-client-cert/1fce084f86
-12:23:23.514  StreamSecrets  Response  projectcontour/envoy-client-cert/1fce084f86
-
-
-second rotation triggered at 12:34:38  (503 for about 20 seconds)
-
-12:34:38.402  StreamSecrets  Response  <empty>
-12:34:38.402  StreamClusters Response  upstream sds secret config name: projectcontour/envoy-client-cert/97af60fef6
-12:34:38.412  StreamSecrets  Response  projectcontour/envoy-client-cert/97af60fef6
-
-
-
-echoserver logs (from another test)
-
-BEFORE      ROTATION
-
-2025/12/10 12:17:04 DEBUG Handling status request url=/status
-2025/12/10 12:17:04 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T10:34:38.000Z peer_certificate_not_after=2026-12-10T10:34:38.000Z peer_certificate_serial_number=1765362878274987535
-
-14:17:08    ROTATION (did not affect the used client cert: still same client cert)
-
-2025/12/10 12:17:09 http: TLS handshake error from 10.244.1.4:39898: EOF
-2025/12/10 12:17:09 DEBUG Handling echo request method=GET url=/ remote=10.244.1.4:39904
-2025/12/10 12:17:09 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T10:34:38.000Z peer_certificate_not_after=2026-12-10T10:34:38.000Z peer_certificate_serial_number=1765362878274987535
-2025/12/10 12:17:09 DEBUG Handling status request url=/status
-2025/12/10 12:17:09 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T10:34:38.000Z peer_certificate_not_after=2026-12-10T10:34:38.000Z peer_certificate_serial_number=1765362878274987535
-2025/12/10 12:17:14 DEBUG Handling echo request method=GET url=/ remote=10.244.1.4:34414
-2025/12/10 12:17:14 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T10:34:38.000Z peer_certificate_not_after=2026-12-10T10:34:38.000Z peer_certificate_serial_number=1765362878274987535
-
-12:17:14    First health check request with new client cert  (6 seconds after rotation)
-                errors starting:
-                    503 Service Unavailable
-                    no healthy upstream
-
-2025/12/10 12:17:14 DEBUG Handling status request url=/status
-2025/12/10 12:17:14 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T12:17:08.000Z peer_certificate_not_after=2026-12-10T12:17:08.000Z peer_certificate_serial_number=1765369028974114603
-2025/12/10 12:17:19 DEBUG Handling status request url=/status
-2025/12/10 12:17:19 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T12:17:08.000Z peer_certificate_not_after=2026-12-10T12:17:08.000Z peer_certificate_serial_number=1765369028974114603
-2025/12/10 12:17:24 DEBUG Handling status request url=/status
-2025/12/10 12:17:24 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T12:17:08.000Z peer_certificate_not_after=2026-12-10T12:17:08.000Z peer_certificate_serial_number=1765369028974114603
-2025/12/10 12:17:29 DEBUG Handling status request url=/status
-2025/12/10 12:17:29 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T12:17:08.000Z peer_certificate_not_after=2026-12-10T12:17:08.000Z peer_certificate_serial_number=1765369028974114603
-
-12:17:34    First request goes through after rotation  (20 seconds after first error)
-                requests start working again
-
-2025/12/10 12:17:34 DEBUG Handling status request url=/status
-2025/12/10 12:17:34 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T12:17:08.000Z peer_certificate_not_after=2026-12-10T12:17:08.000Z peer_certificate_serial_number=1765369028974114603
-2025/12/10 12:17:34 DEBUG Handling echo request method=GET url=/ remote=10.244.1.4:46574
-2025/12/10 12:17:34 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T12:17:08.000Z peer_certificate_not_after=2026-12-10T12:17:08.000Z peer_certificate_serial_number=1765369028974114603
-2025/12/10 12:17:39 DEBUG Handling status request url=/status
-2025/12/10 12:17:39 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T12:17:08.000Z peer_certificate_not_after=2026-12-10T12:17:08.000Z peer_certificate_serial_number=1765369028974114603
-2025/12/10 12:17:44 DEBUG Handling status request url=/status
-2025/12/10 12:17:44 DEBUG TLS info version="TLS 1.3" cipher_suite=TLS_AES_128_GCM_SHA256 peer_certificate_subject="CN=envoy" peer_certificate_not_before=2025-12-10T12:17:08.000Z peer_certificate_not_after=2026-12-10T12:17:08.000Z peer_certificate_serial_number=1765369028974114603
-
-
-
-
-
-
-date
-kubectl patch httpproxy echoserver --type='json' -p='[{"op": "replace", "path": "/spec/routes/0/healthCheckPolicy/path", "value": "/status/200"}]'
-until http --check-status GET http://echoserver.127-0-0-101.nip.io; do sleep 1; done; date
-
-
-date
-kubectl patch httpproxy echoserver --type='json' -p='[{"op": "replace", "path": "/spec/routes/0/healthCheckPolicy/path", "value": "/status"}]'
-until http --check-status GET http://echoserver.127-0-0-101.nip.io; do sleep 1; done; date
-
-
-
-OTHER PROBLEMS
-
-- Sometimes when adding HA to TLS upstream, healthcheck is executed once per minute only, even if it returns success
 
 
 
@@ -358,56 +185,317 @@ kubectl -n projectcontour logs daemonset/envoy  -c envoy >> troubleshooting-logs
 
 
 
+bazel build -c fastbuild //source/exe:envoy-static
+
+
+
+# Test
+
+bazel test -c fastbuild //test/integration:sds_dynamic_integration_test --test_filter="*ClusterWarmingWhileHealthCheckBlocksOnSds*" --test_output=streamed --cache_test_results=no --test_arg="--" --test_arg="-l trace"
+
+
+# this started failing after the change
+bazel test -c fastbuild //test/integration:leds_integration_test --test_filter='*BasicLeds*' --test_output=streamed --cache_test_results=no --test_arg="--" --test_arg="-l trace"
+
+
+bazel test -c fastbuild //test/integration:sds_dynamic_integration_test --test_filter="*ClusterWarmingWhileHealthCheckBlocksOnSdsDisabled*IPv4_EnvoyGrpc_UsesTcp*" --test_output=streamed --cache_test_results=no --test_arg="--" --test_arg="-l trace"
+
+
+# health_checker  source/extensions/health_checkers/common/health_checker_base_impl.cc
+
+HealthCheckerImplBase::addHosts()
+  for each host
+    # add session
+    sessions[host] = makeSession()   HealthCheckerImplBase::ActiveHealthCheckSessionPtr
+    ClusterImplBase::setHealthChecker(new HealthCheckHostMonitorImpl(host))
+    sessions[host]->start()
+
+HealthCheckerImplBase::onClusterMemberUpdate()
+  for each new host
+    addHosts()
+  for each removed host
+    remove session
+
+HealthCheckerImplBase::start() {
+  for cluster_->prioritySet->hostSet()
+    addHosts(host_set->hosts()
+
+
+# upstreamsource/common/upstream/upstream_impl.cc
+
+ClusterImplBase::setHealthChecker()
+  health_checker_->start();
+
+ClusterImplBase::onInitDone()
+  # SDS is ready
+
+
+
+
+following sequence describes how the active health check is working currently
+
+1. Cluster initialization:
+   ClusterImplBase::setHealthChecker(HealthCheckerSharedPtr)
+      └─> health_checker_->start()
+           (or deferred to onInitDone() after SDS completes)
+
+2. Health checker starts (after cluster warming completes):
+   HealthCheckerImplBase::start()
+      └─> for each host_set in cluster_.prioritySet().hostSetsPerPriority():
+            addHosts(host_set->hosts())
+
+3. Adding hosts to health checker:
+   HealthCheckerImplBase::addHosts(hosts)
+      └─> for each host in hosts:
+            ├─> active_sessions_[host] = makeSession(host)
+            │
+            ├─> host->setHealthChecker(new HealthCheckHostMonitorImpl(...))
+            │          │
+            │          └──> Virtual dispatch through:
+            │                Host interface → HostDescription interface
+            │                      │
+            │                      ▼
+            │               HostDescriptionImplBase::setHealthChecker(HealthCheckHostMonitorPtr&&)
+            │                      │
+            │                      └─> health_checker_ = std::move(health_checker)
+            │                          (Stores the monitor in the Host object)
+            │
+            └─> active_sessions_[host]->start()
+
+4. When cluster membership changes (EDS/LEDS update):
+   PrioritySet detects host changes
+      └─> PrioritySet::updateHosts()
+            └─> Calls registered callbacks with (hosts_added, hosts_removed)
+                  └─> HealthCheckerImplBase::onClusterMemberUpdate(added, removed)
+                        ├─> addHosts(added)  [goes back to step 3]
+                        └─> for each removed: delete session
+
+
+This does not work well, see failing test case log file in @test-fail.log
+
+i would like to change the code to more elegantly defer the creation of health check sessions,
+so that so that creating sessions and starting them is deferred until cluster warming completes.
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ During Warming                        After Warming                      │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│   EDS arrives                         onInitDone()                      │
+│       │                                   │                              │
+│       ▼                                   ▼                              │
+│   addHosts()                          health_checker_->start()          │
+│   └─ (health checker not                  │                              │
+│       started yet, so                     └─> addHosts() for all hosts  │
+│       nothing happens)                        └─> makeSession() + start │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+instead of maintaining started_ state, could we defer session creation instead
 
 
 
 
 
 
+1. Cluster initialization:
+   ClusterImplBase::setHealthChecker(HealthCheckerSharedPtr)
+      │
+      ├─> health_checker_ = health_checker
+      │
+      └─> health_checker_->start()
+
+2. Health checker starts (iterates all priority host sets):
+   HealthCheckerImplBase::start()
+      └─> for each host_set in cluster_.prioritySet().hostSetsPerPriority():
+            addHosts(host_set->hosts())
+
+3. Adding hosts to health checker:
+   HealthCheckerImplBase::addHosts(hosts)
+      └─> for each host in hosts:
+            │
+            ├─> active_sessions_[host] = makeSession(host)
+            │         │
+            │         └─> Creates HttpActiveHealthCheckSession / TcpActiveHealthCheckSession / etc.
+            │
+            ├─> host->setHealthChecker(HealthCheckHostMonitorPtr)
+            │         │
+            │         └─> HostDescriptionImplBase::setHealthChecker(HealthCheckHostMonitorPtr&&)
+            │                   └─> health_checker_ = std::move(health_checker)
+            │
+            └─> active_sessions_[host]->start()
+                      │
+                      └─> ActiveHealthCheckSession::onInitialInterval()
+                                │
+                                └─> (after jitter) interval_timer_ triggers onIntervalBase()
+
+4. Health check interval fires - connection creation (HTTP example):
+   HealthCheckerImplBase::ActiveHealthCheckSession::onIntervalBase()
+      │
+      ├─> onInterval()  [virtual, implemented by HttpActiveHealthCheckSession]
+      │
+      ├─> timeout_timer_->enableTimer(parent_.timeout_)
+      │
+      └─> parent_.stats_.attempt_.inc()
+
+5. HTTP health check session creates connection:
+   HttpHealthCheckerImpl::HttpActiveHealthCheckSession::onInterval()
+      │
+      └─> if (!client_):
+            │
+            ├─> Upstream::Host::CreateConnectionData conn =
+            │       host_->createHealthCheckConnection(
+            │           parent_.dispatcher_,
+            │           parent_.transportSocketOptions(),      ← TLS options (ALPN, etc.)
+            │           parent_.transportSocketMatchMetadata().get())  ← Metadata for socket matching
+            │
+            └─> client_.reset(parent_.createCodecClient(conn))
+
+6. Host creates health check connection with transport socket resolution:
+   HostImplBase::createHealthCheckConnection(dispatcher, transport_socket_options, metadata)
+      │
+      ├─> Resolve transport socket factory:
+      │     │
+      │     └─> if (metadata != nullptr):
+      │           │
+      │           └─> factory = resolveTransportSocketFactory(healthCheckAddress(), metadata)
+      │                           │
+      │                           └─> HostDescriptionImplBase::resolveTransportSocketFactory()
+      │         else:
+      │           └─> factory = transportSocketFactory()  ← Uses default/endpoint-matched factory
+      │
+      └─> return createConnection(dispatcher, cluster(), healthCheckAddress(),
+                                   {}, factory, nullptr, transport_socket_options, host)
+
+7. Transport socket factory resolution (with metadata):
+   HostDescriptionImplBase::resolveTransportSocketFactory(dest_address, endpoint_metadata)
+      │
+      └─> cluster_->transportSocketMatcher().resolve(endpoint_metadata, locality_metadata_.get())
+                │
+                └─> TransportSocketMatcherImpl::resolve(endpoint_metadata, locality_metadata, ...)
+                          │
+                          ├─> If matcher_ available:
+                          │     └─> resolveUsingMatcher()  ← xDS matcher-based resolution
+                          │
+                          ├─> Else (legacy metadata matching):
+                          │     │
+                          │     ├─> for each match in matches_:
+                          │     │     if Config::Metadata::metadataLabelMatch(match.label_set,
+                          │     │            endpoint_metadata, ENVOY_TRANSPORT_SOCKET_MATCH):
+                          │     │       return {match.factory, match.stats, match.name}
+                          │     │
+                          │     ├─> for each match in matches_:  ← fallback to locality metadata
+                          │     │     if metadataLabelMatch(..., locality_metadata, ...):
+                          │     │       return {match.factory, ...}
+                          │     │
+                          │     └─> return default_match_.factory  ← If no match found
+                          │
+                          └─> Returns MatchData: {factory&, stats, name}
+
+8. Static helper creates the actual connection:
+   HostImplBase::createConnection(dispatcher, cluster, address, address_list,
+                                   socket_factory, options, transport_socket_options, host)
+      │
+      ├─> source_address_selector = cluster.getUpstreamLocalAddressSelector()
+      │
+      ├─> Check for proxy redirect (HTTP/1.1 CONNECT proxy)
+      │
+      └─> Normal path (no proxy, single address):
+            │
+            ├─> upstream_local_address = source_address_selector->getUpstreamLocalAddress(...)
+            │
+            └─> connection = dispatcher.createClientConnection(
+                    address,                                          ← healthCheckAddress()
+                    upstream_local_address.address_,                  ← Local/source address
+                    socket_factory.createTransportSocket(             ← Creates TLS socket
+                        transport_socket_options, host),
+                    upstream_local_address.socket_options_,
+                    transport_socket_options)
+
+9. Transport socket creation (TLS example):
+   ClientSslSocketFactory::createTransportSocket(transport_socket_options, host)
+      │
+      ├─> Acquire read lock on ssl_ctx_mu_
+      │
+      ├─> ssl_ctx = ssl_ctx_  ← Get current SSL context (may be updated by SDS)
+      │
+      └─> if (ssl_ctx):
+            │
+            └─> SslSocket::create(ssl_ctx, InitialState::Client,
+                                   transport_socket_options, handshaker, host)
+                      │
+                      └─> Creates SslSocket with:
+                            - ClientContextSharedPtr (contains certs, keys, CA)
+                            - Transport socket options (ALPN protocols)
+                            - Host description (for SNI, etc.)
+          else:
+            └─> return NotReadySslSocket()  ← Secrets not ready yet
+
+10. SSL Context contains (populated from SDS or static config):
+    ClientContextImpl:
+      ├─> tls_certificates_  ← Client certificate + private key (for mTLS)
+      ├─> cert_validator_    ← CA certificates for server verification
+      ├─> alpn_protocols_    ← Application-Layer Protocol Negotiation
+      └─> session_keys_      ← TLS session resumption data
+
+11. When cluster membership changes (EDS/LEDS update):
+    PrioritySet::updateHosts()
+       └─> Calls registered callbacks with (hosts_added, hosts_removed)
+             └─> HealthCheckerImplBase::onClusterMemberUpdate(added, removed)
+                   ├─> addHosts(added)  [goes back to step 3]
+                   └─> for each removed:
+                         └─> session->onDeferredDeleteBase()
+                             dispatcher_.deferredDelete(session)
 
 
 
+┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐      ┌──────────────────┐
+│ ClusterImplBase │      │HealthCheckerImpl │      │    HostImpl     │      │ TransportSocket  │
+│                 │      │      Base        │      │                 │      │    Matcher       │
+└────────┬────────┘      └────────┬─────────┘      └────────┬────────┘      └────────┬─────────┘
+         │                        │                         │                        │
+         │ setHealthChecker()     │                         │                        │
+         ├───────────────────────>│                         │                        │
+         │                        │                         │                        │
+         │                        │ start() → addHosts()    │                        │
+         │                        ├────────────────────────>│                        │
+         │                        │  setHealthChecker()     │                        │
+         │                        │                         │                        │
+         │                        │ [timer fires]           │                        │
+         │                        │ onInterval()            │                        │
+         │                        │                         │                        │
+         │                        │ createHealthCheckConnection(metadata)            │
+         │                        ├────────────────────────>│                        │
+         │                        │                         │                        │
+         │                        │                         │ resolve(metadata)      │
+         │                        │                         ├───────────────────────>│
+         │                        │                         │                        │
+         │                        │                         │<── SocketFactory& ─────┤
+         │                        │                         │                        │
+         │                        │                         │ createTransportSocket()│
+         │                        │                         ├───────────────────────>│
+         │                        │                         │                        │
+         │                        │<── Connection ──────────┤                        │
 
 
 
-
-**If you are reporting *any* crash or *any* potential security issue, *do not*
-open an issue in this repo. Please report the issue via emailing
-envoy-security@googlegroups.com where the issue will be triaged appropriately.**
-
-*Title*: *One line description*
-
-*Description*:
->What issue is being seen? Describe what should be happening instead of
-the bug, for example: Envoy should not crash, the expected value isn't
-returned, etc.
-
-*Repro steps*:
-> Include sample requests, environment, etc. All data and inputs
-required to reproduce the bug.
-
->**Note**: The [Envoy_collect tool](https://github.com/envoyproxy/envoy/blob/main/tools/envoy_collect/README.md)
-gathers a tarball with debug logs, config and the following admin
-endpoints: /stats, /clusters and /server_info. Please note if there are
-privacy concerns, sanitize the data prior to sharing the tarball/pasting.
-
-*Admin and Stats Output*:
->Include the admin output for the following endpoints: /stats,
-/clusters, /routes, /server_info. For more information, refer to the
-[admin endpoint documentation.](https://www.envoyproxy.io/docs/envoy/latest/operations/admin)
-
->**Note**: If there are privacy concerns, sanitize the data prior to
-sharing.
-
-*Config*:
->Include the config used to configure Envoy.
-
-*Logs*:
->Include the access logs and the Envoy logs.
-
->**Note**: If there are privacy concerns, sanitize the data prior to
-sharing.
-
-*Call Stack*:
-> If the Envoy binary is crashing, a call stack is **required**.
-Please refer to the [Bazel Stack trace documentation](https://github.com/envoyproxy/envoy/tree/main/bazel#stack-trace-symbol-resolution).
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         CLUSTER WARMING TIMELINE                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  warming_state_ = 1                                warming_state_ = 0       │
+│        │                                                  │                 │
+│        ▼                                                  ▼                 │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────────┐          │
+│  │ Cluster  │───>│ PreInit  │───>│  Init    │───>│  onInitDone  │          │
+│  │ created  │    │ complete │    │ Manager  │    │   called     │          │
+│  └──────────┘    └──────────┘    │ running  │    └──────────────┘          │
+│                                  └──────────┘                               │
+│                                       │                                     │
+│                                       │ All targets call ready()            │
+│                                       ▼                                     │
+│                              ┌────────────────┐                             │
+│                              │ init_watcher_  │                             │
+│                              │ callback fires │                             │
+│                              └────────────────┘                             │
+└─────────────────────────────────────────────────────────────────────────────┘

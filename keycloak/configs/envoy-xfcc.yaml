@@ -64,12 +64,12 @@ static_resources:
           common_tls_context:
             tls_certificates:
               certificate_chain:
-                filename: "/input/certs/keycloak-server.pem"
+                filename: "/host/certs/keycloak-server.pem"
               private_key:
-                filename: "/input/certs/keycloak-server-key.pem"
+                filename: "/host/certs/keycloak-server-key.pem"
             validation_context:
               trusted_ca:
-                filename: "/input/certs/client-ca.pem"
+                filename: "/host/certs/client-ca.pem"
             key_log:
               path: "/tmp/envoy-wireshark-keys.log"
           require_client_certificate: false

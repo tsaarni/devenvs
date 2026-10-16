@@ -13,7 +13,7 @@ services:
     build: docker/sssd
     ports:
       - "2222:22"
-    user: "900:900"
+    #user: "900:900"
     volumes:
       - shared_volume:/usr/local/
     depends_on:

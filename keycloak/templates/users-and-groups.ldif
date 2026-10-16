@@ -193,7 +193,8 @@ objectClass: pwdPolicyChecker
 objectClass: device
 cn: warns-early
 pwdExpireWarning: 2147483646
-pwdMaxAge:        2147483647 # max int ~68 years
+# pwdMaxAge max int ~68 years
+pwdMaxAge: 2147483647
 pwdAttribute: userPassword
 
 #

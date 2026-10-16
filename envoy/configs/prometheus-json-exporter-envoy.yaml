@@ -19,3 +19,12 @@ modules:
       - name: envoy_memory_total_thread_cache
         path: '{.total_thread_cache}'
         help: Total thread cache
+      - name: envoy_memory_transfer_cache_free
+        path: '{.transfer_cache_free}'
+        help: Transfer cache free
+      - name: envoy_memory_central_cache_free
+        path: '{.central_cache_free}'
+        help: Central cache free
+      - name: envoy_memory_thread_cache_free
+        path: '{.thread_cache_free}'
+        help: Thread cache free

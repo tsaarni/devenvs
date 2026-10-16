@@ -10,7 +10,7 @@ It is used by Envoy to manage dynamic memory allocation.
 
 There are two implementations of TCMalloc
 
-- [Google's tcmalloc](https://github.com/google/tcmalloc/tree/master) which is default for x86_64 architecture.
+- [Google's tcmalloc](https://github.com/google/tcmalloc/) which is default for x86_64 architecture.
 - [gperftools](https://github.com/gperftools/gperftools) tcmalloc is enabled with `--define tcmalloc=gperftools` when building Envoy, or default for non-x86_64 architectures.
 
 This document focuses on the Google TCMalloc implementation.
@@ -39,7 +39,10 @@ Following table summarizes how fields in `/memory` elate to `/stats/prometheus` 
 | `total_thread_cache`   |                                     |
 | `total_physical_bytes` | `envoy_server_memory_physical_size` |
 
-It will not be possible to calculate memory pressure from Prometheus metrics alone since not all `/memory` fields have corresponding Prometheus metrics.
+As it can be seen, not all `/memory` fields have corresponding Prometheus metrics.
+Due to this issue, the $\text{pressure}$ metric cannot be derived from Prometheus metrics alone.
+
+> TODO: Consider adding missing metrics to metrics.
 
 ## Fixed Heap Resource Monitor
 
@@ -56,8 +59,8 @@ The memory pressure is determined using the following formula, based on the heap
 
 This equation ensures that only actively used memory (excluding unmapped and free pages) counts towards the heap pressure calculation. The pressure value is used to determine if the system is approaching memory exhaustion, where:
 
-- $\text{pressure} < 1.0$ indicates normal operation
-- $\text{pressure} \geq 1.0$ indicates memory overuse
+- $\text{pressure} < 1.0$ (less than 100% memory usage) means the system is operating within its memory limits.
+- $\text{pressure} \geq 1.0$ (100% memory usage or higher) means the system is exceeding its configured memory limit.
 
 
 ### Example
@@ -119,23 +122,41 @@ Then no overload action is triggered since the memory pressure `0.35` is below t
 
 ## Releasing Memory
 
-Envoy can call TCMalloc's `MallocExtension::ReleaseMemoryToSystem()` to release free memory back to the operating system.
+Envoy can call TCMalloc's `MallocExtension::ReleaseMemoryToSystem()` to release free memory back to the operating system. This can happen in two ways:
 
-There are two different scenarios where this is done:
 
-Overload action `envoy.overload_actions.shrink_heap` can be configured to trigger this behavior.
-The amount of memory per call is fixed to 100 MB and it is called once every 10 seconds when the given threshold triggers this behavior.
-The number of calls is reflected in `shrink_count` metric.
-It does not guarantee that memory is actually released, as it depends on the state of the heap and how much free memory is available to be released.
+There are two ways this can happen:
 
-Option [`MemoryAllocatorManager`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/bootstrap/v3/bootstrap.proto#config-bootstrap-v3-memoryallocatormanager) can be used to configure to periodically release memory back to the OS even when there is no overload condition.
-The amount of memory released per call is configured with `bytes_to_release` and defaults to `0` which means this functionality is disabled.
-The interval for the operation is configured with `memory_release_interval` and defaults to one second.
-The number of times the operation has succeeded in releasing memory is reflected in `released_by_timer` metric
+- Overload action (`envoy.overload_actions.shrink_heap`):
 
-Releasing is done by TCMalloc by unmapping free pages from the process's address space, which can help reduce the overall memory footprint of the application.
-The virtual address space of the process still includes the unmapped memory, but it is no longer backed by physical memory.
-The memory can still be used again later for allocations, but it may incur a page fault when accessed again.
+  When memory pressure exceeds a configured threshold, this action can trigger memory release.
+
+  - Amount released per call: Fixed at 100 MB.
+  - Interval: Once every 10 seconds while the threshold is triggered.
+  - Metric: Number of calls is tracked by the `shrink_count` metric.
+
+- Periodic release (`MemoryAllocatorManager`):
+
+  The [`MemoryAllocatorManager`](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/bootstrap/v3/bootstrap.proto#config-bootstrap-v3-memoryallocatormanager) option allows periodic memory release even when there is no overload condition.
+
+  - Amount released per call: Configurable with `bytes_to_release` (default: `0`, which disables this feature)
+  - Interval: Configurable with `memory_release_interval` (default: 1 second)
+  - Metric: Successful releases are counted by the `released_by_timer` metric
+
+Releasing is performed by TCMalloc by "unmapping" free pages from the process's address space.
+Unmapping is done by calling `madvise()` with the `MADV_DONTNEED` and `MADV_REMOVE` flags.
+After this, the virtual address space still includes the unmapped memory, but it no longer needs to be backed by physical memory.
+The memory can be reused for future allocations, but may incur a page fault when accessed again.
+
+Detailed memory allocation statistics can be obtained by calling TCMalloc's `MallocExtension::GetStats()` function.
+Envoy currently does not expose these statistics via its admin interface or metrics.
+
+> TODO: Consider adding support for displaying these statistics, for example through a new `/memory/tcmalloc` endpoint.
+
+## Cgroup Memory Limits
+
+When Envoy runs in a Kubernetes pod without memory limits, the `memory.current` cgroup metric can continue to report high memory usage even after TCMalloc has released memory back to the operating system.
+This is because there might not be memory pressure on the cgroup level, so the kernel does not reclaim the memory immediately.
 
 ## Source Code References
 

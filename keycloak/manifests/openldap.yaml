@@ -40,42 +40,26 @@ spec:
 
           env:
             - name: CERT_FILENAME
-              value: /input/certs/tls.crt
+              value: /host/certs/openldap.pem
             - name: KEY_FILENAME
-              value: /input/certs/tls.key
+              value: /host/certs/openldap-key.pem
             - name: CA_FILENAME
-              value: /input/certs/ca.crt
+              value: /host/certs/internal-client-ca.pem
 
           volumeMounts:
+            - name: host
+              mountPath: /host
+              readOnly: true
             - name: data
               mountPath: /data
             - name: output
               mountPath: /output
-            - name: input
-              mountPath: /input/templates
-            - name: certs
-              mountPath: /input/certs
 
       volumes:
+        - name: host
+          hostPath:
+            path: /host
         - name: data
-          persistentVolumeClaim:
-              claimName: openldap-data
+          emptyDir: {}
         - name: output
           emptyDir: {}
-        - name: input
-          configMap:
-            name: openldap-config
-        - name: certs
-          secret:
-            secretName: openldap-cert
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: openldap-data
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi

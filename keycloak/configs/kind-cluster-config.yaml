@@ -20,6 +20,9 @@ nodes:
   - containerPort: 443
     hostPort: 443
     listenAddress: "127.0.0.121"
+  - containerPort: 2222
+    hostPort: 2222
+    listenAddress: "127.0.0.121"
   extraMounts:
    - hostPath: ./
      containerPath: /host
