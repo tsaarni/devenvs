@@ -76,6 +76,8 @@ func listenAndServe(srv *http.Server, tlsCfg *tls.Config) error {
 type config struct {
 	Name          string `help:"Server identity in logs and responses." default:"authz"`
 	DefaultStatus int    `help:"Verdict status when no x-authz-status is sent (200 allows, 201..599 denies)." default:"200"`
+	Quiet         bool   `help:"Do not log individual requests (startup and listener errors are still logged). For high request rates."`
+	MetricsAddr   string `name:"metrics-addr" help:"Prometheus metrics listen address, served at /metrics without authentication (empty disables)."`
 
 	GRPCAddr    string `name:"grpc-addr" help:"gRPC listen address (empty disables)." default:":9001"`
 	GRPCTLSCert string `name:"grpc-tls-cert" help:"gRPC server TLS certificate file." type:"path"`
@@ -109,13 +111,22 @@ func main() {
 		log.Error("Invalid configuration: require printable nonempty name, status 200..599, and at least one listener")
 		os.Exit(1)
 	}
-	server := &authzServer{name: *name, defaultStatus: *defaultStatus}
+	server := &authzServer{name: *name, defaultStatus: *defaultStatus, quiet: cli.Quiet}
 	log = log.With("instance", *name)
+
+	errors := make(chan error, 3)
+	if cli.MetricsAddr != "" {
+		m, reg := newMetrics(*name)
+		server.metrics = m
+		go func() {
+			log.Info("Metrics server listening", "addr", cli.MetricsAddr)
+			errors <- (&http.Server{Addr: cli.MetricsAddr, Handler: metricsHandler(reg)}).ListenAndServe()
+		}()
+	}
 
 	grpcTLS := mustTLSConfig(*grpcTLSCert, *grpcTLSKey, *grpcTLSCA)
 	httpTLS := mustTLSConfig(*httpTLSCert, *httpTLSKey, *httpTLSCA)
 
-	errors := make(chan error, 2)
 	if *grpcAddr != "" {
 		go func() {
 			lis, err := net.Listen("tcp", *grpcAddr)

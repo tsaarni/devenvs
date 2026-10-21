@@ -13,17 +13,21 @@ type decision struct {
 	status   int
 	delay    time.Duration
 	fail     string
-	id       string // tester-supplied correlation id, echoed in logs and responses
+	tag      string // tester-supplied tag to tell requests apart, echoed in logs, metrics and responses
 	controls string
+	used     []controlUse // controls found in the request and how they were sent
 }
 
-var controlNames = map[string]bool{"status": true, "delay": true, "fail": true, "id": true}
+// controlUse records one control sent by the client; source is "header" or "authorization".
+type controlUse struct{ name, source string }
 
-func validID(id string) bool {
-	if len(id) > 128 {
+var controlNames = map[string]bool{"status": true, "delay": true, "fail": true, "tag": true}
+
+func validTag(tag string) bool {
+	if len(tag) > 128 {
 		return false
 	}
-	return strings.IndexFunc(id, func(r rune) bool { return r <= ' ' || r > '~' }) < 0
+	return strings.IndexFunc(tag, func(r rune) bool { return r <= ' ' || r > '~' }) < 0
 }
 
 func validStatus(status int) bool {
@@ -43,7 +47,7 @@ func parseAuthorizationHeader(value string) (map[string]string, error) {
 	for _, field := range strings.FieldsFunc(rest, func(r rune) bool { return r == ' ' || r == ',' }) {
 		k, v, ok := strings.Cut(field, "=")
 		if !ok || !controlNames[k] {
-			return nil, fmt.Errorf("invalid Authorization parameter %q: expected status=, delay=, fail= or id=", field)
+			return nil, fmt.Errorf("invalid Authorization parameter %q: expected status=, delay=, fail= or tag=", field)
 		}
 		params[k] = v
 	}
@@ -55,20 +59,23 @@ func parseAuthorizationHeader(value string) (map[string]string, error) {
 func parseDecision(get func(string) string, defaultStatus int) (decision, error) {
 	params, authErr := parseAuthorizationHeader(get("authorization"))
 	var via []string
+	var used []controlUse
 	pick := func(control string) string {
 		if v := get("x-authz-" + control); v != "" {
+			used = append(used, controlUse{control, "header"})
 			return v
 		}
 		if v := params[control]; v != "" {
 			via = append(via, control)
+			used = append(used, controlUse{control, "authorization"})
 			return v
 		}
 		return ""
 	}
-	status, delay, fail, id := pick("status"), pick("delay"), pick("fail"), pick("id")
-	d := decision{status: defaultStatus, fail: fail, id: id, controls: "none (default status)"}
+	status, delay, fail, tag := pick("status"), pick("delay"), pick("fail"), pick("tag")
+	d := decision{status: defaultStatus, fail: fail, tag: tag, controls: "none (default status)", used: used}
 	var set []string
-	for _, c := range []struct{ name, value string }{{"status", status}, {"delay", delay}, {"fail", fail}, {"id", id}} {
+	for _, c := range []struct{ name, value string }{{"status", status}, {"delay", delay}, {"fail", fail}, {"tag", tag}} {
 		if c.value != "" {
 			set = append(set, fmt.Sprintf("%s=%q", c.name, c.value))
 		}
@@ -80,14 +87,14 @@ func parseDecision(get func(string) string, defaultStatus int) (decision, error)
 		}
 	}
 	invalid := func(err error) (decision, error) {
-		return decision{status: http.StatusBadRequest, id: d.id, controls: d.controls}, err
+		return decision{status: http.StatusBadRequest, tag: d.tag, controls: d.controls, used: d.used}, err
 	}
 	if authErr != nil {
 		return invalid(authErr)
 	}
-	if !validID(id) {
-		d.id = ""
-		return invalid(fmt.Errorf("invalid x-authz-id %q: expected up to 128 printable characters without spaces", id))
+	if !validTag(tag) {
+		d.tag = ""
+		return invalid(fmt.Errorf("invalid x-authz-tag %q: expected up to 128 printable characters without spaces", tag))
 	}
 	if status != "" {
 		n, err := strconv.Atoi(status)

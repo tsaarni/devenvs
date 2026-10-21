@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 )
 
 // checkRequestInfo describes the request Envoy sent in an authorization check.
@@ -35,20 +36,33 @@ func formatContext(c map[string]string) string {
 	return strings.Join(parts, " ")
 }
 
-func (s *authzServer) logDecision(info checkRequestInfo, d decision, outcome string, err error) {
-	sni, clientCert := "", ""
+func tlsIdentity(info checkRequestInfo) (sni, clientCert string) {
 	if info.tls != nil {
 		sni = info.tls.ServerName
 		if len(info.tls.PeerCertificates) > 0 {
 			clientCert = info.tls.PeerCertificates[0].Subject.String()
 		}
 	}
+	return sni, clientCert
+}
+
+// record publishes the result of a check to the metrics and the log.
+func (s *authzServer) record(info checkRequestInfo, d decision, outcome string, err error, start time.Time) {
+	s.metrics.observe(info, d, outcome, time.Since(start))
+	s.logDecision(info, d, outcome, err)
+}
+
+func (s *authzServer) logDecision(info checkRequestInfo, d decision, outcome string, err error) {
+	if s.quiet {
+		return
+	}
+	sni, clientCert := tlsIdentity(info)
 	status := d.status
 	if outcome != "allow" && outcome != "deny" {
 		status = 0
 	}
 	attrs := []any{
-		"name", s.name, "id", d.id, "request_id", info.requestID, "proto", info.protocol, "tls", info.tls != nil,
+		"name", s.name, "tag", d.tag, "request_id", info.requestID, "proto", info.protocol, "tls", info.tls != nil,
 		"sni", sni, "client_cert", clientCert, "method", info.method,
 		"host", info.host, "path", info.path,
 		"body_bytes", info.bodyBytes, "controls", d.controls, "verdict", outcome, "status", status,

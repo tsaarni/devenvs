@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"time"
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
@@ -27,6 +28,7 @@ func responseHeader(key, value string) *corev3.HeaderValueOption {
 }
 
 func (s *grpcAuthzServer) Check(ctx context.Context, req *authv3.CheckRequest) (resp *authv3.CheckResponse, err error) {
+	start := time.Now()
 	request := req.GetAttributes().GetRequest().GetHttp()
 	d := s.decisionFor(func(key string) string { return request.GetHeaders()[key] })
 	info := checkRequestInfo{
@@ -44,7 +46,7 @@ func (s *grpcAuthzServer) Check(ctx context.Context, req *authv3.CheckRequest) (
 		}
 	}
 	outcome := d.outcome()
-	defer func() { s.logDecision(info, d, outcome, err) }()
+	defer func() { s.record(info, d, outcome, err, start) }()
 	if err = d.wait(ctx); err != nil {
 		outcome = "canceled"
 		return nil, status.FromContextError(err).Err()
@@ -57,8 +59,8 @@ func (s *grpcAuthzServer) Check(ctx context.Context, req *authv3.CheckRequest) (
 		return nil, status.Error(codes.Unimplemented, "gRPC connection reset is unsupported; use x-authz-fail: error or stop the server")
 	}
 	headers := []*corev3.HeaderValueOption{responseHeader("x-authz-server", s.name)}
-	if d.id != "" {
-		headers = append(headers, responseHeader("x-authz-id", d.id))
+	if d.tag != "" {
+		headers = append(headers, responseHeader("x-authz-tag", d.tag))
 	}
 	if d.status == http.StatusOK {
 		headers = append(headers, responseHeader("x-authz-verdict", "allow"))

@@ -35,7 +35,7 @@ func TestParseDecision(t *testing.T) {
 		status  int
 		delay   time.Duration
 		fail    string
-		id      string
+		tag     string
 		verdict string
 		wantErr bool
 	}{
@@ -55,10 +55,10 @@ func TestParseDecision(t *testing.T) {
 		{name: "authorization fills missing controls", kv: []string{"authorization", "x-authz delay=1s", "x-authz-status", "401"}, status: 401, delay: time.Second, verdict: "deny"},
 		{name: "other schemes ignored", kv: []string{"authorization", "Bearer status=403"}, status: 200, verdict: "allow"},
 		{name: "authorization unknown key", kv: []string{"authorization", "x-authz stats=403"}, status: 400, verdict: "deny", wantErr: true},
-		{name: "id header", kv: []string{"x-authz-id", "t1"}, status: 200, verdict: "allow", id: "t1"},
-		{name: "id via authorization", kv: []string{"authorization", "x-authz id=t2 status=403"}, status: 403, verdict: "deny", id: "t2"},
-		{name: "id header wins", kv: []string{"authorization", "x-authz id=a", "x-authz-id", "b"}, status: 200, verdict: "allow", id: "b"},
-		{name: "invalid id", kv: []string{"x-authz-id", "has space"}, status: 400, verdict: "deny", wantErr: true},
+		{name: "tag header", kv: []string{"x-authz-tag", "t1"}, status: 200, verdict: "allow", tag: "t1"},
+		{name: "tag via authorization", kv: []string{"authorization", "x-authz tag=t2 status=403"}, status: 403, verdict: "deny", tag: "t2"},
+		{name: "tag header wins", kv: []string{"authorization", "x-authz tag=a", "x-authz-tag", "b"}, status: 200, verdict: "allow", tag: "b"},
+		{name: "invalid tag", kv: []string{"x-authz-tag", "has space"}, status: 400, verdict: "deny", wantErr: true},
 		{name: "authorization bad value", kv: []string{"authorization", "x-authz status=abc"}, status: 400, verdict: "deny", wantErr: true},
 	}
 	for _, tt := range tests {
@@ -67,7 +67,7 @@ func TestParseDecision(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("err = %v, wantErr %v", err, tt.wantErr)
 			}
-			if d.status != tt.status || d.delay != tt.delay || d.fail != tt.fail || d.id != tt.id || d.outcome() != tt.verdict {
+			if d.status != tt.status || d.delay != tt.delay || d.fail != tt.fail || d.tag != tt.tag || d.outcome() != tt.verdict {
 				t.Fatalf("got %+v verdict %s", d, d.outcome())
 			}
 		})
