@@ -1,0 +1,66 @@
+<svg viewBox="0 0 731 423" width="731" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <!-- White canvas, same size as the viewBox -->
+  <rect x="0" y="0" width="731" height="423" fill="#ffffff"/>
+
+  <!-- Layout: content x 20..711, y 20..402.5, 20px margins.
+       Dialer box on the left (x 20..160), receiving node group x 305..711.
+       In the group: cluster port box between the two ALPN handler boxes (fan-out),
+       API port box along the bottom. -->
+
+  <!-- Footnote, centred on the content centre (20 + 711) / 2 = 365.5 -->
+  <text x="365.5" y="400" font-size="10" fill="#64748b" text-anchor="middle">ALPN = protocol name that the dialing side sends in the TLS ClientHello.</text>
+
+  <!-- Receiving node group -->
+  <rect x="305" y="20" width="406" height="360" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-dasharray="6,4"/>
+  <text x="315" y="34" font-size="11" fill="#64748b">This OpenBao node</text>
+
+  <!-- Connectors -->
+  <!-- Dialer -> cluster port: co-axial at y=149, 160+5 -> 320-11 -->
+  <path d="M165,149 L 309,149" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- Dialer -> API port: down from the dialer bottom, then right into the API box side -->
+  <path d="M90,172 C 90,280 200,320 309,320" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- Cluster port -> handlers: leave the right side (460+5), enter the handler side (520-11), cp2 level with end -->
+  <path d="M465,119 C 490,119 485,77 509,77" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <path d="M465,179 C 490,179 485,221 509,221" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+  <!-- Dialer -->
+  <rect x="20" y="131" width="140" height="36" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="90" y="153" font-size="12" fill="#1e40af" text-anchor="middle">Other OpenBao node</text>
+
+  <!-- Cluster port: 90px tall, two lines centred on 104 + 45 + 4.2 -->
+  <rect x="320" y="104" width="140" height="90" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="390" y="144" font-size="12" fill="#b45309" text-anchor="middle">Cluster port 8201</text>
+  <text x="390" y="162" font-size="12" fill="#b45309" text-anchor="middle">TLS listener</text>
+
+  <!-- ALPN handlers -->
+  <rect x="520" y="50" width="176" height="54" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="608" y="72" font-size="12" fill="#166534" text-anchor="middle">ALPN raft_storage_v1</text>
+  <text x="608" y="90" font-size="12" fill="#166534" text-anchor="middle">raft transport (msgpack)</text>
+
+  <rect x="520" y="194" width="176" height="54" rx="6" fill="#f3e8ff" stroke="#a855f7"/>
+  <text x="608" y="216" font-size="12" fill="#6b21a8" text-anchor="middle">ALPN req_fw_sb-act_v1</text>
+  <text x="608" y="234" font-size="12" fill="#6b21a8" text-anchor="middle">gRPC request forwarding</text>
+
+  <!-- API port: four lines, block centred on 275 + 45 + 11 × 0.35 -->
+  <rect x="320" y="275" width="376" height="90" rx="6" fill="#f3e8ff" stroke="#a855f7"/>
+  <text x="508" y="298" font-size="12" fill="#6b21a8" text-anchor="middle">API port 8200 (HTTPS)</text>
+  <text x="508" y="316" font-size="12" fill="#6b21a8" text-anchor="middle">join: bootstrap/challenge + answer</text>
+  <text x="508" y="334" font-size="12" fill="#6b21a8" text-anchor="middle">admin: sys/storage/raft/*</text>
+  <text x="508" y="350" font-size="10" font-style="italic" fill="#6b21a8" text-anchor="middle">not part of the raft interface</text>
+
+  <!-- Connector labels -->
+  <text x="232.5" y="136" font-size="10" fill="#64748b" text-anchor="middle">TLS ClientHello + ALPN</text>
+  <text x="255" y="296" font-size="10" fill="#64748b" text-anchor="middle">HTTPS</text>
+</svg>

@@ -1,0 +1,48 @@
+<svg viewBox="0 0 720 472" width="720" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-blue-lg" markerWidth="12" markerHeight="12" refX="3" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,6 L0,12 L3,6 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#22c55e"/>
+    </marker>
+    <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="720" height="472" fill="#ffffff"/>
+
+  <!-- group frames -->
+  <!-- lifelines -->
+  <path d="M184,63 L 184,450" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M536,63 L 536,450" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <!-- messages -->
+  <path d="M189,100 C 224,102 224,140 195,140" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M189,196 L 525,196" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M189,252 L 522,252" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue-lg)"/>
+  <path d="M531,280 C 496,282 496,320 525,320" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <path d="M531,360 L 195,360" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M189,404 L 525,404" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- participant heads -->
+  <rect x="22" y="22" width="324" height="36" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="184" y="44" font-size="12" fill="#1e40af" text-anchor="middle">Leader</text>
+  <rect x="374" y="22" width="324" height="36" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="536" y="44" font-size="12" fill="#166534" text-anchor="middle">Follower</text>
+  <!-- labels and notes -->
+  <text x="360" y="160" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">new connection, closed after</text>
+  <text x="236" y="128" font-size="10" fill="#64748b">#41 already compacted away</text>
+  <text x="360" y="183" font-size="10" fill="#64748b" text-anchor="middle">InstallSnapshot header</text>
+  <text x="360" y="217" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">LastLogIndex=100, Size=N</text>
+  <text x="360" y="239" font-size="10" fill="#64748b" text-anchor="middle">N bytes of snapshot data</text>
+  <text x="484" y="308" font-size="10" fill="#64748b" text-anchor="end">save, restore state, drop old log</text>
+  <text x="360" y="347" font-size="10" fill="#64748b" text-anchor="middle">Success=true</text>
+  <text x="360" y="391" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries [#101..]</text>
+  <text x="360" y="425" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">normal replication again</text>
+</svg>

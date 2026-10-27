@@ -1,0 +1,67 @@
+<svg viewBox="0 0 700 596" width="700" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Layer 0: white canvas -->
+  <rect x="0" y="0" width="700" height="596" fill="#ffffff"/>
+
+  <!-- Layer 1: group frame around the pipelined messages (3-8); x=24..676, y=232..522.
+       It overhangs the head boxes by 18px so its title clears the Leader lifeline at x=189 -->
+  <rect x="24" y="232" width="652" height="290" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-dasharray="6,4"/>
+  <text x="34" y="246" font-size="11" fill="#64748b">pipeline mode</text>
+
+  <!-- Layer 2: lifelines. Leader x=189, Follower x=511 -->
+  <path d="M189,63 L 189,536" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M511,63 L 511,536" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- Layer 2: messages. start = lifeline ±5, end = lifeline ∓11 -->
+  <!-- 1. Leader -> Follower, one-by-one mode -->
+  <path d="M194,100 L 500,100" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 2. Follower -> Leader reply -->
+  <path d="M506,146 L 200,146" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <!-- 2b. Leader self-call: switch to pipeline -->
+  <path d="M194,174 C 229,176 229,214 200,214" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 3. #49 -->
+  <path d="M194,272 L 500,272" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 4. #50, sent before the reply to #49 arrives -->
+  <path d="M194,316 L 500,316" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 5. reply #49 -->
+  <path d="M506,372 L 200,372" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <!-- 6. #51 -->
+  <path d="M194,416 L 500,416" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 7. reply #50 -->
+  <path d="M506,460 L 200,460" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <!-- 8. reply #51 -->
+  <path d="M506,504 L 200,504" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+
+  <!-- Layer 3: participant head boxes, 294x36, 28px apart; baseline = 22 + 18 + 4.2 -->
+  <rect x="42" y="22" width="294" height="36" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="189" y="44" font-size="12" fill="#1e40af" text-anchor="middle">Leader</text>
+  <rect x="364" y="22" width="294" height="36" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="511" y="44" font-size="12" fill="#166534" text-anchor="middle">Follower</text>
+
+  <!-- Layer 3: labels, baseline = arrow y - 13 -->
+  <text x="350" y="87" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries [#48]</text>
+  <text x="350" y="133" font-size="10" fill="#64748b" text-anchor="middle">Success=true</text>
+  <text x="241" y="202" font-size="10" fill="#64748b">healthy → switch to pipeline</text>
+  <text x="350" y="259" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries [#49]</text>
+  <text x="350" y="303" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries [#50]</text>
+  <text x="350" y="337" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">sent before the reply to #49</text>
+  <text x="350" y="359" font-size="10" fill="#64748b" text-anchor="middle">ok #49</text>
+  <text x="350" y="403" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries [#51]</text>
+  <text x="350" y="447" font-size="10" fill="#64748b" text-anchor="middle">ok #50</text>
+  <text x="350" y="491" font-size="10" fill="#64748b" text-anchor="middle">ok #51</text>
+
+  <!-- Notes below the frame and lifelines -->
+  <text x="350" y="556" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">max 2 requests in flight, replies in order</text>
+  <text x="350" y="571" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">error or Success=false → close pipeline, one-by-one again</text>
+</svg>

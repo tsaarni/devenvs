@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The OpenBao raft interface, step by step</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --line: #e2e8f0;
+    --accent: #2563eb;
+    --accent-text: #ffffff;
+    --code-bg: #f1f5f9;
+    --leader: #dbeafe;
+    --leader-line: #3b82f6;
+    --follower: #d1fae5;
+    --follower-line: #22c55e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --line: #334155;
+      --accent: #60a5fa;
+      --accent-text: #0f172a;
+      --code-bg: #0f172a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  }
+  header, main, nav { max-width: 820px; margin: 0 auto; padding: 0 20px; }
+  header { padding-top: 24px; }
+  header h1 { font-size: 1.1rem; font-weight: 600; margin: 0; color: var(--muted); }
+  .progress { height: 4px; background: var(--line); border-radius: 2px; margin: 12px 0 0; overflow: hidden; }
+  .progress > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  @media (prefers-reduced-motion: reduce) { .progress > div { transition: none; } }
+
+  .step {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 20px 0;
+  }
+  .js .step { display: none; }
+  .js .step.active { display: block; }
+  .step h2 { margin: 0 0 12px; font-size: 1.5rem; line-height: 1.3; }
+  .step h2:focus { outline: none; }
+  .step p { margin: 0 0 12px; max-width: 62ch; }
+  .step ul { margin: 0 0 12px; padding-left: 1.2em; max-width: 62ch; }
+  .step li { margin: 4px 0; }
+  .num { color: var(--muted); font-size: .9rem; margin-bottom: 4px; }
+
+  figure { margin: 16px 0; }
+  figure img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+  }
+  figcaption { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: .88em; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    line-height: 1.45;
+    margin: 12px 0;
+  }
+  pre code { background: none; padding: 0; }
+  .c { color: var(--muted); }
+
+  table { border-collapse: collapse; margin: 12px 0; font-size: .95rem; width: 100%; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; }
+
+  details {
+    margin-top: 16px;
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+  }
+  summary { cursor: pointer; color: var(--accent); font-weight: 500; }
+  details[open] summary { margin-bottom: 8px; }
+  details p, details ul { font-size: .95rem; }
+
+  .log { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0; }
+  .log div {
+    border: 1px solid var(--follower-line);
+    background: var(--follower);
+    color: #166534;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: .85rem;
+    text-align: center;
+    min-width: 74px;
+  }
+  .log div.new { border-color: var(--leader-line); background: var(--leader); color: #1e40af; }
+  .log b { display: block; font-size: 1rem; }
+
+  nav.controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .no-js nav.controls { display: none; }
+  button, select {
+    font: inherit;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--text);
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button:disabled { opacity: .4; cursor: default; }
+  button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .spacer { flex: 1; }
+  .hint { color: var(--muted); font-size: .85rem; }
+  a { color: var(--accent); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  @media print {
+    .js .step { display: block; break-inside: avoid; }
+    nav.controls, .progress { display: none; }
+    details { display: block; }
+  }
+</style>
+</head>
+<body class="no-js">
+<script>document.body.classList.replace("no-js", "js");</script>
+
+<header>
+  <h1>The OpenBao raft interface, step by step</h1>
+  <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+</header>
+
+<main id="steps" aria-live="polite">
+
+<!-- 1 -->
+<section class="step" aria-labelledby="s1">
+  <h2 id="s1" tabindex="-1">What this is about</h2>
+  <p>OpenBao can store its data with <em>raft</em>.</p>
+  <p>Then every node keeps a full copy of the data. The nodes keep the copies equal by sending messages to each other.</p>
+  <p>This page explains those messages. Who sends them, when, what is inside, and what happens when something goes wrong.</p>
+  <p class="hint">Use the buttons below, or the ← and → keys. Each step may have a "More detail" section. Open it only if you want to go deeper.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>The protocol comes from the Go library <code>hashicorp/raft</code> (v1.7.3 in OpenBao). Main files: <code>net_transport.go</code>, <code>raft.go</code>, <code>replication.go</code>, <code>commands.go</code>. OpenBao adds the TLS layer in <code>internal/physical/raft/streamlayer.go</code>.</p>
+    <p>Times on this page use OpenBao's default <code>performance_multiplier = 5</code>.</p>
+  </details>
+</section>
+
+<!-- 2 -->
+<section class="step" aria-labelledby="s2">
+  <h2 id="s2" tabindex="-1">Three roles</h2>
+  <p>At any moment, one node is the <strong>leader</strong>. The others are <strong>followers</strong>.</p>
+  <p>Only the leader accepts changes. It sends every change to the followers.</p>
+  <p>If the leader disappears, a follower becomes a <strong>candidate</strong>. It asks the others to vote for it.</p>
+  <p>In OpenBao, the raft leader is the <em>active</em> node. The followers are the <em>standby</em> nodes.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>There are two kinds of followers. <em>Voters</em> vote in elections and count for the majority. <em>Non-voters</em> get all the data, but they do not vote.</p>
+    <p>A new node starts as a non-voter. OpenBao's autopilot makes it a voter when it is healthy.</p>
+  </details>
+</section>
+
+<!-- 3 -->
+<section class="step" aria-labelledby="s3">
+  <h2 id="s3" tabindex="-1">The log</h2>
+  <p>Every change is one <strong>entry</strong> in a log. Each entry has an <strong>index</strong> (1, 2, 3, …) and a <strong>term</strong>.</p>
+  <div class="log" role="img" aria-label="A log with entries 45 to 47 in term 4, committed, and entry 48 in term 5, new.">
+    <div><b>#45</b>term 4</div>
+    <div><b>#46</b>term 4</div>
+    <div><b>#47</b>term 4</div>
+    <div class="new"><b>#48</b>term 5</div>
+  </div>
+  <p>The term is the election round number. It goes up by one at every election.</p>
+  <p>An entry is <strong>committed</strong> when a majority of voters has stored it. With 3 voters, 2 are enough. With 5 voters, 3 are needed.</p>
+  <p>A committed entry is never lost. Then each node applies it to its own data.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>Entry types: <code>Command</code> (OpenBao data), <code>Noop</code> (written by a new leader), <code>Barrier</code>, and <code>Configuration</code> (the member list).</p>
+    <p>In OpenBao, the data of a <code>Command</code> entry is a protobuf <code>LogData</code> message. It holds a list of key/value operations. Large values are split over several entries.</p>
+  </details>
+</section>
+
+<!-- 4 -->
+<section class="step" aria-labelledby="s4">
+  <h2 id="s4" tabindex="-1">Who connects to whom</h2>
+  <figure>
+    <img src="assets/topology.svg" width="740" height="313"
+         alt="Left: in normal operation the leader openbao-0 opens connections to both followers and sends AppendEntries, heartbeats, InstallSnapshot and TimeoutNow. The followers open separate gRPC forwarding connections to the leader, which are not raft. Right: during an election the candidate openbao-1 sends RequestPreVote and RequestVote to openbao-2 and to the crashed openbao-0, where the connection fails.">
+  </figure>
+  <p>The leader opens a connection to every follower.</p>
+  <p>A candidate opens a connection to every other voter.</p>
+  <p>A follower never opens a raft connection to the leader.</p>
+  <p>The side that opens the connection sends the requests. The other side only answers.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>Two nodes can have connections in both directions at the same time, for example after the roles change. Each connection is still used in one direction only.</p>
+  </details>
+</section>
+
+<!-- 5 -->
+<section class="step" aria-labelledby="s5">
+  <h2 id="s5" tabindex="-1">One port, two protocols</h2>
+  <figure>
+    <img src="assets/port-mux.svg" width="731" height="423"
+         alt="Another OpenBao node connects to cluster port 8201 with TLS and names a protocol with ALPN. raft_storage_v1 goes to the raft transport, which uses msgpack. req_fw_sb-act_v1 goes to gRPC request forwarding. The API port 8200 is separate and is used for join and admin calls.">
+  </figure>
+  <p>Raft uses the <strong>cluster port</strong>, 8201 by default.</p>
+  <p>The same port also carries gRPC. Standby nodes use it to forward client requests to the active node.</p>
+  <p>Both run inside TLS. In the TLS handshake the dialer names the protocol it wants (ALPN). Raft asks for <code>raft_storage_v1</code>.</p>
+  <p>Raft itself does <em>not</em> use gRPC. It has its own simple format.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>The listener picks the handler from the negotiated ALPN name (<code>internal/vault/cluster/cluster.go</code>).</p>
+    <p>Joining a cluster and admin calls (<code>sys/storage/raft/*</code>) go over the normal HTTP API port. They are not part of the raft interface.</p>
+  </details>
+</section>
+
+<!-- 6 -->
+<section class="step" aria-labelledby="s6">
+  <h2 id="s6" tabindex="-1">TLS</h2>
+  <p>Both sides show a certificate. This is mutual TLS.</p>
+  <p>All nodes use the <strong>same</strong> key and certificate. The leader creates it and stores it in raft. A new node gets it when it joins.</p>
+  <p>So TLS proves "you are a member of my cluster".</p>
+  <p>It does not prove <em>which</em> member you are. Keep this in mind. It matters later.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>The certificate is self-signed (ECDSA P-521). Its name is <code>raft-&lt;uuid&gt;</code>. It is also its own CA.</p>
+    <p>The dialer puts the key ID in the TLS server name (SNI). The receiver uses SNI only to choose which key to show.</p>
+    <p>During key rotation the keyring has two keys. Only the active key is used to dial. Both keys are accepted.</p>
+  </details>
+</section>
+
+<!-- 7 -->
+<section class="step" aria-labelledby="s7">
+  <h2 id="s7" tabindex="-1">Names and addresses</h2>
+  <p>Each node has a <strong>server ID</strong>, for example <code>openbao-2</code>. This is its identity in raft.</p>
+  <p>Each node also has an <strong>address</strong> (<code>cluster_addr</code>), for example <code>raft-2:8201</code>. This only says where to connect.</p>
+  <p>The member list, with IDs and addresses, is itself a log entry. So every node knows every other node.</p>
+  <p>The address is a string. It becomes an IP only when a <em>new</em> connection is opened (DNS lookup).</p>
+  <details>
+    <summary>More detail</summary>
+    <p>Raft passes the address string to OpenBao's dialer. The Go resolver looks it up on each new dial. OpenBao does not cache the answer.</p>
+  </details>
+</section>
+
+<!-- 8 -->
+<section class="step" aria-labelledby="s8">
+  <h2 id="s8" tabindex="-1">Connections are reused</h2>
+  <p>Opening a TLS connection takes time. So raft keeps open connections in a pool.</p>
+  <p>Up to 3 idle connections are kept per peer.</p>
+  <p>In practice, the leader has about 2 connections to each follower. One is for heartbeats and single requests. One is for the replication pipeline (step 15).</p>
+  <p>A snapshot always uses a fresh connection. It is closed afterwards.</p>
+  <p>When a request fails, its connection is closed. The next request opens a new one, with a new DNS lookup.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>Each request has a 10 s deadline (OpenBao setting). For a snapshot the deadline grows with its size.</p>
+    <p>A working connection can stay open for days. It is never looked up in DNS again.</p>
+  </details>
+</section>
+
+<!-- 9 -->
+<section class="step" aria-labelledby="s9">
+  <h2 id="s9" tabindex="-1">Bytes on the wire</h2>
+  <figure>
+    <img src="assets/framing.svg" width="735" height="393"
+         alt="A request is one type byte followed by a msgpack map with the request struct. A response is a msgpack error string, empty when there is no error, followed by a msgpack map with the response struct. An InstallSnapshot request is type byte 2, the msgpack request, then Size bytes of raw snapshot data. Type values: 0 AppendEntries, 1 RequestVote, 2 InstallSnapshot, 3 TimeoutNow, 4 RequestPreVote.">
+  </figure>
+  <p>A request is one type byte, then the request struct.</p>
+  <p>A response is an error text, then the response struct. The error text is usually empty.</p>
+  <p>Structs are encoded with <strong>msgpack</strong>. It is like JSON, but binary and smaller.</p>
+  <p>On one connection, requests are answered one at a time, in order.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>Each struct becomes a msgpack map. The keys are the Go field names. A heartbeat is 128 bytes. Decoded, it looks like this:</p>
+<pre><code>{ Addr: "raft-0:8201", Entries: nil, ID: "openbao-0",
+  Leader: "raft-0:8201", LeaderCommitIndex: 0, PrevLogEntry: 0,
+  PrevLogTerm: 0, ProtocolVersion: 3, Term: 5 }</code></pre>
+    <p>There is no length prefix and no request ID. The reader knows where a struct ends from the msgpack encoding itself.</p>
+  </details>
+</section>
+
+<!-- 10 -->
+<section class="step" aria-labelledby="s10">
+  <h2 id="s10" tabindex="-1">Only five requests</h2>
+  <table>
+    <thead><tr><th scope="col">Request</th><th scope="col">From → to</th><th scope="col">Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>AppendEntries</code></td><td>leader → each follower</td><td>New entries, heartbeats, commit index</td></tr>
+      <tr><td><code>RequestPreVote</code></td><td>candidate → voters</td><td>"Could I win an election?"</td></tr>
+      <tr><td><code>RequestVote</code></td><td>candidate → voters</td><td>The real vote</td></tr>
+      <tr><td><code>InstallSnapshot</code></td><td>leader → one follower</td><td>Full copy for a follower that is far behind</td></tr>
+      <tr><td><code>TimeoutNow</code></td><td>leader → one follower</td><td>"Start an election now." Used to hand over leadership</td></tr>
+    </tbody>
+  </table>
+  <p>Each request has a matching response. That is the whole protocol.</p>
+  <p>The next steps show each one in action.</p>
+</section>
+
+<!-- 11 -->
+<section class="step" aria-labelledby="s11">
+  <h2 id="s11" tabindex="-1">Every message starts with a header</h2>
+<pre><code>type RPCHeader struct {
+    ProtocolVersion int     <span class="c">// 3 today</span>
+    ID              []byte  <span class="c">// server ID of the SENDER</span>
+    Addr            []byte  <span class="c">// address of the SENDER</span>
+}</code></pre>
+  <p>Every request and every response includes this header.</p>
+  <p>It says who <em>sent</em> the message. There is no field for who should <em>receive</em> it.</p>
+  <p>The receiver checks only the protocol version.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>If the version is too old or too new, the receiver answers with an error text. Raft supports one version back, so rolling upgrades work.</p>
+  </details>
+</section>
+
+<!-- 12 -->
+<section class="step" aria-labelledby="s12">
+  <h2 id="s12" tabindex="-1">Heartbeats</h2>
+  <figure>
+    <img src="assets/seq-heartbeat.svg" width="700" height="422"
+         alt="The leader sends an AppendEntries heartbeat with Term 5 and no entries. The follower resets its timer, remembers the leader, and replies Success true. This repeats every 0.5 to 1 second. If the follower gets no heartbeat for 5 to 10 seconds it starts an election.">
+  </figure>
+  <p>The leader sends an empty <code>AppendEntries</code> to each follower about every 0.5–1 s.</p>
+  <p>The follower answers. Now both know the other is alive.</p>
+  <p>If a follower hears nothing for 5–10 s, it starts an election.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>A heartbeat is an <code>AppendEntries</code> with a term, no entries, and zero in <code>PrevLogEntry</code>, <code>PrevLogTerm</code> and <code>LeaderCommitIndex</code>.</p>
+    <p>The receiver handles heartbeats on a fast path, outside raft's main loop, so slow disk writes do not delay them.</p>
+    <p>Heartbeats run in their own goroutine per follower, separate from data replication.</p>
+  </details>
+</section>
+
+<!-- 13 -->
+<section class="step" aria-labelledby="s13">
+  <h2 id="s13" tabindex="-1">Inside AppendEntries</h2>
+<pre><code>type AppendEntriesRequest struct {
+    RPCHeader
+    Term              uint64
+    Leader            []byte  <span class="c">// old, same as RPCHeader.Addr</span>
+    PrevLogEntry      uint64  <span class="c">// index of the entry just before Entries</span>
+    PrevLogTerm       uint64  <span class="c">// term of that entry</span>
+    Entries           []*Log
+    LeaderCommitIndex uint64
+}
+
+type AppendEntriesResponse struct {
+    RPCHeader
+    Term           uint64
+    LastLog        uint64  <span class="c">// follower's last index, a hint</span>
+    Success        bool
+    NoRetryBackoff bool
+}
+
+type Log struct {
+    Index, Term uint64
+    Type        LogType
+    Data        []byte
+    Extensions  []byte
+    AppendedAt  time.Time
+}</code></pre>
+  <p><code>PrevLogEntry</code> and <code>PrevLogTerm</code> describe the entry just before the new ones.</p>
+  <p>The follower accepts only if it has that same entry. This keeps all logs identical.</p>
+</section>
+
+<!-- 14 -->
+<section class="step" aria-labelledby="s14">
+  <h2 id="s14" tabindex="-1">A write, from start to end</h2>
+  <figure>
+    <img src="assets/seq-write.svg" width="700" height="627"
+         alt="A client sends a write to the leader. The leader appends entry 48 and sends AppendEntries with entry 48 to followers A and B. Follower A answers first. With 2 of 3 nodes holding the entry, the leader commits and applies it and answers OK to the client. Follower B answers later. The next AppendEntries to both followers carries LeaderCommitIndex 48, and the followers apply entry 48.">
+  </figure>
+  <p>The leader writes the entry to its own log. It sends it to all followers at the same time.</p>
+  <p>As soon as a majority has the entry, it is committed. The leader applies it and answers the client.</p>
+  <p>The followers learn about the commit from the next <code>AppendEntries</code>. Then they apply it too.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>If no new writes come, the leader still sends an <code>AppendEntries</code> every 50–100 ms. This way followers learn the commit index fast.</p>
+    <p>A standby can apply only what it has seen as committed. So a read on a standby can be a little behind the leader.</p>
+  </details>
+</section>
+
+<!-- 15 -->
+<section class="step" aria-labelledby="s15">
+  <h2 id="s15" tabindex="-1">Pipelining</h2>
+  <figure>
+    <img src="assets/seq-pipeline.svg" width="700" height="596"
+         alt="The leader sends entry 48 and waits for Success. Then it switches to pipeline mode. It sends entries 49 and 50 before the reply to 49 arrives. Replies come back in order. At most 2 requests are in flight. On an error or Success false the pipeline is closed and the leader goes back to one request at a time.">
+  </figure>
+  <p>Waiting for every reply is slow.</p>
+  <p>When a follower is up to date, the leader switches to <strong>pipeline</strong> mode. It uses its own connection for this.</p>
+  <p>In pipeline mode the leader sends the next request before the previous reply arrives. Replies come back in the same order.</p>
+  <p>If anything goes wrong, the pipeline is closed. The leader goes back to one request at a time.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>OpenBao uses the default of 2 requests in flight. The leader logs <code>pipelining replication</code> when it starts and <code>aborting pipeline replication</code> when it stops.</p>
+  </details>
+</section>
+
+<!-- 16 -->
+<section class="step" aria-labelledby="s16">
+  <h2 id="s16" tabindex="-1">A follower that is behind</h2>
+  <figure>
+    <img src="assets/seq-mismatch.svg" width="700" height="454"
+         alt="The leader sends AppendEntries with Prev 48 and entry 49. The follower has only up to entry 40 and answers Success false, LastLog 40. The leader sets next to 41 and sends AppendEntries with Prev 40 and entries 41 to 49. The follower answers Success true.">
+  </figure>
+  <p>A follower can miss entries, for example while it restarts.</p>
+  <p>Then the "previous entry" check fails. The follower answers <code>Success=false</code> and tells its last index.</p>
+  <p>The leader goes back and sends again from there.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>The leader sets <code>next = max(min(next − 1, LastLog + 1), 1)</code>.</p>
+    <p>If the follower has entries with a different term (left over from an old leader), it deletes them and takes the leader's entries.</p>
+    <p><code>NoRetryBackoff=true</code> means "try again right away". It is set when the reject is a normal log mismatch.</p>
+  </details>
+</section>
+
+<!-- 17 -->
+<section class="step" aria-labelledby="s17">
+  <h2 id="s17" tabindex="-1">Far behind: send a snapshot</h2>
+  <figure>
+    <img src="assets/seq-snapshot.svg" width="720" height="472"
+         alt="Entry 41 is already compacted away on the leader. On a new connection that is closed afterwards, the leader sends an InstallSnapshot header with LastLogIndex 100 and Size N, then N bytes of snapshot data. The follower saves it, restores its state and drops its old log, then answers Success true. Normal replication continues from entry 101.">
+  </figure>
+  <p>The leader does not keep its log forever. Old entries are replaced by a <strong>snapshot</strong> of the data.</p>
+  <p>If a follower needs an entry that is gone, the leader sends the whole snapshot.</p>
+  <p>First comes a small header. Then the raw snapshot bytes follow on the same connection.</p>
+<pre><code>type InstallSnapshotRequest struct {
+    RPCHeader
+    SnapshotVersion    int
+    Term               uint64
+    Leader             []byte
+    LastLogIndex       uint64  <span class="c">// snapshot covers up to here</span>
+    LastLogTerm        uint64
+    Peers              []byte  <span class="c">// old</span>
+    Configuration      []byte  <span class="c">// member list</span>
+    ConfigurationIndex uint64
+    Size               int64   <span class="c">// number of raw bytes that follow</span>
+}
+
+type InstallSnapshotResponse struct {
+    RPCHeader
+    Term    uint64
+    Success bool
+}</code></pre>
+  <details>
+    <summary>More detail</summary>
+    <p>OpenBao decides when to compact the log (<code>snapshot_threshold</code>, <code>trailing_logs</code>, <code>snapshot_interval</code>).</p>
+    <p>The follower does not fill in <code>RPCHeader</code> in this response, so it is empty.</p>
+  </details>
+</section>
+
+<!-- 18 -->
+<section class="step" aria-labelledby="s18">
+  <h2 id="s18" tabindex="-1">The leader disappears: election</h2>
+  <figure>
+    <img src="assets/seq-election.svg" width="720" height="691"
+         alt="openbao-1 gets no heartbeat for 5 to 10 seconds. It sends RequestPreVote for term 6 to openbao-2 and to the crashed openbao-0, where the dial fails. openbao-2 grants the pre-vote. With 2 of 3, openbao-1 starts a real vote in term 6 and votes for itself. It sends RequestVote. openbao-2 checks the rules, saves its vote to disk and grants it. With 2 of 3 votes openbao-1 becomes leader and sends a heartbeat with term 6.">
+  </figure>
+  <p>A follower that hears nothing waits 5–10 s. Then it becomes a candidate.</p>
+  <p>First it asks a <strong>pre-vote</strong>: "Would you vote for me?" Nothing changes yet.</p>
+  <p>If a majority says yes, the real election starts. The candidate raises the term and votes for itself. It sends <code>RequestVote</code>.</p>
+  <p>With a majority of votes, it is the new leader. It sends heartbeats right away.</p>
+<pre><code>type RequestPreVoteRequest struct {
+    RPCHeader
+    Term, LastLogIndex, LastLogTerm uint64
+}
+type RequestVoteRequest struct {
+    RPCHeader
+    Term, LastLogIndex, LastLogTerm uint64
+    Candidate          []byte  <span class="c">// old</span>
+    LeadershipTransfer bool    <span class="c">// step 20</span>
+}
+<span class="c">// both responses:</span> { RPCHeader, Term uint64, Granted bool }</code></pre>
+  <details>
+    <summary>More detail</summary>
+    <p>The wait is random, so two followers rarely start at the same time.</p>
+    <p>If nobody wins within 5–10 s, the candidate starts again.</p>
+    <p>A new leader first writes a <code>Noop</code> entry. It cannot know what is committed until an entry of its own term is committed.</p>
+    <p>When OpenBao starts, the first timeouts are 3 times longer. This gives all nodes time to come up.</p>
+  </details>
+</section>
+
+<!-- 19 -->
+<section class="step" aria-labelledby="s19">
+  <h2 id="s19" tabindex="-1">How a node decides its vote</h2>
+  <p>A node says no when:</p>
+  <ul>
+    <li>it still hears from a leader (except during a handover),</li>
+    <li>the candidate is not in the member list, or is not a voter,</li>
+    <li>the candidate's term is older than its own,</li>
+    <li>its own log is newer than the candidate's log.</li>
+  </ul>
+  <p>A node votes only once per term. It saves the vote to disk before it answers.</p>
+  <p>Any reply with a higher term makes a candidate or leader go back to follower.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>The "I still have a leader" check comes first. So a node that is cut off can ask for votes forever. It does not disturb the others, but it also never gets back in by itself.</p>
+    <p>If the voter already voted for the same candidate in this term, it says yes again and logs <code>duplicate requestVote</code>.</p>
+  </details>
+</section>
+
+<!-- 20 -->
+<section class="step" aria-labelledby="s20">
+  <h2 id="s20" tabindex="-1">A planned leader change</h2>
+  <figure>
+    <img src="assets/seq-transfer.svg" width="720" height="641"
+         alt="Triggered by bao operator step-down or a clean shutdown of the active node. The leader openbao-0 sends AppendEntries to the target openbao-1 until it has caught up, then sends TimeoutNow. The target answers and becomes a candidate at once, without pre-vote. It sends RequestVote with LeadershipTransfer true to openbao-2 and openbao-0. Both grant the vote and openbao-1 is the new leader.">
+  </figure>
+  <p>When the active node steps down, raft hands the leadership over. This happens with <code>bao operator step-down</code> or a clean shutdown.</p>
+  <p>The leader picks the most up-to-date follower. It makes sure that follower has every entry. Then it sends <code>TimeoutNow</code>.</p>
+  <p>The target starts an election at once. <code>LeadershipTransfer=true</code> makes the others vote, even though they still know a leader.</p>
+  <p><code>TimeoutNow</code> carries only the header. Its response is empty.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>A leader that is killed (for example with SIGKILL) cannot do this. Then the followers must wait 5–10 s for a normal election.</p>
+  </details>
+</section>
+
+<!-- 21 -->
+<section class="step" aria-labelledby="s21">
+  <h2 id="s21" tabindex="-1">A new node joins</h2>
+  <figure>
+    <img src="assets/seq-join.svg" width="720" height="595"
+         alt="Over the HTTPS API port 8200: the new node asks the leader for a bootstrap challenge, gets a challenge encrypted with the seal, decrypts it with its own seal, and sends the answer with its server_id and cluster_addr. The leader adds it as a non-voter and returns the peers and the TLS keyring. Then over cluster port 8201 the leader sends AppendEntries or InstallSnapshot and the new node answers. After 10 healthy seconds the leader promotes it to voter.">
+  </figure>
+  <p>Joining does not use the raft protocol. It uses the normal HTTP API.</p>
+  <p>The new node proves it has the same seal by decrypting a challenge.</p>
+  <p>The leader adds the node to the member list as a non-voter. It gives the node the shared TLS key.</p>
+  <p>From now on, the leader connects to the new node's <code>cluster_addr</code> and sends raft messages.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>After the node has been healthy for 10 s (default), autopilot promotes it to voter. This is another member list entry.</p>
+    <p>Removing a node (<code>sys/storage/raft/remove-peer</code>) is also a member list entry. The leader then stops sending to it.</p>
+  </details>
+</section>
+
+<!-- 22 -->
+<section class="step" aria-labelledby="s22">
+  <h2 id="s22" tabindex="-1">When a request fails</h2>
+  <table>
+    <thead><tr><th scope="col">What happens</th><th scope="col">What the sender does</th></tr></thead>
+    <tbody>
+      <tr><td>Cannot connect, TLS fails, or no answer in 10 s</td><td>Closes the connection. Tries again later. The peer counts as "not reached".</td></tr>
+      <tr><td>Reply has an error text</td><td>Keeps the connection. Treats it as a failure. This is rare.</td></tr>
+      <tr><td><code>Success=false</code></td><td>Goes back in the log and tries again (step 16).</td></tr>
+      <tr><td><code>Granted=false</code></td><td>No vote from this node.</td></tr>
+      <tr><td>Reply has a higher term</td><td>A leader or candidate becomes a follower.</td></tr>
+      <tr><td>Problem in the pipeline</td><td>Closes the pipeline. One request at a time again.</td></tr>
+      <tr><td>Receiver cannot decode a request</td><td>Receiver closes the connection.</td></tr>
+    </tbody>
+  </table>
+  <p>The transport never retries by itself. The raft logic above it decides when to try again.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>Most "no" answers are not errors. They are normal replies with <code>Success</code> or <code>Granted</code> set to false.</p>
+    <p>Error texts are used for things like an unsupported protocol version or a failed snapshot restore.</p>
+  </details>
+</section>
+
+<!-- 23 -->
+<section class="step" aria-labelledby="s23">
+  <h2 id="s23" tabindex="-1">Waiting between tries</h2>
+  <p>After a failure, the sender waits before it tries again. The wait doubles each time.</p>
+  <ul>
+    <li>Heartbeats: 10 ms, 20 ms, 40 ms, … up to 2.5 s.</li>
+    <li>Sending entries: 10 ms, 20 ms, … up to about 10 s.</li>
+    <li>Votes: not repeated. The next election round asks again.</li>
+  </ul>
+  <p>So a node that is down does not cause a busy loop.</p>
+  <p>Each new try can open a new connection. So each try also does a new DNS lookup.</p>
+</section>
+
+<!-- 24 -->
+<section class="step" aria-labelledby="s24">
+  <h2 id="s24" tabindex="-1">A leader that loses the majority</h2>
+  <p>The leader keeps checking how many voters answered in the last 2.5 s.</p>
+  <p>If that is less than a majority, it steps down and becomes a follower.</p>
+  <p>This stops a leader that is cut off from the others from acting as leader forever.</p>
+  <p>In OpenBao, that node then stops being the active node.</p>
+</section>
+
+<!-- 25 -->
+<section class="step" aria-labelledby="s25">
+  <h2 id="s25" tabindex="-1">The timers</h2>
+  <table>
+    <thead><tr><th scope="col">Timer</th><th scope="col">Default in OpenBao</th></tr></thead>
+    <tbody>
+      <tr><td>Heartbeat interval</td><td>0.5–1 s</td></tr>
+      <tr><td>Follower gives up on the leader</td><td>5–10 s</td></tr>
+      <tr><td>One election round</td><td>5–10 s</td></tr>
+      <tr><td>Leader must reach a majority within</td><td>2.5 s</td></tr>
+      <tr><td>One request</td><td>10 s</td></tr>
+      <tr><td>Commit index update without new writes</td><td>50–100 ms</td></tr>
+      <tr><td>First timeouts after start-up</td><td>3 × longer</td></tr>
+    </tbody>
+  </table>
+  <details>
+    <summary>More detail</summary>
+    <p><code>performance_multiplier</code> (default 5) multiplies the heartbeat timeout, election timeout and leader lease. The base values are 1 s, 1 s and 0.5 s.</p>
+    <p>"5–10 s" is a random time between the timeout and twice the timeout.</p>
+  </details>
+</section>
+
+<!-- 26 -->
+<section class="step" aria-labelledby="s26">
+  <h2 id="s26" tabindex="-1">What the protocol does not check</h2>
+  <figure>
+    <img src="assets/seq-misroute.svg" width="720" height="478"
+         alt="The leader openbao-0 dials raft-2 and gets an old DNS answer, 10.244.0.12, which now belongs to openbao-1. It sends AppendEntries meant for openbao-2 to openbao-1. openbao-1 sees a valid TLS certificate and a valid leader and accepts. It replies Success true with ID openbao-1. The leader does not check the ID and counts the reply as coming from openbao-2. The real openbao-2 at 10.244.0.30 is never contacted. Fix: compare the reply ID with the peer that was dialed, drop the connection and dial again.">
+  </figure>
+  <p>Put three earlier facts together:</p>
+  <ul>
+    <li>A request names only the sender (step 11).</li>
+    <li>TLS proves membership, not identity (step 6).</li>
+    <li>A working connection is never looked up again (step 8).</li>
+  </ul>
+  <p>Now say a DNS name still points to an old IP, and that IP now belongs to another member. The leader reaches the wrong node. That node answers normally.</p>
+  <p>The leader does not check the ID in the reply. So it counts the wrong node as the right one. The real node is left out, and stays out.</p>
+  <details>
+    <summary>More detail</summary>
+    <p>The wrong node is also counted twice, in votes and in commits. With 3 nodes this hurts availability. With 5 or more nodes it can break safety.</p>
+    <p>The fix is small. When a reply arrives, compare <code>RPCHeader.ID</code> with the server the request was meant for. If they differ, close the connection. The next try does a new DNS lookup.</p>
+  </details>
+</section>
+
+<!-- 27 -->
+<section class="step" aria-labelledby="s27">
+  <h2 id="s27" tabindex="-1">Summary</h2>
+  <ul>
+    <li>Raft runs on the cluster port, inside TLS, with ALPN <code>raft_storage_v1</code>.</li>
+    <li>The leader connects to followers. Candidates connect to voters. The dialer asks, the other side answers.</li>
+    <li>A message is a type byte plus a msgpack struct. A reply is an error text plus a msgpack struct.</li>
+    <li>Five requests: AppendEntries, RequestPreVote, RequestVote, InstallSnapshot, TimeoutNow.</li>
+    <li>Heartbeats every 0.5–1 s. Elections after 5–10 s of silence.</li>
+    <li>Failures close the connection. The next try opens a new one and does a new DNS lookup.</li>
+    <li>Headers name the sender only. Nobody checks that the right node answered.</li>
+  </ul>
+</section>
+
+</main>
+
+<nav class="controls" aria-label="Step navigation">
+  <button id="prev" type="button">← Back</button>
+  <button id="next" type="button" class="primary">Next →</button>
+  <span id="count" class="hint" aria-hidden="true"></span>
+  <span class="spacer"></span>
+  <label for="jump" class="sr-only">Jump to step</label>
+  <select id="jump"></select>
+</nav>
+
+<script>
+(function () {
+  var steps = Array.prototype.slice.call(document.querySelectorAll(".step"));
+  var prev = document.getElementById("prev");
+  var next = document.getElementById("next");
+  var count = document.getElementById("count");
+  var jump = document.getElementById("jump");
+  var bar = document.getElementById("bar");
+  var current = 0;
+
+  // Number each step and fill the jump list from the headings.
+  steps.forEach(function (s, i) {
+    var h = s.querySelector("h2");
+    var n = document.createElement("div");
+    n.className = "num";
+    n.textContent = "Step " + (i + 1) + " of " + steps.length;
+    s.insertBefore(n, h);
+    var o = document.createElement("option");
+    o.value = i;
+    o.textContent = (i + 1) + ". " + h.textContent;
+    jump.appendChild(o);
+  });
+
+  function show(i, focus) {
+    if (i < 0 || i >= steps.length) return;
+    steps[current].classList.remove("active");
+    current = i;
+    steps[current].classList.add("active");
+    prev.disabled = current === 0;
+    next.disabled = current === steps.length - 1;
+    count.textContent = (current + 1) + " / " + steps.length;
+    jump.value = current;
+    bar.style.width = ((current + 1) / steps.length * 100) + "%";
+    if (location.hash !== "#" + (current + 1)) {
+      history.replaceState(null, "", "#" + (current + 1));
+    }
+    if (focus) steps[current].querySelector("h2").focus();
+    window.scrollTo(0, 0);
+  }
+
+  function fromHash() {
+    var n = parseInt(location.hash.slice(1), 10);
+    return isNaN(n) ? 0 : Math.min(Math.max(n - 1, 0), steps.length - 1);
+  }
+
+  prev.addEventListener("click", function () { show(current - 1, true); });
+  next.addEventListener("click", function () { show(current + 1, true); });
+  jump.addEventListener("change", function () { show(parseInt(jump.value, 10), true); });
+  window.addEventListener("hashchange", function () { show(fromHash(), true); });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    var t = e.target.tagName;
+    if (t === "SELECT" || t === "INPUT" || t === "TEXTAREA") return;
+    if (e.key === "ArrowRight") { show(current + 1, true); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { show(current - 1, true); e.preventDefault(); }
+  });
+
+  steps[0].classList.add("active");
+  show(fromHash(), false);
+})();
+</script>
+</body>
+</html>

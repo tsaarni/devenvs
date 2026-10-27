@@ -1,0 +1,68 @@
+<svg viewBox="0 0 735 393" width="735" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+
+  <!-- White canvas, same size as the viewBox -->
+  <rect x="0" y="0" width="735" height="393" fill="#ffffff"/>
+
+  <!-- Layout: content x 20..715, y 20..372.5, 20px margins.
+       Each strip is one 480x54 rect (x 220..700) with no fill; the coloured fields are filled
+       paths under it and the field borders are lines, so adjacent fields touch.
+       Strips are 28px apart: y 50, 132, 214. Field labels: baselines strip y + 22 and + 40. -->
+
+  <!-- Strip group -->
+  <rect x="20" y="20" width="695" height="263" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-dasharray="6,4"/>
+  <text x="30" y="34" font-size="11" fill="#64748b">Left to right = order on the wire</text>
+
+  <!-- Row labels, baseline = strip centre + 12 x 0.35 -->
+  <text x="35" y="81" font-size="12" fill="#1e293b">Request</text>
+  <text x="35" y="163" font-size="12" fill="#1e293b">Response</text>
+  <text x="35" y="245" font-size="12" fill="#1e293b">InstallSnapshot request</text>
+
+  <!-- Request: [type][msgpack request struct] -->
+  <path d="M220,50 L 300,50 L 300,104 L 220,104 Z" fill="#fef3c7" stroke="none"/>
+  <path d="M300,50 L 700,50 L 700,104 L 300,104 Z" fill="#dbeafe" stroke="none"/>
+  <line x1="300" y1="50" x2="300" y2="104" stroke="#64748b"/>
+  <rect x="220" y="50" width="480" height="54" fill="none" stroke="#64748b"/>
+  <text x="260" y="72" font-size="12" fill="#b45309" text-anchor="middle">type</text>
+  <text x="260" y="90" font-size="12" fill="#b45309" text-anchor="middle">1 byte</text>
+  <text x="500" y="72" font-size="12" fill="#1e40af" text-anchor="middle">msgpack map:</text>
+  <text x="500" y="90" font-size="12" fill="#1e40af" text-anchor="middle">request struct</text>
+
+  <!-- Response: [msgpack error string][msgpack response struct] -->
+  <path d="M220,132 L 420,132 L 420,186 L 220,186 Z" fill="#fce7f3" stroke="none"/>
+  <path d="M420,132 L 700,132 L 700,186 L 420,186 Z" fill="#d1fae5" stroke="none"/>
+  <line x1="420" y1="132" x2="420" y2="186" stroke="#64748b"/>
+  <rect x="220" y="132" width="480" height="54" fill="none" stroke="#64748b"/>
+  <text x="320" y="154" font-size="12" fill="#9d174d" text-anchor="middle">msgpack string: error</text>
+  <text x="320" y="172" font-size="12" fill="#9d174d" text-anchor="middle">&quot;&quot; = no error</text>
+  <text x="560" y="154" font-size="12" fill="#166534" text-anchor="middle">msgpack map:</text>
+  <text x="560" y="172" font-size="12" fill="#166534" text-anchor="middle">response struct</text>
+
+  <!-- InstallSnapshot request: [type = 2][msgpack request][raw snapshot bytes] -->
+  <path d="M220,214 L 300,214 L 300,268 L 220,268 Z" fill="#fef3c7" stroke="none"/>
+  <path d="M300,214 L 500,214 L 500,268 L 300,268 Z" fill="#dbeafe" stroke="none"/>
+  <path d="M500,214 L 700,214 L 700,268 L 500,268 Z" fill="#f3e8ff" stroke="none"/>
+  <line x1="300" y1="214" x2="300" y2="268" stroke="#64748b"/>
+  <line x1="500" y1="214" x2="500" y2="268" stroke="#64748b"/>
+  <rect x="220" y="214" width="480" height="54" fill="none" stroke="#64748b"/>
+  <text x="260" y="236" font-size="12" fill="#b45309" text-anchor="middle">type = 2</text>
+  <text x="260" y="254" font-size="12" fill="#b45309" text-anchor="middle">1 byte</text>
+  <text x="400" y="236" font-size="12" fill="#1e40af" text-anchor="middle">msgpack:</text>
+  <text x="400" y="254" font-size="12" fill="#1e40af" text-anchor="middle">InstallSnapshotRequest</text>
+  <text x="600" y="236" font-size="12" fill="#6b21a8" text-anchor="middle">Size bytes:</text>
+  <text x="600" y="254" font-size="12" fill="#6b21a8" text-anchor="middle">raw snapshot data</text>
+
+  <!-- Type byte values -->
+  <rect x="20" y="298" width="695" height="52" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-dasharray="6,4"/>
+  <text x="30" y="312" font-size="11" fill="#64748b">Type byte values</text>
+  <text x="35" y="334" font-size="10" fill="#64748b">0 AppendEntries</text>
+  <text x="170" y="334" font-size="10" fill="#64748b">1 RequestVote</text>
+  <text x="305" y="334" font-size="10" fill="#64748b">2 InstallSnapshot</text>
+  <text x="440" y="334" font-size="10" fill="#64748b">3 TimeoutNow</text>
+  <text x="575" y="334" font-size="10" fill="#64748b">4 RequestPreVote</text>
+
+  <!-- Note, centred on the content centre (20 + 715) / 2 = 367.5 -->
+  <text x="367.5" y="370" font-size="10" font-style="italic" fill="#94a3b8" text-anchor="middle">No length prefix, no request ID, no field for the intended receiver.</text>
+</svg>

@@ -1,0 +1,75 @@
+<svg viewBox="0 0 700 627" width="700" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#a855f7"/>
+    </marker>
+    <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Layer 0: white canvas -->
+  <rect x="0" y="0" width="700" height="627" fill="#ffffff"/>
+
+  <!-- Layer 2: lifelines. Client 95, Leader 265, Follower A 435, Follower B 605 -->
+  <path d="M95,63 L 95,580" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M265,63 L 265,580" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M435,63 L 435,580" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M605,63 L 605,580" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- Layer 2: messages. start = lifeline ±5, end = lifeline ∓11 -->
+  <!-- 1. Client -> Leader -->
+  <path d="M100,100 L 254,100" fill="none" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+  <!-- 2. Leader self-call -->
+  <path d="M270,128 C 305,130 305,168 276,168" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 3. Leader -> Follower A -->
+  <path d="M270,212 L 424,212" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 4. Leader -> Follower B (crosses A's lifeline; label sits in the A-B channel) -->
+  <path d="M270,256 L 594,256" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 5. Follower A -> Leader reply -->
+  <path d="M430,300 L 276,300" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <!-- 6. Leader self-call: commit -->
+  <path d="M270,328 C 305,330 305,368 276,368" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 7. Leader -> Client reply -->
+  <path d="M260,410 L 106,410" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <!-- 8. Follower B -> Leader reply (late) -->
+  <path d="M600,454 L 276,454" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <!-- 9. Leader -> Follower A: commit index -->
+  <path d="M270,498 L 424,498" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- 10. Leader -> Follower B: commit index -->
+  <path d="M270,542 L 594,542" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- Layer 3: participant head boxes, 142x36, 28px apart; baseline = 22 + 18 + 4.2 -->
+  <rect x="24" y="22" width="142" height="36" rx="6" fill="#f3e8ff" stroke="#a855f7"/>
+  <text x="95" y="44" font-size="12" fill="#6b21a8" text-anchor="middle">Client</text>
+  <rect x="194" y="22" width="142" height="36" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="265" y="44" font-size="12" fill="#1e40af" text-anchor="middle">Leader</text>
+  <rect x="364" y="22" width="142" height="36" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="435" y="44" font-size="12" fill="#166534" text-anchor="middle">Follower A</text>
+  <rect x="534" y="22" width="142" height="36" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="605" y="44" font-size="12" fill="#166534" text-anchor="middle">Follower B</text>
+
+  <!-- Layer 3: labels, baseline = arrow y - 13, each in a channel with no lifeline under it -->
+  <!-- (the linter treats the first free label as a title, so a label centred on the content centre 350 comes first) -->
+  <text x="350" y="199" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries [#48]</text>
+  <text x="180" y="87" font-size="10" fill="#64748b" text-anchor="middle">write (HTTP API)</text>
+  <text x="317" y="156" font-size="10" fill="#64748b">append entry #48</text>
+  <text x="520" y="243" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries [#48]</text>
+  <text x="350" y="287" font-size="10" fill="#64748b" text-anchor="middle">Success=true</text>
+  <text x="317" y="343" font-size="10" fill="#64748b">2 of 3 have #48</text>
+  <text x="317" y="356" font-size="10" fill="#64748b">→ commit, apply</text>
+  <text x="180" y="397" font-size="10" fill="#64748b" text-anchor="middle">OK</text>
+  <text x="520" y="441" font-size="10" fill="#64748b" text-anchor="middle">Success=true</text>
+  <text x="350" y="485" font-size="10" fill="#64748b" text-anchor="middle">LeaderCommitIndex=48</text>
+  <text x="520" y="529" font-size="10" fill="#64748b" text-anchor="middle">LeaderCommitIndex=48</text>
+  <text x="520" y="563" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">followers apply #48</text>
+
+  <!-- Footnote below the lifelines -->
+  <text x="24" y="602" font-size="10" fill="#64748b">A write sent to a standby is forwarded to the leader over gRPC first.</text>
+</svg>

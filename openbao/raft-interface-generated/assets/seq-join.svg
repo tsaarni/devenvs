@@ -1,0 +1,53 @@
+<svg viewBox="0 0 720 595" width="720" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#a855f7"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="720" height="595" fill="#ffffff"/>
+
+  <!-- group frames -->
+  <rect x="22" y="71" width="676" height="323" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-dasharray="6,4"/>
+  <text x="32" y="85" font-size="11" fill="#64748b">API port 8200 (HTTPS)</text>
+  <rect x="22" y="404" width="676" height="100" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-dasharray="6,4"/>
+  <text x="32" y="418" font-size="11" fill="#64748b">cluster port 8201 (raft)</text>
+  <!-- lifelines -->
+  <path d="M193,63 L 193,573" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M527,63 L 527,573" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <!-- messages -->
+  <path d="M198,111 L 516,111" fill="none" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+  <path d="M522,155 L 204,155" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M198,183 C 233,185 233,223 204,223" fill="none" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+  <path d="M198,263 L 516,263" fill="none" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+  <path d="M522,298 C 487,300 487,338 516,338" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M522,378 L 204,378" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M522,444 L 204,444" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M198,488 L 516,488" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M522,509 C 487,511 487,549 516,549" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- participant heads -->
+  <rect x="40" y="22" width="306" height="36" rx="6" fill="#f3e8ff" stroke="#a855f7"/>
+  <text x="193" y="44" font-size="12" fill="#6b21a8" text-anchor="middle">New node</text>
+  <rect x="374" y="22" width="306" height="36" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="527" y="44" font-size="12" fill="#1e40af" text-anchor="middle">Leader</text>
+  <!-- labels and notes -->
+  <text x="360" y="98" font-size="10" fill="#64748b" text-anchor="middle">POST sys/storage/raft/bootstrap/challenge</text>
+  <text x="360" y="142" font-size="10" fill="#64748b" text-anchor="middle">challenge (encrypted with the seal)</text>
+  <text x="245" y="211" font-size="10" fill="#64748b">decrypt with own seal</text>
+  <text x="360" y="250" font-size="10" fill="#64748b" text-anchor="middle">POST …/bootstrap/answer</text>
+  <text x="360" y="284" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">server_id, cluster_addr, answer</text>
+  <text x="475" y="326" font-size="10" fill="#64748b" text-anchor="end">add as non-voter (config entry)</text>
+  <text x="360" y="365" font-size="10" fill="#64748b" text-anchor="middle">peers, TLS keyring</text>
+  <text x="360" y="431" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries / InstallSnapshot</text>
+  <text x="360" y="475" font-size="10" fill="#64748b" text-anchor="middle">Success=true</text>
+  <text x="360" y="537" font-size="10" fill="#64748b" text-anchor="middle">healthy 10 s → promote to voter</text>
+</svg>

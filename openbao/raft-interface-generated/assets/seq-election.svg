@@ -1,0 +1,65 @@
+<svg viewBox="0 0 720 691" width="720" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#22c55e"/>
+    </marker>
+    <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#ef4444"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="720" height="691" fill="#ffffff"/>
+
+  <!-- group frames -->
+  <!-- lifelines -->
+  <path d="M126,81 L 126,646" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M360,81 L 360,646" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M594,81 L 594,646" fill="none" stroke="#ec4899" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="4,4"/>
+  <!-- messages -->
+  <path d="M131,118 C 166,120 166,158 137,158" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <path d="M131,198 L 349,198" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <path d="M131,242 L 583,242" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-red)"/>
+  <path d="M355,298 L 137,298" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M131,326 C 166,328 166,366 137,366" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <path d="M131,406 L 349,406" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <path d="M365,434 C 400,436 400,474 371,474" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <path d="M355,514 L 137,514" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M131,542 C 166,544 166,582 137,582" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M131,622 L 349,622" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- participant heads -->
+  <rect x="22" y="22" width="208" height="54" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="126" y="44" font-size="12" fill="#b45309" text-anchor="middle">openbao-1</text>
+  <text x="126" y="62" font-size="12" fill="#b45309" text-anchor="middle">candidate</text>
+  <rect x="256" y="22" width="208" height="54" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="360" y="44" font-size="12" fill="#166534" text-anchor="middle">openbao-2</text>
+  <text x="360" y="62" font-size="12" fill="#166534" text-anchor="middle">follower</text>
+  <rect x="490" y="22" width="208" height="54" rx="6" fill="#fce7f3" stroke="#ec4899"/>
+  <text x="594" y="44" font-size="12" fill="#9d174d" text-anchor="middle">openbao-0</text>
+  <text x="594" y="62" font-size="12" fill="#9d174d" text-anchor="middle">crashed</text>
+  <!-- labels and notes -->
+  <text x="360" y="666" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">Pre-vote does not raise the term, so a node that cannot win does not disturb the cluster.</text>
+  <text x="178" y="146" font-size="10" fill="#64748b">no heartbeat for 5–10 s</text>
+  <text x="243" y="185" font-size="10" fill="#64748b" text-anchor="middle">RequestPreVote Term=6</text>
+  <text x="477" y="229" font-size="10" fill="#64748b" text-anchor="middle">RequestPreVote</text>
+  <text x="477" y="263" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">dial fails</text>
+  <text x="243" y="285" font-size="10" fill="#64748b" text-anchor="middle">Granted=true</text>
+  <text x="178" y="344" font-size="10" fill="#64748b">2 of 3 → real vote</text>
+  <text x="178" y="359" font-size="10" fill="#64748b">Term=6, vote self</text>
+  <text x="243" y="393" font-size="10" fill="#64748b" text-anchor="middle">RequestVote Term=6, LastLog…</text>
+  <text x="412" y="462" font-size="10" fill="#64748b">check rules, save vote to disk</text>
+  <text x="243" y="501" font-size="10" fill="#64748b" text-anchor="middle">Granted=true</text>
+  <text x="178" y="570" font-size="10" fill="#64748b">2 of 3 votes → leader</text>
+  <text x="243" y="609" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries (heartbeat) Term=6</text>
+</svg>

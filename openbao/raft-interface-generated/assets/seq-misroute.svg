@@ -1,0 +1,57 @@
+<svg viewBox="0 0 720 478" width="720" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#22c55e"/>
+    </marker>
+    <marker id="arrow-pink" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#ec4899"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#ef4444"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="720" height="478" fill="#ffffff"/>
+
+  <!-- group frames -->
+  <rect x="542" y="289" width="104" height="34" rx="8" fill="#f8fafc" stroke="#ec4899" stroke-dasharray="6,4"/>
+  <text x="594" y="309.5" font-size="10" fill="#9d174d" font-style="italic" text-anchor="middle">never contacted</text>
+  <!-- lifelines -->
+  <path d="M126,81 L 126,398" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M360,81 L 360,398" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M594,81 L 594,289" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M594,323 L 594,398" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <!-- messages -->
+  <path d="M131,118 C 166,120 166,158 137,158" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M131,198 L 349,198" fill="none" stroke="#ef4444" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <path d="M365,226 C 400,228 400,266 371,266" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <path d="M355,306 L 137,306" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-red)"/>
+  <path d="M131,334 C 166,336 166,374 137,374" fill="none" stroke="#ec4899" stroke-width="1.5" marker-end="url(#arrow-pink)"/>
+  <!-- participant heads -->
+  <rect x="22" y="22" width="208" height="54" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="126" y="44" font-size="12" fill="#1e40af" text-anchor="middle">openbao-0</text>
+  <text x="126" y="62" font-size="12" fill="#1e40af" text-anchor="middle">leader</text>
+  <rect x="256" y="22" width="208" height="54" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="360" y="44" font-size="12" fill="#166534" text-anchor="middle">openbao-1</text>
+  <text x="360" y="62" font-size="12" fill="#166534" text-anchor="middle">10.244.0.12</text>
+  <rect x="490" y="22" width="208" height="54" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="594" y="44" font-size="12" fill="#166534" text-anchor="middle">openbao-2</text>
+  <text x="594" y="62" font-size="12" fill="#166534" text-anchor="middle">10.244.0.30</text>
+  <!-- labels and notes -->
+  <path d="M30,410 L 690,410 Q 698,410 698,418 L 698,448 Q 698,456 690,456 L 30,456 Q 22,456 22,448 L 22,418 Q 22,410 30,410 Z" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="360" y="437" font-size="12" fill="#166534" text-anchor="middle">Fix: compare reply ID with the peer we dialed → drop connection, dial again</text>
+  <text x="178" y="136" font-size="10" fill="#64748b">dial raft-2 →</text>
+  <text x="178" y="151" font-size="10" fill="#64748b">old DNS answer 10.244.0.12</text>
+  <text x="243" y="185" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries (meant for openbao-2)</text>
+  <text x="412" y="244" font-size="10" fill="#64748b">valid TLS cert, valid leader</text>
+  <text x="412" y="259" font-size="10" fill="#64748b">→ accept</text>
+  <text x="243" y="293" font-size="10" fill="#64748b" text-anchor="middle">Success=true, ID=openbao-1</text>
+  <text x="178" y="352" font-size="10" fill="#64748b">ID not checked →</text>
+  <text x="178" y="367" font-size="10" fill="#64748b">counted as openbao-2</text>
+</svg>

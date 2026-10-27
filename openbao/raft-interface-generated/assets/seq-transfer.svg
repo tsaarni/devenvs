@@ -1,0 +1,58 @@
+<svg viewBox="0 0 720 641" width="720" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-muted" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="720" height="641" fill="#ffffff"/>
+
+  <!-- group frames -->
+  <!-- lifelines -->
+  <path d="M126,101 L 126,596" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M360,101 L 360,596" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <path d="M594,101 L 594,596" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"/>
+  <!-- messages -->
+  <path d="M131,132 L 349,132" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M355,176 L 137,176" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M131,220 L 349,220" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M355,264 L 137,264" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M365,292 C 400,294 400,332 371,332" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <path d="M365,372 L 583,372" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <path d="M355,416 L 137,416" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <path d="M589,460 L 371,460" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M131,504 L 349,504" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-muted)"/>
+  <path d="M365,532 C 400,534 400,572 371,572" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <!-- participant heads -->
+  <rect x="22" y="42" width="208" height="54" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="126" y="64" font-size="12" fill="#1e40af" text-anchor="middle">openbao-0</text>
+  <text x="126" y="82" font-size="12" fill="#1e40af" text-anchor="middle">leader</text>
+  <rect x="256" y="42" width="208" height="54" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="360" y="64" font-size="12" fill="#166534" text-anchor="middle">openbao-1</text>
+  <text x="360" y="82" font-size="12" fill="#166534" text-anchor="middle">target</text>
+  <rect x="490" y="42" width="208" height="54" rx="6" fill="#d1fae5" stroke="#22c55e"/>
+  <text x="594" y="64" font-size="12" fill="#166534" text-anchor="middle">openbao-2</text>
+  <text x="594" y="82" font-size="12" fill="#166534" text-anchor="middle">follower</text>
+  <!-- labels and notes -->
+  <text x="360" y="616" font-size="10" fill="#94a3b8" font-style="italic" text-anchor="middle">LeadershipTransfer=true makes voters accept even though they still know a leader.</text>
+  <text x="243" y="119" font-size="10" fill="#64748b" text-anchor="middle">AppendEntries (catch up)</text>
+  <text x="243" y="163" font-size="10" fill="#64748b" text-anchor="middle">Success=true</text>
+  <text x="243" y="207" font-size="10" fill="#64748b" text-anchor="middle">TimeoutNow</text>
+  <text x="243" y="251" font-size="10" fill="#64748b" text-anchor="middle">TimeoutNowResponse</text>
+  <text x="412" y="320" font-size="10" fill="#64748b">candidate now, skip pre-vote</text>
+  <text x="477" y="359" font-size="10" fill="#64748b" text-anchor="middle">RequestVote LeadershipTransfer=true</text>
+  <text x="243" y="403" font-size="10" fill="#64748b" text-anchor="middle">RequestVote LeadershipTransfer=true</text>
+  <text x="477" y="447" font-size="10" fill="#64748b" text-anchor="middle">Granted=true</text>
+  <text x="243" y="491" font-size="10" fill="#64748b" text-anchor="middle">Granted=true</text>
+  <text x="412" y="560" font-size="10" fill="#64748b">new leader</text>
+  <text x="22" y="30" font-size="10" fill="#94a3b8" font-style="italic">bao operator step-down, or clean shutdown of the active node</text>
+</svg>
